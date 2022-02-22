@@ -5,15 +5,15 @@ import net.joefoxe.hexerei.items.JarSlot;
 import net.minecraft.CrashReport;
 import net.minecraft.CrashReportCategory;
 import net.minecraft.ReportedException;
-import net.minecraft.core.BlockPos;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.core.Registry;
 import net.minecraft.world.entity.SlotAccess;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.world.inventory.*;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.world.World;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.SlotItemHandler;
@@ -24,13 +24,18 @@ import javax.annotation.Nullable;
 import java.util.Optional;
 
 
-public class HerbJarContainer extends AbstractContainerMenu {
-    private final BlockEntity tileEntity;
-    private final Player playerEntity;
+import net.minecraft.inventory.container.ClickType;
+import net.minecraft.inventory.container.Container;
+import net.minecraft.inventory.container.Slot;
+import net.minecraft.util.IWorldPosCallable;
+
+public class HerbJarContainer extends Container {
+    private final TileEntity tileEntity;
+    private final PlayerEntity playerEntity;
     private final IItemHandler playerInventory;
 
 
-    public HerbJarContainer(int windowId, Level world, BlockPos pos, Inventory playerInventory, Player player) {
+    public HerbJarContainer(int windowId, World world, BlockPos pos, PlayerInventory playerInventory, PlayerEntity player) {
         super(ModContainers.HERB_JAR_CONTAINER.get(), windowId);
         this.tileEntity = world.getBlockEntity(pos);
         playerEntity = player;
@@ -297,12 +302,12 @@ public class HerbJarContainer extends AbstractContainerMenu {
 //    }
 
 
-    public void clicked(int p_150400_, int p_150401_, ClickType p_150402_, Player p_150403_) {
+    public void clicked(int p_150400_, int p_150401_, ClickType p_150402_, PlayerEntity p_150403_) {
             this.doClick(p_150400_, p_150401_, p_150402_, p_150403_);
     }
 
-    private void doClick(int p_150431_, int p_150432_, ClickType p_150433_, Player p_150434_) {
-        Inventory inventory = p_150434_.getInventory();
+    private void doClick(int p_150431_, int p_150432_, ClickType p_150433_, PlayerEntity p_150434_) {
+        PlayerInventory inventory = p_150434_.getInventory();
         if (p_150433_ == ClickType.QUICK_CRAFT) {
             int i = this.quickcraftStatus;
             this.quickcraftStatus = getQuickcraftHeader(p_150432_);
@@ -698,8 +703,8 @@ public class HerbJarContainer extends AbstractContainerMenu {
 
 
     @Override
-    public boolean stillValid(Player playerIn) {
-        return stillValid(ContainerLevelAccess.create(tileEntity.getLevel(), tileEntity.getBlockPos()),
+    public boolean stillValid(PlayerEntity playerIn) {
+        return stillValid(IWorldPosCallable.create(tileEntity.getLevel(), tileEntity.getBlockPos()),
                 playerIn, ModBlocks.HERB_JAR.get());
     }
 
@@ -749,7 +754,7 @@ public class HerbJarContainer extends AbstractContainerMenu {
     private static final int TE_INVENTORY_SLOT_COUNT = 1;  // must match TileEntityInventoryBasic.NUMBER_OF_SLOTS
 
     @Override
-    public ItemStack quickMoveStack(Player playerIn, int index) {
+    public ItemStack quickMoveStack(PlayerEntity playerIn, int index) {
         Slot sourceSlot = slots.get(index);
         if (sourceSlot == null || !sourceSlot.hasItem()) return ItemStack.EMPTY;  //EMPTY_ITEM
         ItemStack sourceStack = sourceSlot.getItem();

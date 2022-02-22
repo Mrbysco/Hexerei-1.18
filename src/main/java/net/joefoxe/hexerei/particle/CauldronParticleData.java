@@ -4,14 +4,16 @@ import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.core.particles.ParticleOptions;
-import net.minecraft.core.particles.ParticleType;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.util.Mth;
+import net.minecraft.particles.IParticleData;
+import net.minecraft.particles.ParticleType;
+import net.minecraft.network.PacketBuffer;
+import net.minecraft.util.math.MathHelper;
 
 import javax.annotation.Nonnull;
 import java.awt.*;
 import java.util.Locale;
+
+import net.minecraft.particles.IParticleData.IDeserializer;
 
 /**
  * Created by TGG on 25/03/2020.
@@ -26,7 +28,7 @@ import java.util.Locale;
  * 2) transmit it between server and client (write and read methods), and
  * 3) parse it from a command string i.e. the /particle params
  */
-public class CauldronParticleData implements ParticleOptions {
+public class CauldronParticleData implements IParticleData {
 
     public CauldronParticleData(Color tint, double diameter) {
         this.tint = tint;
@@ -49,7 +51,7 @@ public class CauldronParticleData implements ParticleOptions {
 
     // write the particle information to a FriendlyByteBuf, ready for transmission to a client
     @Override
-    public void writeToNetwork(FriendlyByteBuf buf) {
+    public void writeToNetwork(PacketBuffer buf) {
         buf.writeInt(tint.getRed());
         buf.writeInt(tint.getGreen());
         buf.writeInt(tint.getBlue());
@@ -67,7 +69,7 @@ public class CauldronParticleData implements ParticleOptions {
     private static double constrainDiameterToValidRange(double diameter) {
         final double MIN_DIAMETER = 0.05;
         final double MAX_DIAMETER = 1.0;
-        return Mth.clamp(diameter, MIN_DIAMETER, MAX_DIAMETER);
+        return MathHelper.clamp(diameter, MIN_DIAMETER, MAX_DIAMETER);
     }
 
     private Color tint;
@@ -97,7 +99,7 @@ public class CauldronParticleData implements ParticleOptions {
 
     // The DESERIALIZER is used to construct CauldronParticleData from either command line parameters or from a network packet
 
-    public static final Deserializer<CauldronParticleData> DESERIALIZER = new Deserializer<CauldronParticleData>() {
+    public static final IDeserializer<CauldronParticleData> DESERIALIZER = new IDeserializer<CauldronParticleData>() {
 
         // parse the parameters for this particle from a /particle command
         @Nonnull
@@ -109,11 +111,11 @@ public class CauldronParticleData implements ParticleOptions {
             final int MIN_COLOUR = 0;
             final int MAX_COLOUR = 255;
             reader.expect(' ');
-            int red = Mth.clamp(reader.readInt(), MIN_COLOUR, MAX_COLOUR);
+            int red = MathHelper.clamp(reader.readInt(), MIN_COLOUR, MAX_COLOUR);
             reader.expect(' ');
-            int green = Mth.clamp(reader.readInt(), MIN_COLOUR, MAX_COLOUR);
+            int green = MathHelper.clamp(reader.readInt(), MIN_COLOUR, MAX_COLOUR);
             reader.expect(' ');
-            int blue = Mth.clamp(reader.readInt(), MIN_COLOUR, MAX_COLOUR);
+            int blue = MathHelper.clamp(reader.readInt(), MIN_COLOUR, MAX_COLOUR);
             Color color = new Color(red, green, blue);
 
             return new CauldronParticleData(color, diameter);
@@ -121,14 +123,14 @@ public class CauldronParticleData implements ParticleOptions {
 
         // read the particle information from a FriendlyByteBuf after the client has received it from the server
         @Override
-        public CauldronParticleData fromNetwork(@Nonnull ParticleType<CauldronParticleData> type, FriendlyByteBuf buf) {
+        public CauldronParticleData fromNetwork(@Nonnull ParticleType<CauldronParticleData> type, PacketBuffer buf) {
             // warning! never trust the data read in from a packet buffer.
 
             final int MIN_COLOUR = 0;
             final int MAX_COLOUR = 255;
-            int red = Mth.clamp(buf.readInt(), MIN_COLOUR, MAX_COLOUR);
-            int green = Mth.clamp(buf.readInt(), MIN_COLOUR, MAX_COLOUR);
-            int blue = Mth.clamp(buf.readInt(), MIN_COLOUR, MAX_COLOUR);
+            int red = MathHelper.clamp(buf.readInt(), MIN_COLOUR, MAX_COLOUR);
+            int green = MathHelper.clamp(buf.readInt(), MIN_COLOUR, MAX_COLOUR);
+            int blue = MathHelper.clamp(buf.readInt(), MIN_COLOUR, MAX_COLOUR);
             Color color = new Color(red, green, blue);
 
             double diameter = constrainDiameterToValidRange(buf.readDouble());

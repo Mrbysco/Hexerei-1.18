@@ -1,17 +1,19 @@
 package net.joefoxe.hexerei.item.custom;
 
 import net.minecraft.world.*;
-import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.context.UseOnContext;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.InteractionResult;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.level.ClipContext;
+import net.minecraft.item.BlockItem;
+import net.minecraft.item.ItemUseContext;
+import net.minecraft.block.Block;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.ActionResultType;
+import net.minecraft.util.Hand;
+import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.util.math.RayTraceContext;
 import net.minecraft.world.level.Level;
+
+import net.minecraft.util.ActionResult;
 
 public class FloweringLilyPadItem extends BlockItem {
     public FloweringLilyPadItem(Block p_43436_, Item.Properties p_43437_) {
@@ -42,14 +44,14 @@ public class FloweringLilyPadItem extends BlockItem {
 
 
 
-    public InteractionResult useOn(UseOnContext p_43439_) {
-        return InteractionResult.PASS;
+    public ActionResultType useOn(ItemUseContext p_43439_) {
+        return ActionResultType.PASS;
     }
 
-    public InteractionResultHolder<ItemStack> use(Level p_43441_, Player p_43442_, InteractionHand p_43443_) {
-        BlockHitResult blockhitresult = getPlayerPOVHitResult(p_43441_, p_43442_, ClipContext.Fluid.SOURCE_ONLY);
-        BlockHitResult blockhitresult1 = blockhitresult.withPosition(blockhitresult.getBlockPos().above());
-        InteractionResult interactionresult = super.useOn(new UseOnContext(p_43442_, p_43443_, blockhitresult1));
-        return new InteractionResultHolder<>(interactionresult, p_43442_.getItemInHand(p_43443_));
+    public ActionResult<ItemStack> use(World p_43441_, PlayerEntity p_43442_, Hand p_43443_) {
+        BlockRayTraceResult blockhitresult = getPlayerPOVHitResult(p_43441_, p_43442_, RayTraceContext.FluidMode.SOURCE_ONLY);
+        BlockRayTraceResult blockhitresult1 = blockhitresult.withPosition(blockhitresult.getBlockPos().above());
+        ActionResultType interactionresult = super.useOn(new ItemUseContext(p_43442_, p_43443_, blockhitresult1));
+        return new ActionResult<>(interactionresult, p_43442_.getItemInHand(p_43443_));
     }
 }

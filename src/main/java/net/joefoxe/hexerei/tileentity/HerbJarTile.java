@@ -8,37 +8,37 @@ import net.joefoxe.hexerei.util.HexereiPacketHandler;
 import net.joefoxe.hexerei.util.HexereiTags;
 import net.joefoxe.hexerei.util.message.MessageCountUpdate;
 import net.joefoxe.hexerei.util.message.TESyncPacket;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.world.Clearable;
-import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.level.block.Block;
+import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.network.IPacket;
+import net.minecraft.client.network.play.IClientPlayNetHandler;
+import net.minecraft.inventory.IClearable;
+import net.minecraft.inventory.container.Container;
+import net.minecraft.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.tileentity.LockableLootTileEntity;
+import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.world.ContainerHelper;
-import net.minecraft.world.MenuProvider;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.Connection;
-import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.inventory.container.INamedContainerProvider;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.network.NetworkManager;
+import net.minecraft.network.play.server.SUpdateTileEntityPacket;
 import net.minecraft.server.players.PlayerList;
 import net.minecraft.client.renderer.texture.Tickable;
-import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.core.Direction;
-import net.minecraft.util.FormattedCharSequence;
-import net.minecraft.core.NonNullList;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.tileentity.TileEntityType;
+import net.minecraft.util.Direction;
+import net.minecraft.util.IReorderingProcessor;
+import net.minecraft.util.NonNullList;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.capabilities.Capability;
@@ -54,27 +54,27 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Function;
 
-public class HerbJarTile extends RandomizableContainerBlockEntity implements Clearable, MenuProvider {
+public class HerbJarTile extends LockableLootTileEntity implements IClearable, INamedContainerProvider {
 
     public JarHandler itemHandler;
     private final LazyOptional<IItemHandler> handler = LazyOptional.of(() -> itemHandler).cast();
 
     protected NonNullList<ItemStack> items = NonNullList.withSize(8, ItemStack.EMPTY);
 
-    private final FormattedCharSequence[] renderText = new FormattedCharSequence[1];
+    private final IReorderingProcessor[] renderText = new IReorderingProcessor[1];
 
-    private final Component[] signText = new Component[]{new TextComponent("Text")};
+    private final ITextComponent[] signText = new ITextComponent[]{new StringTextComponent("Text")};
 
     public int degreesOpened;
 
-    public Component customName;
+    public ITextComponent customName;
 
     private long lastClickTime;
     private UUID lastClickUUID;
 
 
 
-    public HerbJarTile(BlockEntityType<?> tileEntityTypeIn, BlockPos blockPos, BlockState blockState) {
+    public HerbJarTile(TileEntityType<?> tileEntityTypeIn, BlockPos blockPos, BlockState blockState) {
         super(tileEntityTypeIn, blockPos, blockState);
         this.itemHandler = createHandler();
     }
@@ -89,7 +89,7 @@ public class HerbJarTile extends RandomizableContainerBlockEntity implements Cle
 //        this.itemHandler = createHandler();
 //    }
 
-    public void readInventory(CompoundTag compound) {
+    public void readInventory(CompoundNBT compound) {
         itemHandler.deserializeNBT(compound);
     }
 
@@ -114,8 +114,8 @@ public class HerbJarTile extends RandomizableContainerBlockEntity implements Cle
     }
 
     @Override
-    protected Component getDefaultName() {
-        return new TranslatableComponent("container." + Hexerei.MOD_ID + ".herb_jar");
+    protected ITextComponent getDefaultName() {
+        return new TranslationTextComponent("container." + Hexerei.MOD_ID + ".herb_jar");
     }
 
 //    public HerbJarTile() {
@@ -134,7 +134,7 @@ public class HerbJarTile extends RandomizableContainerBlockEntity implements Cle
 
 
 //    @Override
-    public CompoundTag save(CompoundTag tag) {
+    public CompoundNBT save(CompoundNBT tag) {
         super.saveAdditional(tag);
         tag.put("inv", itemHandler.serializeNBT());
         return tag;
@@ -142,36 +142,36 @@ public class HerbJarTile extends RandomizableContainerBlockEntity implements Cle
 
 
     @Override
-    public void saveAdditional(CompoundTag compound) {
+    public void saveAdditional(CompoundNBT compound) {
         compound.put("inv", itemHandler.serializeNBT());
         if (this.customName != null)
-            compound.putString("CustomName", Component.Serializer.toJson(this.customName));
+            compound.putString("CustomName", ITextComponent.Serializer.toJson(this.customName));
     }
 
 
 
     @Override
-    public void load(CompoundTag compoundTag) {
+    public void load(CompoundNBT compoundTag) {
         super.load(compoundTag);
         itemHandler.deserializeNBT(compoundTag.getCompound("inv"));
         if (compoundTag.contains("CustomName", 8))
-            this.customName = Component.Serializer.fromJson(compoundTag.getString("CustomName"));
+            this.customName = ITextComponent.Serializer.fromJson(compoundTag.getString("CustomName"));
     }
 
     @Override
-    public CompoundTag getUpdateTag()
+    public CompoundNBT getUpdateTag()
     {
-        return this.save(new CompoundTag());
+        return this.save(new CompoundNBT());
     }
 
     @Nullable
-    public Packet<ClientGamePacketListener> getUpdatePacket() {
+    public IPacket<IClientPlayNetHandler> getUpdatePacket() {
 
-        return ClientboundBlockEntityDataPacket.create(this, (tag) -> this.getUpdateTag());
+        return SUpdateTileEntityPacket.create(this, (tag) -> this.getUpdateTag());
     }
 
     @Override
-    public void onDataPacket(final Connection net, final ClientboundBlockEntityDataPacket pkt)
+    public void onDataPacket(final NetworkManager net, final SUpdateTileEntityPacket pkt)
     {
         this.deserializeNBT(pkt.getTag());
     }
@@ -179,7 +179,7 @@ public class HerbJarTile extends RandomizableContainerBlockEntity implements Cle
     public void sync() {
         setChanged();
         if (!level.isClientSide)
-            HexereiPacketHandler.instance.send(PacketDistributor.TRACKING_CHUNK.with(() -> level.getChunkAt(worldPosition)), new TESyncPacket(worldPosition, save(new CompoundTag())));
+            HexereiPacketHandler.instance.send(PacketDistributor.TRACKING_CHUNK.with(() -> level.getChunkAt(worldPosition)), new TESyncPacket(worldPosition, save(new CompoundNBT())));
 
         if(this.level != null)
             this.level.sendBlockUpdated(this.worldPosition, this.level.getBlockState(this.worldPosition), this.level.getBlockState(this.worldPosition),
@@ -188,7 +188,7 @@ public class HerbJarTile extends RandomizableContainerBlockEntity implements Cle
 
 
     @Override
-    protected AbstractContainerMenu createMenu(int id, Inventory player) {
+    protected Container createMenu(int id, PlayerInventory player) {
         return new HerbJarContainer(id, this.level, this.worldPosition, player, player.player);
     }
 
@@ -204,15 +204,15 @@ public class HerbJarTile extends RandomizableContainerBlockEntity implements Cle
 //    }
 
     @Override
-    public AABB getRenderBoundingBox() {
-        AABB aabb = super.getRenderBoundingBox().inflate(5, 5, 5);
+    public AxisAlignedBB getRenderBoundingBox() {
+        AxisAlignedBB aabb = super.getRenderBoundingBox().inflate(5, 5, 5);
         return aabb;
     }
 
 
     @Nullable
     @OnlyIn(Dist.CLIENT)
-    public FormattedCharSequence reorderText(int row, Function<Component, FormattedCharSequence> textProcessorFunction) {
+    public IReorderingProcessor reorderText(int row, Function<ITextComponent, IReorderingProcessor> textProcessorFunction) {
         if (this.renderText[row] == null && this.customName != null) {
             this.renderText[row] = textProcessorFunction.apply(this.customName);
         }
@@ -273,9 +273,9 @@ public class HerbJarTile extends RandomizableContainerBlockEntity implements Cle
     }
 
     @Override
-    public Component getDisplayName() {
+    public ITextComponent getDisplayName() {
         return customName != null ? customName
-                : new TranslatableComponent("");
+                : new TranslationTextComponent("");
     }
 
     @Nonnull
@@ -341,7 +341,7 @@ public class HerbJarTile extends RandomizableContainerBlockEntity implements Cle
 
 
 
-    public int interactPutItems (Player player) {
+    public int interactPutItems (PlayerEntity player) {
         int count;
         if (Objects.requireNonNull(getLevel()).getGameTime() - lastClickTime < 10 && player.getUUID().equals(lastClickUUID))
             count = interactPutCurrentInventory(0, player);
@@ -356,7 +356,7 @@ public class HerbJarTile extends RandomizableContainerBlockEntity implements Cle
         return count;
     }
 
-    public int interactPutCurrentItem (int slot, Player player) {
+    public int interactPutCurrentItem (int slot, PlayerEntity player) {
 
         int count = 0;
         ItemStack playerStack = player.inventory.getSelected();
@@ -367,7 +367,7 @@ public class HerbJarTile extends RandomizableContainerBlockEntity implements Cle
     }
 
 
-    public int interactPutCurrentInventory (int slot, Player player) {
+    public int interactPutCurrentInventory (int slot, PlayerEntity player) {
         int count = 0;
         if (!this.itemHandler.getContents().get(0).isEmpty()) {
             for (int i = 0, n = player.inventory.getContainerSize(); i < n; i++) {
@@ -383,14 +383,14 @@ public class HerbJarTile extends RandomizableContainerBlockEntity implements Cle
         }
 
         if (count > 0)
-            if (player instanceof ServerPlayer)
-                ((ServerPlayer) player).initMenu(player.containerMenu);
+            if (player instanceof ServerPlayerEntity)
+                ((ServerPlayerEntity) player).initMenu(player.containerMenu);
 
         return count;
     }
 
     @Override
-    public Component getCustomName() {
+    public ITextComponent getCustomName() {
         return this.customName;
     }
 
@@ -400,7 +400,7 @@ public class HerbJarTile extends RandomizableContainerBlockEntity implements Cle
     }
 
     @Override
-    public Component getName() {
+    public ITextComponent getName() {
         return customName;
     }
 

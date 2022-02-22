@@ -1,6 +1,6 @@
 package net.joefoxe.hexerei.world.structure.structures;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.common.util.Lazy;
 

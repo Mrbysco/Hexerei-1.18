@@ -1,29 +1,29 @@
 package net.joefoxe.hexerei.tileentity.renderer;
 
-import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.matrix.MatrixStack;
 import net.joefoxe.hexerei.block.ModBlocks;
 import net.joefoxe.hexerei.block.custom.CrystalBall;
 import net.joefoxe.hexerei.block.custom.MixingCauldron;
 import net.joefoxe.hexerei.item.ModItems;
 import net.joefoxe.hexerei.tileentity.CrystalBallTile;
 import net.joefoxe.hexerei.tileentity.MixingCauldronTile;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
-import net.minecraft.world.item.ItemStack;
-import com.mojang.math.Vector3f;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.math.vector.Vector3f;
 import net.minecraftforge.client.model.data.EmptyModelData;
 
-public class CrystalBallRenderer implements BlockEntityRenderer<CrystalBallTile> {
+public class CrystalBallRenderer implements TileEntityRenderer<CrystalBallTile> {
 
 
     @Override
-    public void render(CrystalBallTile tileEntityIn, float partialTicks, PoseStack matrixStackIn,
-                       MultiBufferSource bufferIn, int combinedLightIn, int combinedOverlayIn) {
+    public void render(CrystalBallTile tileEntityIn, float partialTicks, MatrixStack matrixStackIn,
+                       IRenderTypeBuffer bufferIn, int combinedLightIn, int combinedOverlayIn) {
 
         if(!tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).hasBlockEntity())
             return;
@@ -55,14 +55,14 @@ public class CrystalBallRenderer implements BlockEntityRenderer<CrystalBallTile>
 
     }
 
-    private void renderItem(ItemStack stack, float partialTicks, PoseStack matrixStackIn, MultiBufferSource bufferIn,
+    private void renderItem(ItemStack stack, float partialTicks, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn,
                             int combinedLightIn) {
-        Minecraft.getInstance().getItemRenderer().renderStatic(stack, ItemTransforms.TransformType.FIXED, combinedLightIn,
+        Minecraft.getInstance().getItemRenderer().renderStatic(stack, ItemCameraTransforms.TransformType.FIXED, combinedLightIn,
                 OverlayTexture.NO_OVERLAY, matrixStackIn, bufferIn, 1);
     }
 
 
-    private void renderBlock(PoseStack matrixStackIn, MultiBufferSource bufferIn, int combinedLightIn, BlockState state) {
+    private void renderBlock(MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int combinedLightIn, BlockState state) {
         Minecraft.getInstance().getBlockRenderer().renderSingleBlock(state, matrixStackIn, bufferIn, combinedLightIn, OverlayTexture.NO_OVERLAY, EmptyModelData.INSTANCE);
 
     }

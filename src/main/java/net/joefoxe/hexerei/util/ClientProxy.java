@@ -9,11 +9,11 @@ import net.joefoxe.hexerei.item.custom.BroomItemStackRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.model.geom.ModelLayerLocation;
-import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
-import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
+import net.minecraft.client.renderer.tileentity.ItemStackTileEntityRenderer;
+import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.world.World;
 
 import net.joefoxe.hexerei.client.renderer.entity.ModEntityTypes;
 import net.joefoxe.hexerei.client.renderer.entity.render.BroomRenderer;
@@ -38,12 +38,12 @@ public class ClientProxy implements SidedProxy {
 
 
     @Override
-    public Player getPlayer() {
+    public PlayerEntity getPlayer() {
         return Minecraft.getInstance().player;
     }
 
     @Override
-    public Level getLevel() {
+    public World getLevel() {
         return Minecraft.getInstance().level;
     }
 
@@ -56,14 +56,14 @@ public class ClientProxy implements SidedProxy {
 
     }
 
-    public static void registerISTER(Consumer<IItemRenderProperties> consumer, BiFunction<BlockEntityRenderDispatcher, EntityModelSet, BlockEntityWithoutLevelRenderer> factory) {
+    public static void registerISTER(Consumer<IItemRenderProperties> consumer, BiFunction<TileEntityRendererDispatcher, EntityModelSet, ItemStackTileEntityRenderer> factory) {
         consumer.accept(new IItemRenderProperties() {
-            final NonNullLazy<BlockEntityWithoutLevelRenderer> renderer = NonNullLazy.of(
+            final NonNullLazy<ItemStackTileEntityRenderer> renderer = NonNullLazy.of(
                     () -> factory.apply(Minecraft.getInstance().getBlockEntityRenderDispatcher(),
                             Minecraft.getInstance().getEntityModels()));
 
             @Override
-            public BlockEntityWithoutLevelRenderer getItemStackRenderer() {
+            public ItemStackTileEntityRenderer getItemStackRenderer() {
                 return renderer.get();
             }
         });

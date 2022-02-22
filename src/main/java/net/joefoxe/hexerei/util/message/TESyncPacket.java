@@ -1,10 +1,10 @@
 package net.joefoxe.hexerei.util.message;
 
 import net.joefoxe.hexerei.Hexerei;
-import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.level.Level;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.network.PacketBuffer;
+import net.minecraft.world.World;
 import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.network.NetworkEvent;
 
@@ -12,25 +12,25 @@ import java.util.function.Supplier;
 
 public class TESyncPacket {
     BlockPos pos;
-    CompoundTag tag;
+    CompoundNBT tag;
 
-    public TESyncPacket(BlockPos pos, CompoundTag tag) {
+    public TESyncPacket(BlockPos pos, CompoundNBT tag) {
         this.pos = pos;
         this.tag = tag;
     }
 
-    public static void encode(TESyncPacket object, FriendlyByteBuf buffer) {
+    public static void encode(TESyncPacket object, PacketBuffer buffer) {
         buffer.writeBlockPos(object.pos);
         buffer.writeNbt(object.tag);
     }
 
-    public static TESyncPacket decode(FriendlyByteBuf buffer) {
+    public static TESyncPacket decode(PacketBuffer buffer) {
         return new TESyncPacket(buffer.readBlockPos(), buffer.readNbt());
     }
 
     public static void consume(TESyncPacket packet, Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
-            Level world;
+            World world;
             if (ctx.get().getDirection() == NetworkDirection.PLAY_TO_CLIENT) {
                 world = Hexerei.proxy.getLevel();
             }

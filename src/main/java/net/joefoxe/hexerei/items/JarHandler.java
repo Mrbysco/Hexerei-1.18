@@ -1,10 +1,10 @@
 package net.joefoxe.hexerei.items;
 
-import net.minecraft.nbt.Tag;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.core.NonNullList;
+import net.minecraft.nbt.INBT;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.ListNBT;
+import net.minecraft.util.NonNullList;
 import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraftforge.items.ItemStackHandler;
 
@@ -98,38 +98,38 @@ public class JarHandler extends ItemStackHandler {
     }
 
     @Override
-    public CompoundTag serializeNBT() {
-        ListTag nbtTagList = new ListTag();
+    public CompoundNBT serializeNBT() {
+        ListNBT nbtTagList = new ListNBT();
         for (int i = 0; i < getContents().size(); i++) {
             if (!getContents().get(i).isEmpty()) {
                 int realCount = Math.min(stacklimit, getContents().get(i).getCount());
-                CompoundTag itemTag = new CompoundTag();
+                CompoundNBT itemTag = new CompoundNBT();
                 itemTag.putInt("Slot", i);
                 getContents().get(i).save(itemTag);
                 itemTag.putInt("ExtendedCount", realCount);
                 nbtTagList.add(itemTag);
             }
         }
-        CompoundTag nbt = new CompoundTag();
+        CompoundNBT nbt = new CompoundNBT();
         nbt.put("Items", nbtTagList);
         nbt.putInt("Size", getContents().size());
         return nbt;
     }
 
     @Override
-    public void deserializeNBT(CompoundTag nbt) {
-        setSize(nbt.contains("Size", Tag.TAG_INT) ? nbt.getInt("Size") : getContents().size());
-        ListTag tagList = nbt.getList("Items", Tag.TAG_COMPOUND);
+    public void deserializeNBT(CompoundNBT nbt) {
+        setSize(nbt.contains("Size", INBT.TAG_INT) ? nbt.getInt("Size") : getContents().size());
+        ListNBT tagList = nbt.getList("Items", INBT.TAG_COMPOUND);
         for (int i = 0; i < tagList.size(); i++) {
-            CompoundTag itemTags = tagList.getCompound(i);
+            CompoundNBT itemTags = tagList.getCompound(i);
             int slot = itemTags.getInt("Slot");
 
             if (slot >= 0 && slot < stacks.size()) {
-                if (itemTags.contains("StackList", Tag.TAG_LIST)) {
+                if (itemTags.contains("StackList", INBT.TAG_LIST)) {
                     ItemStack stack = ItemStack.EMPTY;
-                    ListTag stackTagList = itemTags.getList("StackList", Tag.TAG_COMPOUND);
+                    ListNBT stackTagList = itemTags.getList("StackList", INBT.TAG_COMPOUND);
                     for (int j = 0; j < stackTagList.size(); j++) {
-                        CompoundTag itemTag = stackTagList.getCompound(j);
+                        CompoundNBT itemTag = stackTagList.getCompound(j);
                         ItemStack temp = ItemStack.of(itemTag);
                         if (!temp.isEmpty()) {
                             if (stack.isEmpty()) stack = temp;
@@ -145,7 +145,7 @@ public class JarHandler extends ItemStackHandler {
                     }
                 } else {
                     ItemStack stack = ItemStack.of(itemTags);
-                    if (itemTags.contains("ExtendedCount", Tag.TAG_INT)) {
+                    if (itemTags.contains("ExtendedCount", INBT.TAG_INT)) {
                         stack.setCount(itemTags.getInt("ExtendedCount"));
                     }
                     stacks.set(slot, stack);

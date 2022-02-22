@@ -1,19 +1,19 @@
 package net.joefoxe.hexerei.tileentity;
 
 import net.minecraft.client.renderer.texture.Tickable;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.world.World;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.tileentity.TileEntityType;
+import net.minecraft.block.BlockState;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.vector.Vector3d;
 
 import java.util.Objects;
 
-public class BookOfShadowsAltarTile extends BlockEntity {
+public class BookOfShadowsAltarTile extends TileEntity {
 
 //    public final ItemStackHandler itemHandler = createHandler();
 //    private final LazyOptional<IItemHandler> handler = LazyOptional.of(() -> itemHandler);
@@ -34,13 +34,13 @@ public class BookOfShadowsAltarTile extends BlockEntity {
     public int candlePos3Slot;
     public float degreesSpunCandles;
 
-    public Vec3 closestPlayerPos;
+    public Vector3d closestPlayerPos;
     public double closestDist;
 
     public final double maxDist = 8;
 
 
-    public BookOfShadowsAltarTile(BlockEntityType<?> tileEntityTypeIn, BlockPos blockPos, BlockState blockState) {
+    public BookOfShadowsAltarTile(TileEntityType<?> tileEntityTypeIn, BlockPos blockPos, BlockState blockState) {
         super(tileEntityTypeIn, blockPos, blockState);
 
         pageOneRotation = 0;
@@ -215,8 +215,8 @@ public class BookOfShadowsAltarTile extends BlockEntity {
 //    }
 
     @Override
-    public AABB getRenderBoundingBox() {
-        AABB aabb = super.getRenderBoundingBox().inflate(5, 5, 5);
+    public AxisAlignedBB getRenderBoundingBox() {
+        AxisAlignedBB aabb = super.getRenderBoundingBox().inflate(5, 5, 5);
         return aabb;
     }
 
@@ -314,7 +314,7 @@ public class BookOfShadowsAltarTile extends BlockEntity {
         return input;
     }
 
-    public float getAngle(Vec3 pos) {
+    public float getAngle(Vector3d pos) {
         float angle = (float) Math.toDegrees(Math.atan2(pos.z() - this.worldPosition.getZ() - 0.5f, pos.x() - this.worldPosition.getX() - 0.5f));
 
         if(angle < 0){
@@ -324,7 +324,7 @@ public class BookOfShadowsAltarTile extends BlockEntity {
         return angle;
     }
 
-    private boolean getCandle(Level world, BlockPos pos) {
+    private boolean getCandle(World world, BlockPos pos) {
         return world.getBlockEntity(pos) instanceof CandleTile;
     }
 
@@ -599,7 +599,7 @@ public class BookOfShadowsAltarTile extends BlockEntity {
             }
 
 
-            Player playerEntity = this.level.getNearestPlayer(this.worldPosition.getX(),this.worldPosition.getY(),this.worldPosition.getZ(), maxDist, false);
+            PlayerEntity playerEntity = this.level.getNearestPlayer(this.worldPosition.getX(),this.worldPosition.getY(),this.worldPosition.getZ(), maxDist, false);
             if(this.level.isClientSide() && playerEntity != null) {
                 if (Math.floor(getDistanceToEntity(playerEntity, this.worldPosition)) < maxDist) {
                     if (Math.floor(getDistanceToEntity(playerEntity, this.worldPosition)) < closestDist) {

@@ -1,28 +1,28 @@
 package net.joefoxe.hexerei.tileentity.renderer;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Vector3f;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import net.minecraft.util.math.vector.Vector3f;
 import net.joefoxe.hexerei.block.ModBlocks;
 import net.joefoxe.hexerei.block.custom.SageBurningPlate;
 import net.joefoxe.hexerei.item.ModItems;
 import net.joefoxe.hexerei.tileentity.SageBurningPlateTile;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
-import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.model.ItemCameraTransforms;
+import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.core.Direction;
+import net.minecraft.util.Direction;
 import net.minecraft.util.Mth;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.HorizontalDirectionalBlock;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.item.ItemStack;
+import net.minecraft.block.HorizontalBlock;
+import net.minecraft.block.BlockState;
 import net.minecraftforge.client.model.data.EmptyModelData;
 
-public class SageBurningPlateRenderer implements BlockEntityRenderer<SageBurningPlateTile> {
+public class SageBurningPlateRenderer implements TileEntityRenderer<SageBurningPlateTile> {
 
     @Override
-    public void render(SageBurningPlateTile tileEntityIn, float partialTicks, PoseStack matrixStackIn,
-                       MultiBufferSource bufferIn, int combinedLightIn, int combinedOverlayIn) {
+    public void render(SageBurningPlateTile tileEntityIn, float partialTicks, MatrixStack matrixStackIn,
+                       IRenderTypeBuffer bufferIn, int combinedLightIn, int combinedOverlayIn) {
 
         if(!tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).hasBlockEntity()){
             return;
@@ -31,17 +31,17 @@ public class SageBurningPlateRenderer implements BlockEntityRenderer<SageBurning
         if(tileEntityIn.getItems().get(0).is(ModItems.DRIED_SAGE_BUNDLE.get())){
             matrixStackIn.pushPose();
             int rotationOffset = 0;
-            if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalDirectionalBlock.FACING) == Direction.NORTH)
+            if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalBlock.FACING) == Direction.NORTH)
                 rotationOffset = 0;
-            if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalDirectionalBlock.FACING) == Direction.WEST) {
+            if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalBlock.FACING) == Direction.WEST) {
                 rotationOffset = 90;
                 matrixStackIn.translate(0D, 0D, 1D);
             }
-            if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalDirectionalBlock.FACING) == Direction.SOUTH) {
+            if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalBlock.FACING) == Direction.SOUTH) {
                 rotationOffset = 180;
                 matrixStackIn.translate(1D, 0D, 1D);
             }
-            if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalDirectionalBlock.FACING) == Direction.EAST) {
+            if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalBlock.FACING) == Direction.EAST) {
                 rotationOffset = 270;
                 matrixStackIn.translate(1D, 0D, 0D);
             }
@@ -63,13 +63,13 @@ public class SageBurningPlateRenderer implements BlockEntityRenderer<SageBurning
     }
 
     // THIS IS WHAT I WAS LOOKING FOR FOREVER AHHHHH
-    private void renderItem(ItemStack stack, float partialTicks, PoseStack matrixStackIn, MultiBufferSource bufferIn,
+    private void renderItem(ItemStack stack, float partialTicks, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn,
                             int combinedLightIn) {
-        Minecraft.getInstance().getItemRenderer().renderStatic(stack, ItemTransforms.TransformType.FIXED, combinedLightIn,
+        Minecraft.getInstance().getItemRenderer().renderStatic(stack, ItemCameraTransforms.TransformType.FIXED, combinedLightIn,
                 OverlayTexture.NO_OVERLAY, matrixStackIn, bufferIn, 1);
     }
 
-    private void renderBlock(PoseStack matrixStackIn, MultiBufferSource bufferIn, int combinedLightIn, BlockState state) {
+    private void renderBlock(MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int combinedLightIn, BlockState state) {
         Minecraft.getInstance().getBlockRenderer().renderSingleBlock(state, matrixStackIn, bufferIn, combinedLightIn, OverlayTexture.NO_OVERLAY, EmptyModelData.INSTANCE);
 
     }

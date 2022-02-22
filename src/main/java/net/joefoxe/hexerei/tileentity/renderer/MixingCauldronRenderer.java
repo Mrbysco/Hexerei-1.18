@@ -1,43 +1,43 @@
 package net.joefoxe.hexerei.tileentity.renderer;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Matrix4f;
-import com.mojang.math.Vector3f;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.IVertexBuilder;
+import net.minecraft.util.math.vector.Matrix4f;
+import net.minecraft.util.math.vector.Vector3f;
 import net.joefoxe.hexerei.block.ModBlocks;
 import net.joefoxe.hexerei.block.custom.MixingCauldron;
 import net.joefoxe.hexerei.item.ModItems;
 import net.joefoxe.hexerei.tileentity.MixingCauldronTile;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.BiomeColors;
-import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.world.biome.BiomeColors;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
-import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.client.renderer.texture.TextureAtlas;
+import net.minecraft.client.renderer.texture.AtlasTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.Fluids;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.Direction;
+import net.minecraft.item.ItemStack;
+import net.minecraft.block.BlockState;
+import net.minecraft.fluid.Fluids;
 import net.minecraftforge.client.model.data.EmptyModelData;
 import net.minecraftforge.fluids.FluidStack;
 
 import java.awt.*;
 import java.util.Objects;
 
-public class MixingCauldronRenderer implements BlockEntityRenderer<MixingCauldronTile> {
+public class MixingCauldronRenderer implements TileEntityRenderer<MixingCauldronTile> {
 
     public static final float CORNERS = (float)MixingCauldron.SHAPE.min(Direction.Axis.X) + 0.01f + 3 / 16f;
     public static final float MIN_Y = 3f / 16f;
     public static final float MAX_Y = 15f/ 16f;
 
     @Override
-    public void render(MixingCauldronTile tileEntityIn, float partialTicks, PoseStack matrixStackIn,
-                       MultiBufferSource bufferIn, int combinedLightIn, int combinedOverlayIn) {
+    public void render(MixingCauldronTile tileEntityIn, float partialTicks, MatrixStack matrixStackIn,
+                       IRenderTypeBuffer bufferIn, int combinedLightIn, int combinedOverlayIn) {
 
 
         // Rendering for the items inside the cauldron
@@ -130,9 +130,9 @@ public class MixingCauldronRenderer implements BlockEntityRenderer<MixingCauldro
         }
     }
 
-    private static void renderFluid(PoseStack matrixStack, MultiBufferSource renderTypeBuffer, FluidStack fluidStack, float alpha, float heightPercentage, int combinedLight, MixingCauldronTile tileEntityIn){
-        VertexConsumer vertexBuilder = renderTypeBuffer.getBuffer(RenderType.translucentNoCrumbling());
-        TextureAtlasSprite sprite = Minecraft.getInstance().getTextureAtlas(TextureAtlas.LOCATION_BLOCKS).apply(fluidStack.getFluid().getAttributes().getStillTexture(fluidStack));
+    private static void renderFluid(MatrixStack matrixStack, IRenderTypeBuffer renderTypeBuffer, FluidStack fluidStack, float alpha, float heightPercentage, int combinedLight, MixingCauldronTile tileEntityIn){
+        IVertexBuilder vertexBuilder = renderTypeBuffer.getBuffer(RenderType.translucentNoCrumbling());
+        TextureAtlasSprite sprite = Minecraft.getInstance().getTextureAtlas(AtlasTexture.LOCATION_BLOCKS).apply(fluidStack.getFluid().getAttributes().getStillTexture(fluidStack));
         Color color2 = new Color(BiomeColors.getAverageWaterColor(tileEntityIn.getLevel(), new BlockPos(tileEntityIn.getPos().getX(), tileEntityIn.getPos().getY(), tileEntityIn.getPos().getZ())));
         int color = fluidStack.getFluid().getAttributes().getColor(fluidStack);
         alpha *= (color >> 24 & 255) / 255f;
@@ -149,7 +149,7 @@ public class MixingCauldronRenderer implements BlockEntityRenderer<MixingCauldro
         renderQuads(matrixStack.last().pose(), vertexBuilder, sprite, red, green, blue, alpha, heightPercentage, combinedLight);
     }
 
-    private static void renderQuads(Matrix4f matrix, VertexConsumer vertexBuilder, TextureAtlasSprite sprite, float r, float g, float b, float alpha, float heightPercentage, int light){
+    private static void renderQuads(Matrix4f matrix, IVertexBuilder vertexBuilder, TextureAtlasSprite sprite, float r, float g, float b, float alpha, float heightPercentage, int light){
         float height = MIN_Y + (MAX_Y - MIN_Y) * heightPercentage;
         float minU = sprite.getU(CORNERS * 16);
         float maxU = sprite.getU((1 - CORNERS) * 16);
@@ -162,13 +162,13 @@ public class MixingCauldronRenderer implements BlockEntityRenderer<MixingCauldro
     }
 
     // THIS IS WHAT I WAS LOOKING FOR FOREVER AHHHHH
-    private void renderItem(ItemStack stack, float partialTicks, PoseStack matrixStackIn, MultiBufferSource bufferIn,
+    private void renderItem(ItemStack stack, float partialTicks, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn,
                             int combinedLightIn) {
-        Minecraft.getInstance().getItemRenderer().renderStatic(stack, ItemTransforms.TransformType.FIXED, combinedLightIn,
+        Minecraft.getInstance().getItemRenderer().renderStatic(stack, ItemCameraTransforms.TransformType.FIXED, combinedLightIn,
                 OverlayTexture.NO_OVERLAY, matrixStackIn, bufferIn, 1);
     }
 
-    private void renderBlock(PoseStack matrixStackIn, MultiBufferSource bufferIn, int combinedLightIn, BlockState state) {
+    private void renderBlock(MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int combinedLightIn, BlockState state) {
         Minecraft.getInstance().getBlockRenderer().renderSingleBlock(state, matrixStackIn, bufferIn, combinedLightIn, OverlayTexture.NO_OVERLAY, EmptyModelData.INSTANCE);
 
     }

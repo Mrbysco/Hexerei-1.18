@@ -1,32 +1,32 @@
 package net.joefoxe.hexerei.tileentity;
 
 import net.joefoxe.hexerei.block.custom.Candle;
-import net.minecraft.core.particles.BlockParticleOption;
-import net.minecraft.nbt.Tag;
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.HorizontalDirectionalBlock;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.Connection;
-import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.particles.BlockParticleData;
+import net.minecraft.nbt.INBT;
+import net.minecraft.network.IPacket;
+import net.minecraft.client.network.play.IClientPlayNetHandler;
+import net.minecraft.util.SoundEvents;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.HorizontalBlock;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.network.NetworkManager;
+import net.minecraft.network.play.server.SUpdateTileEntityPacket;
+import net.minecraft.particles.ParticleTypes;
 import net.minecraft.client.renderer.texture.Tickable;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.core.Direction;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.core.BlockPos;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.tileentity.TileEntityType;
+import net.minecraft.util.Direction;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
 
 import javax.annotation.Nullable;
 import java.util.Random;
 import java.util.function.Function;
 
-public class CandleTile extends BlockEntity {
+public class CandleTile extends TileEntity {
 
 //    public final ItemStackHandler itemHandler = createHandler();
 //    private final LazyOptional<IItemHandler> handler = LazyOptional.of(() -> itemHandler);
@@ -68,7 +68,7 @@ public class CandleTile extends BlockEntity {
     public int candleMeltTimerMAX = 6000;
     private boolean startupFlag;
 
-    public CandleTile(BlockEntityType<?> tileEntityTypeIn, BlockPos blockPos, BlockState blockState) {
+    public CandleTile(TileEntityType<?> tileEntityTypeIn, BlockPos blockPos, BlockState blockState) {
         super(tileEntityTypeIn, blockPos, blockState);
         startupFlag = false;
         candleType1 = 0;
@@ -111,46 +111,46 @@ public class CandleTile extends BlockEntity {
 //    }
 
     @Override
-    public void load(CompoundTag nbt) {
+    public void load(CompoundNBT nbt) {
 
-        if (nbt.contains("candleType1",  Tag.TAG_INT))
+        if (nbt.contains("candleType1",  INBT.TAG_INT))
             candleType1 = nbt.getInt("candleType1");
-        if (nbt.contains("candleType2",  Tag.TAG_INT))
+        if (nbt.contains("candleType2",  INBT.TAG_INT))
             candleType2 = nbt.getInt("candleType2");
-        if (nbt.contains("candleType3",  Tag.TAG_INT))
+        if (nbt.contains("candleType3",  INBT.TAG_INT))
             candleType3 = nbt.getInt("candleType3");
-        if (nbt.contains("candleType4",  Tag.TAG_INT))
+        if (nbt.contains("candleType4",  INBT.TAG_INT))
             candleType4 = nbt.getInt("candleType4");
-        if (nbt.contains("candleHeight1",  Tag.TAG_INT))
+        if (nbt.contains("candleHeight1",  INBT.TAG_INT))
             candleHeight1 = nbt.getInt("candleHeight1");
-        if (nbt.contains("candleHeight2",  Tag.TAG_INT))
+        if (nbt.contains("candleHeight2",  INBT.TAG_INT))
             candleHeight2 = nbt.getInt("candleHeight2");
-        if (nbt.contains("candleHeight3",  Tag.TAG_INT))
+        if (nbt.contains("candleHeight3",  INBT.TAG_INT))
             candleHeight3 = nbt.getInt("candleHeight3");
-        if (nbt.contains("candleHeight4",  Tag.TAG_INT))
+        if (nbt.contains("candleHeight4",  INBT.TAG_INT))
             candleHeight4 = nbt.getInt("candleHeight4");
-        if (nbt.contains("candleLit1",  Tag.TAG_INT))
+        if (nbt.contains("candleLit1",  INBT.TAG_INT))
             candleLit1 = nbt.getInt("candleLit1");
-        if (nbt.contains("candleLit2",  Tag.TAG_INT))
+        if (nbt.contains("candleLit2",  INBT.TAG_INT))
             candleLit2 = nbt.getInt("candleLit2");
-        if (nbt.contains("candleLit3",  Tag.TAG_INT))
+        if (nbt.contains("candleLit3",  INBT.TAG_INT))
             candleLit3 = nbt.getInt("candleLit3");
-        if (nbt.contains("candleLit4",  Tag.TAG_INT))
+        if (nbt.contains("candleLit4",  INBT.TAG_INT))
             candleLit4 = nbt.getInt("candleLit4");
-        if (nbt.contains("candleMeltTimer1",  Tag.TAG_INT))
+        if (nbt.contains("candleMeltTimer1",  INBT.TAG_INT))
             candleMeltTimer1 = nbt.getInt("candleMeltTimer1");
-        if (nbt.contains("candleMeltTimer2",  Tag.TAG_INT))
+        if (nbt.contains("candleMeltTimer2",  INBT.TAG_INT))
             candleMeltTimer2 = nbt.getInt("candleMeltTimer2");
-        if (nbt.contains("candleMeltTimer3",  Tag.TAG_INT))
+        if (nbt.contains("candleMeltTimer3",  INBT.TAG_INT))
             candleMeltTimer3 = nbt.getInt("candleMeltTimer3");
-        if (nbt.contains("candleMeltTimer4",  Tag.TAG_INT))
+        if (nbt.contains("candleMeltTimer4",  INBT.TAG_INT))
             candleMeltTimer4 = nbt.getInt("candleMeltTimer4");
         super.load(nbt);
 
     }
 
     @Override
-    public void saveAdditional(CompoundTag compound) {
+    public void saveAdditional(CompoundNBT compound) {
         if(candleType1 != 0)
             compound.putInt("candleType1", candleType1);
         if(candleType2 != 0)
@@ -187,7 +187,7 @@ public class CandleTile extends BlockEntity {
     }
 
 //    @Override
-    public CompoundTag save(CompoundTag tag) {
+    public CompoundNBT save(CompoundNBT tag) {
         super.saveAdditional(tag);
 //        ContainerHelper.saveAllItems(tag, this.items);
 //        tag.put("inv", itemHandler.serializeNBT());
@@ -229,19 +229,19 @@ public class CandleTile extends BlockEntity {
 
 
     @Override
-    public CompoundTag getUpdateTag()
+    public CompoundNBT getUpdateTag()
     {
-        return this.save(new CompoundTag());
+        return this.save(new CompoundNBT());
     }
 
     @Nullable
-    public Packet<ClientGamePacketListener> getUpdatePacket() {
+    public IPacket<IClientPlayNetHandler> getUpdatePacket() {
 
-        return ClientboundBlockEntityDataPacket.create(this, (tag) -> this.getUpdateTag());
+        return SUpdateTileEntityPacket.create(this, (tag) -> this.getUpdateTag());
     }
 
     @Override
-    public void onDataPacket(final Connection net, final ClientboundBlockEntityDataPacket pkt)
+    public void onDataPacket(final NetworkManager net, final SUpdateTileEntityPacket pkt)
     {
         this.deserializeNBT(pkt.getTag());
     }
@@ -281,8 +281,8 @@ public class CandleTile extends BlockEntity {
 //    }
 
     @Override
-    public AABB getRenderBoundingBox() {
-        AABB aabb = super.getRenderBoundingBox().inflate(25, 25, 25);
+    public AxisAlignedBB getRenderBoundingBox() {
+        AxisAlignedBB aabb = super.getRenderBoundingBox().inflate(25, 25, 25);
         return aabb;
     }
 
@@ -359,47 +359,47 @@ public class CandleTile extends BlockEntity {
                 float zOffset = 0;
 
                 if (numberOfCandles == 4) {
-                    if (getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.NORTH) {
+                    if (getBlockState().getValue(HorizontalBlock.FACING) == Direction.NORTH) {
                         xOffset = 3f / 16f;
                         zOffset = 2f / 16f;
-                    }if (getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.SOUTH) {
+                    }if (getBlockState().getValue(HorizontalBlock.FACING) == Direction.SOUTH) {
                         xOffset = -3f / 16f;
                         zOffset = -2f / 16f;
-                    }if (getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.EAST) {
+                    }if (getBlockState().getValue(HorizontalBlock.FACING) == Direction.EAST) {
                         xOffset = -2f / 16f;
                         zOffset = 3f / 16f;
-                    }if (getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.WEST) {
+                    }if (getBlockState().getValue(HorizontalBlock.FACING) == Direction.WEST) {
                         xOffset = 2f / 16f;
                         zOffset = -3f / 16f;
                     }
                 }
                 else if (numberOfCandles == 3) {
-                    if (getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.NORTH) {
+                    if (getBlockState().getValue(HorizontalBlock.FACING) == Direction.NORTH) {
                         xOffset = -1f / 16f;
                         zOffset = 3f / 16f;
-                    }if (getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.SOUTH) {
+                    }if (getBlockState().getValue(HorizontalBlock.FACING) == Direction.SOUTH) {
                         xOffset = 1f / 16f;
                         zOffset = -3f / 16f;
-                    }if (getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.EAST) {
+                    }if (getBlockState().getValue(HorizontalBlock.FACING) == Direction.EAST) {
                         xOffset = -3f / 16f;
                         zOffset = -1f / 16f;
-                    }if (getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.WEST) {
+                    }if (getBlockState().getValue(HorizontalBlock.FACING) == Direction.WEST) {
                         xOffset = 3f / 16f;
                         zOffset = 1f / 16f;
                     }
                 }
                 else if (numberOfCandles == 2) {
 
-                    if (getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.NORTH) {
+                    if (getBlockState().getValue(HorizontalBlock.FACING) == Direction.NORTH) {
                         xOffset = 3f / 16f;
                         zOffset = -2f / 16f;
-                    }if (getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.SOUTH) {
+                    }if (getBlockState().getValue(HorizontalBlock.FACING) == Direction.SOUTH) {
                         xOffset = -3f / 16f;
                         zOffset = 2f / 16f;
-                    }if (getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.EAST) {
+                    }if (getBlockState().getValue(HorizontalBlock.FACING) == Direction.EAST) {
                         xOffset = 2f / 16f;
                         zOffset = 3f / 16f;
-                    }if (getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.WEST) {
+                    }if (getBlockState().getValue(HorizontalBlock.FACING) == Direction.WEST) {
                         xOffset = -2f / 16f;
                         zOffset = -3f / 16f;
                     }
@@ -443,15 +443,15 @@ public class CandleTile extends BlockEntity {
                         BlockState blockstate = this.getLevel().getBlockState(this.getBlockPos());
                         if (!level.isClientSide())
                             this.getLevel().setBlock(this.getBlockPos(), this.getBlockState().setValue(Candle.CANDLES, Integer.valueOf(Math.max(1, blockstate.getValue(Candle.CANDLES) - 1))),1);
-                        level.playSound((Player) null, worldPosition, SoundEvents.STONE_BREAK, SoundSource.BLOCKS, 1.0F, random.nextFloat() * 0.4F + 1.0F);
+                        level.playSound((PlayerEntity) null, worldPosition, SoundEvents.STONE_BREAK, SoundCategory.BLOCKS, 1.0F, random.nextFloat() * 0.4F + 1.0F);
 
                         if(!(candlePosX1 != 0 || candlePosY1 != 0 || candlePosZ1 != 0)) {
-                            level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, level.getBlockState(worldPosition)), worldPosition.getX() + 0.5f + xOffset, worldPosition.getY() + 0.2d, worldPosition.getZ() + 0.5f + zOffset, (random.nextDouble() - 0.5d) / 50d, (random.nextDouble() + 0.5d) * 0.045d, (random.nextDouble() - 0.5d) / 50d);
-                            level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, level.getBlockState(worldPosition)), worldPosition.getX() + 0.5f + xOffset, worldPosition.getY() + 0.2d, worldPosition.getZ() + 0.5f + zOffset, (random.nextDouble() - 0.5d) / 50d, (random.nextDouble() + 0.5d) * 0.045d, (random.nextDouble() - 0.5d) / 50d);
+                            level.addParticle(new BlockParticleData(ParticleTypes.BLOCK, level.getBlockState(worldPosition)), worldPosition.getX() + 0.5f + xOffset, worldPosition.getY() + 0.2d, worldPosition.getZ() + 0.5f + zOffset, (random.nextDouble() - 0.5d) / 50d, (random.nextDouble() + 0.5d) * 0.045d, (random.nextDouble() - 0.5d) / 50d);
+                            level.addParticle(new BlockParticleData(ParticleTypes.BLOCK, level.getBlockState(worldPosition)), worldPosition.getX() + 0.5f + xOffset, worldPosition.getY() + 0.2d, worldPosition.getZ() + 0.5f + zOffset, (random.nextDouble() - 0.5d) / 50d, (random.nextDouble() + 0.5d) * 0.045d, (random.nextDouble() - 0.5d) / 50d);
                         } else
                         {
-                            level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, level.getBlockState(worldPosition)), worldPosition.getX() + 0.5f + candlePosX1, worldPosition.getY() + 3f / 16f + (float) candleHeight1 / 16f + candlePosY1, worldPosition.getZ() + 0.5f + candlePosZ1, (random.nextDouble() - 0.5d) / 50d, (random.nextDouble() + 0.5d) * 0.045d, (random.nextDouble() - 0.5d) / 50d);
-                            level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, level.getBlockState(worldPosition)), worldPosition.getX() + 0.5f + candlePosX1, worldPosition.getY() + 3f / 16f + (float) candleHeight1 / 16f + candlePosY1, worldPosition.getZ() + 0.5f + candlePosZ1, (random.nextDouble() - 0.5d) / 50d, (random.nextDouble() + 0.5d) * 0.045d, (random.nextDouble() - 0.5d) / 50d);
+                            level.addParticle(new BlockParticleData(ParticleTypes.BLOCK, level.getBlockState(worldPosition)), worldPosition.getX() + 0.5f + candlePosX1, worldPosition.getY() + 3f / 16f + (float) candleHeight1 / 16f + candlePosY1, worldPosition.getZ() + 0.5f + candlePosZ1, (random.nextDouble() - 0.5d) / 50d, (random.nextDouble() + 0.5d) * 0.045d, (random.nextDouble() - 0.5d) / 50d);
+                            level.addParticle(new BlockParticleData(ParticleTypes.BLOCK, level.getBlockState(worldPosition)), worldPosition.getX() + 0.5f + candlePosX1, worldPosition.getY() + 3f / 16f + (float) candleHeight1 / 16f + candlePosY1, worldPosition.getZ() + 0.5f + candlePosZ1, (random.nextDouble() - 0.5d) / 50d, (random.nextDouble() + 0.5d) * 0.045d, (random.nextDouble() - 0.5d) / 50d);
                         }
 
                         //candleHeight1 = 0;
@@ -474,47 +474,47 @@ public class CandleTile extends BlockEntity {
 //                else if(tileEntityIn.numberOfCandles == 2)
 //                    matrixStackIn.translate(-3f/16f , 0f/16f, 3f/16f);
                 if (numberOfCandles == 4) {
-                    if (getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.NORTH) {
+                    if (getBlockState().getValue(HorizontalBlock.FACING) == Direction.NORTH) {
                         xOffset = -2f / 16f;
                         zOffset = -3f / 16f;
-                    }if (getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.SOUTH) {
+                    }if (getBlockState().getValue(HorizontalBlock.FACING) == Direction.SOUTH) {
                         xOffset = 2f / 16f;
                         zOffset = 3f / 16f;
-                    }if (getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.EAST) {
+                    }if (getBlockState().getValue(HorizontalBlock.FACING) == Direction.EAST) {
                         xOffset = 3f / 16f;
                         zOffset = -2f / 16f;
-                    }if (getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.WEST) {
+                    }if (getBlockState().getValue(HorizontalBlock.FACING) == Direction.WEST) {
                         xOffset = -3f / 16f;
                         zOffset = 2f / 16f;
                     }
                 }
                 else if (numberOfCandles == 3) {
-                    if (getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.NORTH) {
+                    if (getBlockState().getValue(HorizontalBlock.FACING) == Direction.NORTH) {
                         xOffset = 3f / 16f;
                         zOffset = 1f / 16f;
-                    }if (getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.SOUTH) {
+                    }if (getBlockState().getValue(HorizontalBlock.FACING) == Direction.SOUTH) {
                         xOffset = -3f / 16f;
                         zOffset = -1f / 16f;
-                    }if (getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.EAST) {
+                    }if (getBlockState().getValue(HorizontalBlock.FACING) == Direction.EAST) {
                         xOffset = -1f / 16f;
                         zOffset = 3f / 16f;
-                    }if (getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.WEST) {
+                    }if (getBlockState().getValue(HorizontalBlock.FACING) == Direction.WEST) {
                         xOffset = 1f / 16f;
                         zOffset = -3f / 16f;
                     }
                 }
                 else if (numberOfCandles == 2) {
 
-                    if (getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.NORTH) {
+                    if (getBlockState().getValue(HorizontalBlock.FACING) == Direction.NORTH) {
                         xOffset = -3f / 16f;
                         zOffset = 3f / 16f;
-                    }if (getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.SOUTH) {
+                    }if (getBlockState().getValue(HorizontalBlock.FACING) == Direction.SOUTH) {
                         xOffset = 3f / 16f;
                         zOffset = -3f / 16f;
-                    }if (getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.EAST) {
+                    }if (getBlockState().getValue(HorizontalBlock.FACING) == Direction.EAST) {
                         xOffset = -3f / 16f;
                         zOffset = -3f / 16f;
-                    }if (getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.WEST) {
+                    }if (getBlockState().getValue(HorizontalBlock.FACING) == Direction.WEST) {
                         xOffset = 3f / 16f;
                         zOffset = 3f / 16f;
                     }
@@ -558,14 +558,14 @@ public class CandleTile extends BlockEntity {
                         BlockState blockstate = this.getLevel().getBlockState(this.getBlockPos());
                         if (!level.isClientSide())
                             this.getLevel().setBlock(this.getBlockPos(), this.getBlockState().setValue(Candle.CANDLES, Integer.valueOf(Math.max(1, blockstate.getValue(Candle.CANDLES) - 1))), 1);
-                        level.playSound((Player) null, worldPosition, SoundEvents.STONE_BREAK, SoundSource.BLOCKS, 1.0F, random.nextFloat() * 0.4F + 1.0F);
+                        level.playSound((PlayerEntity) null, worldPosition, SoundEvents.STONE_BREAK, SoundCategory.BLOCKS, 1.0F, random.nextFloat() * 0.4F + 1.0F);
                         if(!(candlePosX2 != 0 || candlePosY2 != 0 || candlePosZ2 != 0)) {
-                            level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, level.getBlockState(worldPosition)), worldPosition.getX() + 0.5f + xOffset, worldPosition.getY() + 0.2d, worldPosition.getZ() + 0.5f + zOffset, (random.nextDouble() - 0.5d) / 50d, (random.nextDouble() + 0.5d) * 0.045d, (random.nextDouble() - 0.5d) / 50d);
-                            level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, level.getBlockState(worldPosition)), worldPosition.getX() + 0.5f + xOffset, worldPosition.getY() + 0.2d, worldPosition.getZ() + 0.5f + zOffset, (random.nextDouble() - 0.5d) / 50d, (random.nextDouble() + 0.5d) * 0.045d, (random.nextDouble() - 0.5d) / 50d);
+                            level.addParticle(new BlockParticleData(ParticleTypes.BLOCK, level.getBlockState(worldPosition)), worldPosition.getX() + 0.5f + xOffset, worldPosition.getY() + 0.2d, worldPosition.getZ() + 0.5f + zOffset, (random.nextDouble() - 0.5d) / 50d, (random.nextDouble() + 0.5d) * 0.045d, (random.nextDouble() - 0.5d) / 50d);
+                            level.addParticle(new BlockParticleData(ParticleTypes.BLOCK, level.getBlockState(worldPosition)), worldPosition.getX() + 0.5f + xOffset, worldPosition.getY() + 0.2d, worldPosition.getZ() + 0.5f + zOffset, (random.nextDouble() - 0.5d) / 50d, (random.nextDouble() + 0.5d) * 0.045d, (random.nextDouble() - 0.5d) / 50d);
                         } else
                         {
-                            level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, level.getBlockState(worldPosition)), worldPosition.getX() + 0.5f + candlePosX2, worldPosition.getY() + 3f / 16f + (float) candleHeight2 / 16f + candlePosY2, worldPosition.getZ() + 0.5f + candlePosZ2, (random.nextDouble() - 0.5d) / 50d, (random.nextDouble() + 0.5d) * 0.045d, (random.nextDouble() - 0.5d) / 50d);
-                            level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, level.getBlockState(worldPosition)), worldPosition.getX() + 0.5f + candlePosX2, worldPosition.getY() + 3f / 16f + (float) candleHeight2 / 16f + candlePosY2, worldPosition.getZ() + 0.5f + candlePosZ2, (random.nextDouble() - 0.5d) / 50d, (random.nextDouble() + 0.5d) * 0.045d, (random.nextDouble() - 0.5d) / 50d);
+                            level.addParticle(new BlockParticleData(ParticleTypes.BLOCK, level.getBlockState(worldPosition)), worldPosition.getX() + 0.5f + candlePosX2, worldPosition.getY() + 3f / 16f + (float) candleHeight2 / 16f + candlePosY2, worldPosition.getZ() + 0.5f + candlePosZ2, (random.nextDouble() - 0.5d) / 50d, (random.nextDouble() + 0.5d) * 0.045d, (random.nextDouble() - 0.5d) / 50d);
+                            level.addParticle(new BlockParticleData(ParticleTypes.BLOCK, level.getBlockState(worldPosition)), worldPosition.getX() + 0.5f + candlePosX2, worldPosition.getY() + 3f / 16f + (float) candleHeight2 / 16f + candlePosY2, worldPosition.getZ() + 0.5f + candlePosZ2, (random.nextDouble() - 0.5d) / 50d, (random.nextDouble() + 0.5d) * 0.045d, (random.nextDouble() - 0.5d) / 50d);
                         }
                         //candleHeight1 = 0;
                     }
@@ -581,31 +581,31 @@ public class CandleTile extends BlockEntity {
 
 
                 if (numberOfCandles == 4) {
-                    if (getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.NORTH) {
+                    if (getBlockState().getValue(HorizontalBlock.FACING) == Direction.NORTH) {
                         xOffset = -2f / 16f;
                         zOffset = 2f / 16f;
-                    }if (getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.SOUTH) {
+                    }if (getBlockState().getValue(HorizontalBlock.FACING) == Direction.SOUTH) {
                         xOffset = 2f / 16f;
                         zOffset = -2f / 16f;
-                    }if (getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.EAST) {
+                    }if (getBlockState().getValue(HorizontalBlock.FACING) == Direction.EAST) {
                         xOffset = 2f / 16f;
                         zOffset = 2f / 16f;
-                    }if (getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.WEST) {
+                    }if (getBlockState().getValue(HorizontalBlock.FACING) == Direction.WEST) {
                         xOffset = -2f / 16f;
                         zOffset = -2f / 16f;
                     }
                 }
                 else if (numberOfCandles == 3) {
-                    if (getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.NORTH) {
+                    if (getBlockState().getValue(HorizontalBlock.FACING) == Direction.NORTH) {
                         xOffset = -2f / 16f;
                         zOffset = -3f / 16f;
-                    }if (getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.SOUTH) {
+                    }if (getBlockState().getValue(HorizontalBlock.FACING) == Direction.SOUTH) {
                         xOffset = 2f / 16f;
                         zOffset = 3f / 16f;
-                    }if (getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.EAST) {
+                    }if (getBlockState().getValue(HorizontalBlock.FACING) == Direction.EAST) {
                         xOffset = 3f / 16f;
                         zOffset = -2f / 16f;
-                    }if (getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.WEST) {
+                    }if (getBlockState().getValue(HorizontalBlock.FACING) == Direction.WEST) {
                         xOffset = -3f / 16f;
                         zOffset = 2f / 16f;
                     }
@@ -645,14 +645,14 @@ public class CandleTile extends BlockEntity {
                         BlockState blockstate = this.getLevel().getBlockState(this.getBlockPos());
                         if (!level.isClientSide())
                             this.getLevel().setBlock(this.getBlockPos(), this.getBlockState().setValue(Candle.CANDLES, Integer.valueOf(Math.max(1, blockstate.getValue(Candle.CANDLES) - 1))), 1);
-                        level.playSound((Player) null, worldPosition, SoundEvents.STONE_BREAK, SoundSource.BLOCKS, 1.0F, random.nextFloat() * 0.4F + 1.0F);
+                        level.playSound((PlayerEntity) null, worldPosition, SoundEvents.STONE_BREAK, SoundCategory.BLOCKS, 1.0F, random.nextFloat() * 0.4F + 1.0F);
                         if(!(candlePosX3 != 0 || candlePosY3 != 0 || candlePosZ3 != 0)) {
-                            level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, level.getBlockState(worldPosition)), worldPosition.getX() + 0.5f + xOffset, worldPosition.getY() + 0.2d, worldPosition.getZ() + 0.5f + zOffset, (random.nextDouble() - 0.5d) / 50d, (random.nextDouble() + 0.5d) * 0.045d, (random.nextDouble() - 0.5d) / 50d);
-                            level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, level.getBlockState(worldPosition)), worldPosition.getX() + 0.5f + xOffset, worldPosition.getY() + 0.2d, worldPosition.getZ() + 0.5f + zOffset, (random.nextDouble() - 0.5d) / 50d, (random.nextDouble() + 0.5d) * 0.045d, (random.nextDouble() - 0.5d) / 50d);
+                            level.addParticle(new BlockParticleData(ParticleTypes.BLOCK, level.getBlockState(worldPosition)), worldPosition.getX() + 0.5f + xOffset, worldPosition.getY() + 0.2d, worldPosition.getZ() + 0.5f + zOffset, (random.nextDouble() - 0.5d) / 50d, (random.nextDouble() + 0.5d) * 0.045d, (random.nextDouble() - 0.5d) / 50d);
+                            level.addParticle(new BlockParticleData(ParticleTypes.BLOCK, level.getBlockState(worldPosition)), worldPosition.getX() + 0.5f + xOffset, worldPosition.getY() + 0.2d, worldPosition.getZ() + 0.5f + zOffset, (random.nextDouble() - 0.5d) / 50d, (random.nextDouble() + 0.5d) * 0.045d, (random.nextDouble() - 0.5d) / 50d);
                         } else
                         {
-                            level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, level.getBlockState(worldPosition)), worldPosition.getX() + 0.5f + candlePosX3, worldPosition.getY() + 3f / 16f + (float) candleHeight3 / 16f + candlePosY3, worldPosition.getZ() + 0.5f + candlePosZ3, (random.nextDouble() - 0.5d) / 50d, (random.nextDouble() + 0.5d) * 0.045d, (random.nextDouble() - 0.5d) / 50d);
-                            level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, level.getBlockState(worldPosition)), worldPosition.getX() + 0.5f + candlePosX3, worldPosition.getY() + 3f / 16f + (float) candleHeight3 / 16f + candlePosY3, worldPosition.getZ() + 0.5f + candlePosZ3, (random.nextDouble() - 0.5d) / 50d, (random.nextDouble() + 0.5d) * 0.045d, (random.nextDouble() - 0.5d) / 50d);
+                            level.addParticle(new BlockParticleData(ParticleTypes.BLOCK, level.getBlockState(worldPosition)), worldPosition.getX() + 0.5f + candlePosX3, worldPosition.getY() + 3f / 16f + (float) candleHeight3 / 16f + candlePosY3, worldPosition.getZ() + 0.5f + candlePosZ3, (random.nextDouble() - 0.5d) / 50d, (random.nextDouble() + 0.5d) * 0.045d, (random.nextDouble() - 0.5d) / 50d);
+                            level.addParticle(new BlockParticleData(ParticleTypes.BLOCK, level.getBlockState(worldPosition)), worldPosition.getX() + 0.5f + candlePosX3, worldPosition.getY() + 3f / 16f + (float) candleHeight3 / 16f + candlePosY3, worldPosition.getZ() + 0.5f + candlePosZ3, (random.nextDouble() - 0.5d) / 50d, (random.nextDouble() + 0.5d) * 0.045d, (random.nextDouble() - 0.5d) / 50d);
                         }
                         //candleHeight1 = 0;
                     }
@@ -668,16 +668,16 @@ public class CandleTile extends BlockEntity {
 
 
                 if (numberOfCandles == 4) {
-                    if (getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.NORTH) {
+                    if (getBlockState().getValue(HorizontalBlock.FACING) == Direction.NORTH) {
                         xOffset = 3f / 16f;
                         zOffset = -2f / 16f;
-                    }if (getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.SOUTH) {
+                    }if (getBlockState().getValue(HorizontalBlock.FACING) == Direction.SOUTH) {
                         xOffset = -3f / 16f;
                         zOffset = 2f / 16f;
-                    }if (getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.EAST) {
+                    }if (getBlockState().getValue(HorizontalBlock.FACING) == Direction.EAST) {
                         xOffset = -2f / 16f;
                         zOffset = 3f / 16f;
-                    }if (getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.WEST) {
+                    }if (getBlockState().getValue(HorizontalBlock.FACING) == Direction.WEST) {
                         xOffset = 2f / 16f;
                         zOffset = -3f / 16f;
                     }
@@ -717,14 +717,14 @@ public class CandleTile extends BlockEntity {
                         BlockState blockstate = this.getLevel().getBlockState(this.getBlockPos());
                         if (!level.isClientSide())
                             this.getLevel().setBlock(this.getBlockPos(), this.getBlockState().setValue(Candle.CANDLES, Integer.valueOf(Math.max(1, blockstate.getValue(Candle.CANDLES) - 1))), 1);
-                        level.playSound((Player) null, worldPosition, SoundEvents.STONE_BREAK, SoundSource.BLOCKS, 1.0F, random.nextFloat() * 0.4F + 1.0F);
+                        level.playSound((PlayerEntity) null, worldPosition, SoundEvents.STONE_BREAK, SoundCategory.BLOCKS, 1.0F, random.nextFloat() * 0.4F + 1.0F);
                         if(!(candlePosX4 != 0 || candlePosY4 != 0 || candlePosZ4 != 0)) {
-                            level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, level.getBlockState(worldPosition)), worldPosition.getX() + 0.5f + xOffset, worldPosition.getY() + 0.2d, worldPosition.getZ() + 0.5f + zOffset, (random.nextDouble() - 0.5d) / 50d, (random.nextDouble() + 0.5d) * 0.045d, (random.nextDouble() - 0.5d) / 50d);
-                            level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, level.getBlockState(worldPosition)), worldPosition.getX() + 0.5f + xOffset, worldPosition.getY() + 0.2d, worldPosition.getZ() + 0.5f + zOffset, (random.nextDouble() - 0.5d) / 50d, (random.nextDouble() + 0.5d) * 0.045d, (random.nextDouble() - 0.5d) / 50d);
+                            level.addParticle(new BlockParticleData(ParticleTypes.BLOCK, level.getBlockState(worldPosition)), worldPosition.getX() + 0.5f + xOffset, worldPosition.getY() + 0.2d, worldPosition.getZ() + 0.5f + zOffset, (random.nextDouble() - 0.5d) / 50d, (random.nextDouble() + 0.5d) * 0.045d, (random.nextDouble() - 0.5d) / 50d);
+                            level.addParticle(new BlockParticleData(ParticleTypes.BLOCK, level.getBlockState(worldPosition)), worldPosition.getX() + 0.5f + xOffset, worldPosition.getY() + 0.2d, worldPosition.getZ() + 0.5f + zOffset, (random.nextDouble() - 0.5d) / 50d, (random.nextDouble() + 0.5d) * 0.045d, (random.nextDouble() - 0.5d) / 50d);
                         } else
                         {
-                            level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, level.getBlockState(worldPosition)), worldPosition.getX() + 0.5f + candlePosX4, worldPosition.getY() + 3f / 16f + (float) candleHeight4 / 16f + candlePosY4, worldPosition.getZ() + 0.5f + candlePosZ4, (random.nextDouble() - 0.5d) / 50d, (random.nextDouble() + 0.5d) * 0.045d, (random.nextDouble() - 0.5d) / 50d);
-                            level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, level.getBlockState(worldPosition)), worldPosition.getX() + 0.5f + candlePosX4, worldPosition.getY() + 3f / 16f + (float) candleHeight4 / 16f + candlePosY4, worldPosition.getZ() + 0.5f + candlePosZ4, (random.nextDouble() - 0.5d) / 50d, (random.nextDouble() + 0.5d) * 0.045d, (random.nextDouble() - 0.5d) / 50d);
+                            level.addParticle(new BlockParticleData(ParticleTypes.BLOCK, level.getBlockState(worldPosition)), worldPosition.getX() + 0.5f + candlePosX4, worldPosition.getY() + 3f / 16f + (float) candleHeight4 / 16f + candlePosY4, worldPosition.getZ() + 0.5f + candlePosZ4, (random.nextDouble() - 0.5d) / 50d, (random.nextDouble() + 0.5d) * 0.045d, (random.nextDouble() - 0.5d) / 50d);
+                            level.addParticle(new BlockParticleData(ParticleTypes.BLOCK, level.getBlockState(worldPosition)), worldPosition.getX() + 0.5f + candlePosX4, worldPosition.getY() + 3f / 16f + (float) candleHeight4 / 16f + candlePosY4, worldPosition.getZ() + 0.5f + candlePosZ4, (random.nextDouble() - 0.5d) / 50d, (random.nextDouble() + 0.5d) * 0.045d, (random.nextDouble() - 0.5d) / 50d);
                         }
                         //candleHeight1 = 0;
                     }

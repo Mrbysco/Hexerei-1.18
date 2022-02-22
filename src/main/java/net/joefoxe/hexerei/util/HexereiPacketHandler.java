@@ -2,7 +2,7 @@ package net.joefoxe.hexerei.util;
 
 import net.joefoxe.hexerei.Hexerei;
 import net.joefoxe.hexerei.util.message.*;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.simple.SimpleChannel;
 

@@ -8,36 +8,36 @@ import net.joefoxe.hexerei.tileentity.renderer.MixingCauldronRenderer;
 import net.joefoxe.hexerei.util.HexereiPacketHandler;
 import net.joefoxe.hexerei.util.message.EmitParticlesPacket;
 import net.joefoxe.hexerei.util.message.TESyncPacket;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.core.NonNullList;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
-import net.minecraft.network.Connection;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.Direction;
+import net.minecraft.util.NonNullList;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.INBT;
+import net.minecraft.network.NetworkManager;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.network.IPacket;
+import net.minecraft.client.network.play.IClientPlayNetHandler;
+import net.minecraft.network.play.server.SUpdateTileEntityPacket;
+import net.minecraft.world.server.ServerWorld;
+import net.minecraft.util.SoundEvents;
+import net.minecraft.util.SoundCategory;
 import net.minecraft.world.*;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.Block;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.inventory.container.Container;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.tileentity.TileEntityType;
+import net.minecraft.tileentity.LockableLootTileEntity;
+import net.minecraft.block.BlockState;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fluids.FluidStack;
@@ -51,7 +51,14 @@ import javax.annotation.Nullable;
 import java.util.Optional;
 import java.util.Random;
 
-public class DryingRackTile extends RandomizableContainerBlockEntity implements WorldlyContainer, Clearable, MenuProvider {
+import net.minecraft.inventory.IClearable;
+import net.minecraft.inventory.ISidedInventory;
+import net.minecraft.inventory.Inventory;
+import net.minecraft.inventory.ItemStackHelper;
+import net.minecraft.inventory.container.INamedContainerProvider;
+import net.minecraft.util.Hand;
+
+public class DryingRackTile extends LockableLootTileEntity implements ISidedInventory, IClearable, INamedContainerProvider {
 
 //    public final ItemStackHandler itemHandler = createHandler();
 //    private final LazyOptional<IItemHandler> handler = LazyOptional.of(() -> itemHandler);
@@ -63,7 +70,7 @@ public class DryingRackTile extends RandomizableContainerBlockEntity implements 
     public int[] dryingTime = {200, 200, 200};
     public ItemStack[] output = {ItemStack.EMPTY, ItemStack.EMPTY, ItemStack.EMPTY};
 
-    public DryingRackTile(BlockEntityType<?> tileEntityTypeIn, BlockPos blockPos, BlockState blockState) {
+    public DryingRackTile(TileEntityType<?> tileEntityTypeIn, BlockPos blockPos, BlockState blockState) {
         super(tileEntityTypeIn, blockPos, blockState);
     }
 
@@ -90,7 +97,7 @@ public class DryingRackTile extends RandomizableContainerBlockEntity implements 
     public void sync() {
         setChanged();
         if (!level.isClientSide)
-            HexereiPacketHandler.instance.send(PacketDistributor.TRACKING_CHUNK.with(() -> level.getChunkAt(worldPosition)), new TESyncPacket(worldPosition, save(new CompoundTag())));
+            HexereiPacketHandler.instance.send(PacketDistributor.TRACKING_CHUNK.with(() -> level.getChunkAt(worldPosition)), new TESyncPacket(worldPosition, save(new CompoundNBT())));
 
         if(this.level != null)
             this.level.sendBlockUpdated(this.worldPosition, this.level.getBlockState(this.worldPosition), this.level.getBlockState(this.worldPosition),
@@ -139,17 +146,17 @@ public class DryingRackTile extends RandomizableContainerBlockEntity implements 
 
 
     @Override
-    public void deserializeNBT(CompoundTag nbt) {
+    public void deserializeNBT(CompoundNBT nbt) {
         super.deserializeNBT(nbt);
     }
 
     @Override
-    public CompoundTag serializeNBT() {
+    public CompoundNBT serializeNBT() {
         return super.serializeNBT();
     }
 
     @Override
-    public void handleUpdateTag(CompoundTag tag) {
+    public void handleUpdateTag(CompoundNBT tag) {
         super.handleUpdateTag(tag);
     }
 
@@ -174,7 +181,7 @@ public class DryingRackTile extends RandomizableContainerBlockEntity implements 
                 dryingTime[1] = dryingTimeMax[1];
             if(index == 2)
                 dryingTime[2] = dryingTimeMax[2];
-            level.playSound((Player) null, worldPosition, SoundEvents.ITEM_PICKUP, SoundSource.BLOCKS, 1.0F, this.level.random.nextFloat() * 0.4F + 1.0F);
+            level.playSound((PlayerEntity) null, worldPosition, SoundEvents.ITEM_PICKUP, SoundCategory.BLOCKS, 1.0F, this.level.random.nextFloat() * 0.4F + 1.0F);
         }
 
         sync();
@@ -182,8 +189,8 @@ public class DryingRackTile extends RandomizableContainerBlockEntity implements 
 
     @Override
     public ItemStack removeItem(int index, int p_59614_) {
-        this.unpackLootTable((Player)null);
-        ItemStack itemstack = ContainerHelper.removeItem(this.getItems(), index, p_59614_);
+        this.unpackLootTable((PlayerEntity)null);
+        ItemStack itemstack = ItemStackHelper.removeItem(this.getItems(), index, p_59614_);
         if (!itemstack.isEmpty()) {
             this.setChanged();
             if(index == 0)
@@ -206,7 +213,7 @@ public class DryingRackTile extends RandomizableContainerBlockEntity implements 
     }
 
     public void craft(){
-        SimpleContainer inv = new SimpleContainer(3);
+        Inventory inv = new Inventory(3);
         for (int i = 0; i < 3; i++) {
             inv.setItem(i, this.items.get(i));
         }
@@ -214,7 +221,7 @@ public class DryingRackTile extends RandomizableContainerBlockEntity implements 
         Optional<DryingRackRecipe> recipe = level.getRecipeManager()
                 .getRecipeFor(ModRecipeTypes.DRYING_RACK_RECIPE, inv, level);
 
-        BlockEntity blockEntity = level.getBlockEntity(this.worldPosition);
+        TileEntity blockEntity = level.getBlockEntity(this.worldPosition);
         if(blockEntity instanceof DryingRackTile) {
             recipe.ifPresent(iRecipe -> {
                 ItemStack recipeOutput = iRecipe.getResultItem();
@@ -288,50 +295,50 @@ public class DryingRackTile extends RandomizableContainerBlockEntity implements 
 
 
     @Override
-    public void load(CompoundTag nbt) {
+    public void load(CompoundNBT nbt) {
 //        itemHandler.deserializeNBT(nbt.getCompound("inv"));
         this.items = NonNullList.withSize(this.getContainerSize(), ItemStack.EMPTY);
         if (!this.tryLoadLootTable(nbt)) {
-            ContainerHelper.loadAllItems(nbt, this.items);
+            ItemStackHelper.loadAllItems(nbt, this.items);
         }
 //        super.read(state, nbt);
 //        if (nbt.contains("CustomName", 8))
 //            this.customName = Component.Serializer.fromJson(nbt.getString("CustomName"));
 
-        if (nbt.contains("dryingTime[0]",  Tag.TAG_INT))
+        if (nbt.contains("dryingTime[0]",  INBT.TAG_INT))
             dryingTime[0] = nbt.getInt("dryingTime[0]");
-        if (nbt.contains("dryingTime[1]",  Tag.TAG_INT))
+        if (nbt.contains("dryingTime[1]",  INBT.TAG_INT))
             dryingTime[1] = nbt.getInt("dryingTime[1]");
-        if (nbt.contains("dryingTime[2]",  Tag.TAG_INT))
+        if (nbt.contains("dryingTime[2]",  INBT.TAG_INT))
             dryingTime[2] = nbt.getInt("dryingTime[2]");
-        if (nbt.contains("crafting[0]",  Tag.TAG_INT))
+        if (nbt.contains("crafting[0]",  INBT.TAG_INT))
             crafting[0] = nbt.getInt("crafting[0]") == 1;
-        if (nbt.contains("crafting[1]",  Tag.TAG_INT))
+        if (nbt.contains("crafting[1]",  INBT.TAG_INT))
             crafting[1] = nbt.getInt("crafting[1]") == 1;
-        if (nbt.contains("crafting[2]",  Tag.TAG_INT))
+        if (nbt.contains("crafting[2]",  INBT.TAG_INT))
             crafting[2] = nbt.getInt("crafting[2]") == 1;
-        if (nbt.contains("crafted[0]",  Tag.TAG_INT))
+        if (nbt.contains("crafted[0]",  INBT.TAG_INT))
             crafted[0] = nbt.getInt("crafted[0]") == 1;
-        if (nbt.contains("crafted[1]",  Tag.TAG_INT))
+        if (nbt.contains("crafted[1]",  INBT.TAG_INT))
             crafted[1] = nbt.getInt("crafted[1]") == 1;
-        if (nbt.contains("crafted[2]",  Tag.TAG_INT))
+        if (nbt.contains("crafted[2]",  INBT.TAG_INT))
             crafted[2] = nbt.getInt("crafted[2]") == 1;
         super.load(nbt);
 
     }
 
     @Override
-    protected Component getDefaultName() {
-        return new TranslatableComponent("container." + Hexerei.MOD_ID + ".dipper");
+    protected ITextComponent getDefaultName() {
+        return new TranslationTextComponent("container." + Hexerei.MOD_ID + ".dipper");
     }
 
     @Override
-    protected AbstractContainerMenu createMenu(int p_58627_, Inventory p_58628_) {
+    protected Container createMenu(int p_58627_, PlayerInventory p_58628_) {
         return null;
     }
 
-    public void saveAdditional(CompoundTag compound) {
-        ContainerHelper.saveAllItems(compound, this.items);
+    public void saveAdditional(CompoundNBT compound) {
+        ItemStackHelper.saveAllItems(compound, this.items);
 
         compound.putInt("dryingTime[0]", dryingTime[0]);
         compound.putInt("dryingTime[1]", dryingTime[1]);
@@ -348,12 +355,12 @@ public class DryingRackTile extends RandomizableContainerBlockEntity implements 
 
 
 //    @Override
-    public CompoundTag save(CompoundTag compound) {
+    public CompoundNBT save(CompoundNBT compound) {
         super.saveAdditional(compound);
 //        compound.put("inv", itemHandler.serializeNBT());
 //        if (this.customName != null)
 //            compound.putString("CustomName", Component.Serializer.toJson(this.customName));
-        ContainerHelper.saveAllItems(compound, this.items);
+        ItemStackHelper.saveAllItems(compound, this.items);
 
         compound.putInt("dryingTime[0]", dryingTime[0]);
         compound.putInt("dryingTime[1]", dryingTime[1]);
@@ -371,19 +378,19 @@ public class DryingRackTile extends RandomizableContainerBlockEntity implements 
     }
 
     @Override
-    public CompoundTag getUpdateTag()
+    public CompoundNBT getUpdateTag()
     {
-        return this.save(new CompoundTag());
+        return this.save(new CompoundNBT());
     }
 
     @Nullable
-    public Packet<ClientGamePacketListener> getUpdatePacket() {
+    public IPacket<IClientPlayNetHandler> getUpdatePacket() {
 
-        return ClientboundBlockEntityDataPacket.create(this, (tag) -> this.getUpdateTag());
+        return SUpdateTileEntityPacket.create(this, (tag) -> this.getUpdateTag());
     }
 
     @Override
-    public void onDataPacket(final Connection net, final ClientboundBlockEntityDataPacket pkt)
+    public void onDataPacket(final NetworkManager net, final SUpdateTileEntityPacket pkt)
     {
         this.deserializeNBT(pkt.getTag());
     }
@@ -410,8 +417,8 @@ public class DryingRackTile extends RandomizableContainerBlockEntity implements 
 //    }
 
     @Override
-    public AABB getRenderBoundingBox() {
-        AABB aabb = super.getRenderBoundingBox().inflate(5, 5, 5);
+    public AxisAlignedBB getRenderBoundingBox() {
+        AxisAlignedBB aabb = super.getRenderBoundingBox().inflate(5, 5, 5);
         return aabb;
     }
 
@@ -465,7 +472,7 @@ public class DryingRackTile extends RandomizableContainerBlockEntity implements 
         return input;
     }
 
-    public float getAngle(Vec3 pos) {
+    public float getAngle(Vector3d pos) {
         float angle = (float) Math.toDegrees(Math.atan2(pos.z() - this.getBlockPos().getZ() - 0.5f, pos.x() - this.getBlockPos().getX() - 0.5f));
 
         if(angle < 0){
@@ -479,9 +486,9 @@ public class DryingRackTile extends RandomizableContainerBlockEntity implements 
         return (float)(0.01f + 0.10f * (Math.abs(pos - posTo) / 3f));
     }
 
-    public Vec3 rotateAroundVec(Vec3 vector3dCenter,float rotation,Vec3 vector3d)
+    public Vector3d rotateAroundVec(Vector3d vector3dCenter,float rotation,Vector3d vector3d)
     {
-        Vec3 newVec = vector3d.subtract(vector3dCenter);
+        Vector3d newVec = vector3d.subtract(vector3dCenter);
         newVec = newVec.yRot(rotation/180f*(float)Math.PI);
         newVec = newVec.add(vector3dCenter);
 
@@ -500,7 +507,7 @@ public class DryingRackTile extends RandomizableContainerBlockEntity implements 
                 stack.shrink(3);
 
                 for(int i = 0; i < 3; i++)
-                level.playSound((Player) null, worldPosition, SoundEvents.ITEM_PICKUP, SoundSource.BLOCKS, 1.0F, rand.nextFloat() * 0.4F + 1.0F);
+                level.playSound((PlayerEntity) null, worldPosition, SoundEvents.ITEM_PICKUP, SoundCategory.BLOCKS, 1.0F, rand.nextFloat() * 0.4F + 1.0F);
             }
             else
             {
@@ -509,7 +516,7 @@ public class DryingRackTile extends RandomizableContainerBlockEntity implements 
                 stack.shrink(stack.getCount());
 
                 for(int i = 0; i < stack1.getCount(); i++)
-                    level.playSound((Player) null, worldPosition, SoundEvents.ITEM_PICKUP, SoundSource.BLOCKS, 1.0F, rand.nextFloat() * 0.4F + 1.0F);
+                    level.playSound((PlayerEntity) null, worldPosition, SoundEvents.ITEM_PICKUP, SoundCategory.BLOCKS, 1.0F, rand.nextFloat() * 0.4F + 1.0F);
             }
             return 1;
         }
@@ -528,7 +535,7 @@ public class DryingRackTile extends RandomizableContainerBlockEntity implements 
             stack.shrink(3 - count);
 
             for(int i = 0; i < 3 - count; i++)
-                level.playSound((Player) null, worldPosition, SoundEvents.ITEM_PICKUP, SoundSource.BLOCKS, 1.0F, rand.nextFloat() * 0.4F + 1.0F);
+                level.playSound((PlayerEntity) null, worldPosition, SoundEvents.ITEM_PICKUP, SoundCategory.BLOCKS, 1.0F, rand.nextFloat() * 0.4F + 1.0F);
         }
         else
         {
@@ -538,48 +545,48 @@ public class DryingRackTile extends RandomizableContainerBlockEntity implements 
             stack.shrink(stack.getCount());
 
             for(int i = 0; i < stack1.getCount(); i++)
-                level.playSound((Player) null, worldPosition, SoundEvents.ITEM_PICKUP, SoundSource.BLOCKS, 1.0F, rand.nextFloat() * 0.4F + 1.0F);
+                level.playSound((PlayerEntity) null, worldPosition, SoundEvents.ITEM_PICKUP, SoundCategory.BLOCKS, 1.0F, rand.nextFloat() * 0.4F + 1.0F);
         }
 
 
         return 1;
     }
 
-    public int interactDryingRack (Player player, BlockHitResult hit) {
+    public int interactDryingRack (PlayerEntity player, BlockRayTraceResult hit) {
         if(!player.isShiftKeyDown()) {
-            if (!player.getItemInHand(InteractionHand.MAIN_HAND).isEmpty()) {
+            if (!player.getItemInHand(Hand.MAIN_HAND).isEmpty()) {
                 Random rand = new Random();
-                if (this.items.get(0).isEmpty() || (player.getItemInHand(InteractionHand.MAIN_HAND) == this.items.get(0))) {
-                    putItems(0, player.getItemInHand(InteractionHand.MAIN_HAND));
+                if (this.items.get(0).isEmpty() || (player.getItemInHand(Hand.MAIN_HAND) == this.items.get(0))) {
+                    putItems(0, player.getItemInHand(Hand.MAIN_HAND));
                     dryingTime[0] = dryingTimeMax[0];
                     crafted[0] = false;
 
                     return 1;
-                }else if(ItemStack.isSameItemSameTags(player.getItemInHand(InteractionHand.MAIN_HAND), this.items.get(0)) && this.items.get(0).getCount() < getMaxStackSize()){
-                    putItems(0, player.getItemInHand(InteractionHand.MAIN_HAND));
-                } else if (this.items.get(1).isEmpty() || (player.getItemInHand(InteractionHand.MAIN_HAND) == this.items.get(1) && this.items.get(1).getCount() < getMaxStackSize())) {
-                    putItems(1, player.getItemInHand(InteractionHand.MAIN_HAND));
+                }else if(ItemStack.isSameItemSameTags(player.getItemInHand(Hand.MAIN_HAND), this.items.get(0)) && this.items.get(0).getCount() < getMaxStackSize()){
+                    putItems(0, player.getItemInHand(Hand.MAIN_HAND));
+                } else if (this.items.get(1).isEmpty() || (player.getItemInHand(Hand.MAIN_HAND) == this.items.get(1) && this.items.get(1).getCount() < getMaxStackSize())) {
+                    putItems(1, player.getItemInHand(Hand.MAIN_HAND));
                     dryingTime[1] = dryingTimeMax[1];
                     crafted[1] = false;
 
                     return 1;
-                }else if(ItemStack.isSameItemSameTags(player.getItemInHand(InteractionHand.MAIN_HAND), this.items.get(1)) && this.items.get(1).getCount() < getMaxStackSize()){
-                    putItems(1, player.getItemInHand(InteractionHand.MAIN_HAND));
-                } else if (this.items.get(2).isEmpty() || (player.getItemInHand(InteractionHand.MAIN_HAND) == this.items.get(2) && this.items.get(2).getCount() < getMaxStackSize())) {
-                    putItems(2, player.getItemInHand(InteractionHand.MAIN_HAND));
+                }else if(ItemStack.isSameItemSameTags(player.getItemInHand(Hand.MAIN_HAND), this.items.get(1)) && this.items.get(1).getCount() < getMaxStackSize()){
+                    putItems(1, player.getItemInHand(Hand.MAIN_HAND));
+                } else if (this.items.get(2).isEmpty() || (player.getItemInHand(Hand.MAIN_HAND) == this.items.get(2) && this.items.get(2).getCount() < getMaxStackSize())) {
+                    putItems(2, player.getItemInHand(Hand.MAIN_HAND));
                     dryingTime[2] = dryingTimeMax[2];
                     crafted[2] = false;
 
                     return 1;
-                }else if(ItemStack.isSameItemSameTags(player.getItemInHand(InteractionHand.MAIN_HAND), this.items.get(2)) && this.items.get(2).getCount() < getMaxStackSize()){
-                    putItems(2, player.getItemInHand(InteractionHand.MAIN_HAND));
+                }else if(ItemStack.isSameItemSameTags(player.getItemInHand(Hand.MAIN_HAND), this.items.get(2)) && this.items.get(2).getCount() < getMaxStackSize()){
+                    putItems(2, player.getItemInHand(Hand.MAIN_HAND));
                 }
             }
             if(crafted[0]){
                 crafted[0] = false;
                 dryingTime[0] = dryingTimeMax[0];
                 player.inventory.placeItemBackInInventory(this.items.get(0).copy());
-                level.playSound((Player) null, worldPosition, SoundEvents.ITEM_FRAME_REMOVE_ITEM, SoundSource.BLOCKS, 1.0F, level.random.nextFloat() * 0.4F + 1.0F);
+                level.playSound((PlayerEntity) null, worldPosition, SoundEvents.ITEM_FRAME_REMOVE_ITEM, SoundCategory.BLOCKS, 1.0F, level.random.nextFloat() * 0.4F + 1.0F);
                 this.items.set(0, ItemStack.EMPTY);
                 output[0] = ItemStack.EMPTY;
             }
@@ -587,7 +594,7 @@ public class DryingRackTile extends RandomizableContainerBlockEntity implements 
                 crafted[1] = false;
                 dryingTime[1] = dryingTimeMax[1];
                 player.inventory.placeItemBackInInventory(this.items.get(1).copy());
-                level.playSound((Player) null, worldPosition, SoundEvents.ITEM_FRAME_REMOVE_ITEM, SoundSource.BLOCKS, 1.0F, level.random.nextFloat() * 0.4F + 1.0F);
+                level.playSound((PlayerEntity) null, worldPosition, SoundEvents.ITEM_FRAME_REMOVE_ITEM, SoundCategory.BLOCKS, 1.0F, level.random.nextFloat() * 0.4F + 1.0F);
                 this.items.set(1, ItemStack.EMPTY);
                 output[1] = ItemStack.EMPTY;
             }
@@ -595,7 +602,7 @@ public class DryingRackTile extends RandomizableContainerBlockEntity implements 
                 crafted[2] = false;
                 dryingTime[2] = dryingTimeMax[2];
                 player.inventory.placeItemBackInInventory(this.items.get(2).copy());
-                level.playSound((Player) null, worldPosition, SoundEvents.ITEM_FRAME_REMOVE_ITEM, SoundSource.BLOCKS, 1.0F, level.random.nextFloat() * 0.4F + 1.0F);
+                level.playSound((PlayerEntity) null, worldPosition, SoundEvents.ITEM_FRAME_REMOVE_ITEM, SoundCategory.BLOCKS, 1.0F, level.random.nextFloat() * 0.4F + 1.0F);
                 this.items.set(2, ItemStack.EMPTY);
                 output[2] = ItemStack.EMPTY;
             }
@@ -607,7 +614,7 @@ public class DryingRackTile extends RandomizableContainerBlockEntity implements 
                 crafted[0] = false;
                 dryingTime[0] = dryingTimeMax[0];
                 player.inventory.placeItemBackInInventory(this.items.get(0).copy());
-                level.playSound((Player) null, worldPosition, SoundEvents.ITEM_FRAME_REMOVE_ITEM, SoundSource.BLOCKS, 1.0F, level.random.nextFloat() * 0.4F + 1.0F);
+                level.playSound((PlayerEntity) null, worldPosition, SoundEvents.ITEM_FRAME_REMOVE_ITEM, SoundCategory.BLOCKS, 1.0F, level.random.nextFloat() * 0.4F + 1.0F);
                 this.items.set(0, ItemStack.EMPTY);
                 output[0] = ItemStack.EMPTY;
             }
@@ -616,7 +623,7 @@ public class DryingRackTile extends RandomizableContainerBlockEntity implements 
                 crafted[1] = false;
                 dryingTime[1] = dryingTimeMax[1];
                 player.inventory.placeItemBackInInventory(this.items.get(1).copy());
-                level.playSound((Player) null, worldPosition, SoundEvents.ITEM_FRAME_REMOVE_ITEM, SoundSource.BLOCKS, 1.0F, level.random.nextFloat() * 0.4F + 1.0F);
+                level.playSound((PlayerEntity) null, worldPosition, SoundEvents.ITEM_FRAME_REMOVE_ITEM, SoundCategory.BLOCKS, 1.0F, level.random.nextFloat() * 0.4F + 1.0F);
                 this.items.set(1, ItemStack.EMPTY);
                 output[1] = ItemStack.EMPTY;
             }
@@ -625,7 +632,7 @@ public class DryingRackTile extends RandomizableContainerBlockEntity implements 
                 crafted[2] = false;
                 dryingTime[2] = dryingTimeMax[2];
                 player.inventory.placeItemBackInInventory(this.items.get(2).copy());
-                level.playSound((Player) null, worldPosition, SoundEvents.ITEM_FRAME_REMOVE_ITEM, SoundSource.BLOCKS, 1.0F, level.random.nextFloat() * 0.4F + 1.0F);
+                level.playSound((PlayerEntity) null, worldPosition, SoundEvents.ITEM_FRAME_REMOVE_ITEM, SoundCategory.BLOCKS, 1.0F, level.random.nextFloat() * 0.4F + 1.0F);
                 this.items.set(2, ItemStack.EMPTY);
                 output[2] = ItemStack.EMPTY;
             }
@@ -637,7 +644,7 @@ public class DryingRackTile extends RandomizableContainerBlockEntity implements 
 //    @Override
     public void tick() {
 
-        if(level instanceof ServerLevel) {
+        if(level instanceof ServerWorld) {
             craft();
         }
 

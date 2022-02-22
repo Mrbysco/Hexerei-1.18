@@ -1,32 +1,32 @@
 package net.joefoxe.hexerei.screen;
 
 
-import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.joefoxe.hexerei.Hexerei;
 import net.joefoxe.hexerei.block.ModBlocks;
 import net.joefoxe.hexerei.container.CofferContainer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.client.gui.screen.inventory.ContainerScreen;
+import net.minecraft.client.gui.screen.inventory.InventoryScreen;
 import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.client.renderer.entity.ItemRenderer;
-import net.minecraft.client.resources.sounds.SimpleSoundInstance;
-import net.minecraft.network.chat.Component;
+import net.minecraft.client.renderer.ItemRenderer;
+import net.minecraft.client.audio.SimpleSound;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.network.chat.Style;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.SoundEvents;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.item.ItemStack;
 
-public class CofferScreen extends AbstractContainerScreen<CofferContainer> {
+public class CofferScreen extends ContainerScreen<CofferContainer> {
     private final ResourceLocation GUI = new ResourceLocation(Hexerei.MOD_ID,
             "textures/gui/coffer_gui.png");
     private final ResourceLocation INVENTORY = new ResourceLocation(Hexerei.MOD_ID,
             "textures/gui/inventory.png");
 
-    public CofferScreen(CofferContainer screenContainer, Inventory inv, Component titleIn) {
+    public CofferScreen(CofferContainer screenContainer, PlayerInventory inv, ITextComponent titleIn) {
         super(screenContainer, inv, titleIn);
         titleLabelY = 1;
         titleLabelX = 4;
@@ -46,7 +46,7 @@ public class CofferScreen extends AbstractContainerScreen<CofferContainer> {
     }
 
     @Override
-    public void render(PoseStack matrixStack, int mouseX, int mouseY, float partialTicks) {
+    public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
 
 
         this.renderBackground(matrixStack);
@@ -55,12 +55,12 @@ public class CofferScreen extends AbstractContainerScreen<CofferContainer> {
     }
 
     @Override
-    public Component getTitle() {
+    public ITextComponent getTitle() {
         return super.getTitle();
     }
 
     @Override
-    protected void renderBg(PoseStack matrixStack, float partialTicks, int x, int y) {
+    protected void renderBg(MatrixStack matrixStack, float partialTicks, int x, int y) {
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         RenderSystem.setShaderTexture(0, GUI);
@@ -101,7 +101,7 @@ public class CofferScreen extends AbstractContainerScreen<CofferContainer> {
 
         if(x > this.leftPos + 188 && x < this.leftPos + 188 + 18 &&  y > this.topPos + 129 && y < this.topPos + 129 + 18){
             this.menu.setToggled(1 - this.menu.getToggled());
-            Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+            Minecraft.getInstance().getSoundManager().play(SimpleSound.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
         }
 //        this.menu.playSound();
 

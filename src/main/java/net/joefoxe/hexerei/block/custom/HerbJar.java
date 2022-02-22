@@ -5,48 +5,48 @@ import net.joefoxe.hexerei.container.HerbJarContainer;
 import net.joefoxe.hexerei.items.JarHandler;
 import net.joefoxe.hexerei.tileentity.HerbJarTile;
 import net.joefoxe.hexerei.tileentity.ModTileEntities;
-import net.minecraft.core.Direction;
-import net.minecraft.nbt.Tag;
-import net.minecraft.network.chat.Style;
-import net.minecraft.network.chat.TextColor;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.util.Direction;
+import net.minecraft.nbt.INBT;
+import net.minecraft.util.text.Style;
+import net.minecraft.util.text.Color;
+import net.minecraft.util.SoundEvents;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.inventory.container.Container;
 import net.minecraft.world.level.*;
 import net.minecraft.world.level.block.*;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.level.material.Fluids;
-import net.minecraft.world.MenuProvider;
-import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.util.ITooltipFlag;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.item.ItemEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.block.BlockState;
+import net.minecraft.fluid.FluidState;
+import net.minecraft.fluid.Fluids;
+import net.minecraft.inventory.container.INamedContainerProvider;
+import net.minecraft.item.BlockItemUseContext;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.ListNBT;
+import net.minecraft.state.BooleanProperty;
+import net.minecraft.state.StateContainer;
 import net.minecraft.world.level.block.state.properties.*;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.material.PushReaction;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.level.ClipContext;
-import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.shapes.BooleanOp;
-import net.minecraft.world.phys.shapes.CollisionContext;
-import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraft.world.phys.shapes.Shapes;
-import net.minecraft.world.phys.Vec3;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.block.material.PushReaction;
+import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.util.math.RayTraceContext;
+import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.shapes.IBooleanFunction;
+import net.minecraft.util.math.shapes.ISelectionContext;
+import net.minecraft.util.math.shapes.VoxelShape;
+import net.minecraft.util.math.shapes.VoxelShapes;
+import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.*;
-import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.ClientRegistry;
@@ -61,28 +61,39 @@ import java.util.Random;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-public class HerbJar extends Block implements ITileEntity<HerbJarTile>, EntityBlock, SimpleWaterloggedBlock {
+import net.minecraft.block.AbstractBlock.Properties;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockRenderType;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.HorizontalBlock;
+import net.minecraft.block.ITileEntityProvider;
+import net.minecraft.block.IWaterLoggable;
+import net.minecraft.state.properties.BlockStateProperties;
+import net.minecraft.util.ActionResultType;
+import net.minecraft.util.Hand;
+
+public class HerbJar extends Block implements ITileEntity<HerbJarTile>, ITileEntityProvider, IWaterLoggable {
 
     public static final BooleanProperty HANGING = BlockStateProperties.HANGING;
     public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
 
     @SuppressWarnings("deprecation")
     @Override
-    public RenderShape getRenderShape(BlockState iBlockState) {
-        return RenderShape.MODEL;
+    public BlockRenderType getRenderShape(BlockState iBlockState) {
+        return BlockRenderType.MODEL;
     }
 
 
     @Nullable
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext context) {
+    public BlockState getStateForPlacement(BlockItemUseContext context) {
         FluidState fluidstate = context.getLevel().getFluidState(context.getClickedPos());
 
         for(Direction direction : context.getNearestLookingDirections()) {
             if (direction.getAxis() == Direction.Axis.Y) {
                 BlockState blockstate = this.defaultBlockState().setValue(HANGING, Boolean.valueOf(direction == Direction.UP));
                 if (blockstate.canSurvive(context.getLevel(), context.getClickedPos())) {
-                    return blockstate.setValue(WATERLOGGED, Boolean.valueOf(fluidstate.getType() == Fluids.WATER)).setValue(HorizontalDirectionalBlock.FACING, context.getHorizontalDirection());
+                    return blockstate.setValue(WATERLOGGED, Boolean.valueOf(fluidstate.getType() == Fluids.WATER)).setValue(HorizontalBlock.FACING, context.getHorizontalDirection());
                 }
             }
         }
@@ -100,76 +111,76 @@ public class HerbJar extends Block implements ITileEntity<HerbJarTile>, EntityBl
             Block.box(10.5, 12, 5.5, 11.5, 14, 10.5),
             Block.box(4, 0, 4, 12, 11, 12),
             Block.box(5, 11, 5, 11, 12, 11)
-    ).reduce((v1, v2) -> Shapes.join(v1, v2, BooleanOp.OR)).get();
+    ).reduce((v1, v2) -> VoxelShapes.join(v1, v2, IBooleanFunction.OR)).get();
 
 
-    public VoxelShape getShape(BlockState state, BlockGetter worldIn, BlockPos pos, CollisionContext context) {
+    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
         return SHAPE;
     }
 
     @SuppressWarnings("deprecation")
     @Override
-    public InteractionResult use(BlockState state, Level worldIn, BlockPos pos, Player player, InteractionHand handIn, BlockHitResult hit) {
+    public ActionResultType use(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
         ItemStack itemstack = player.getItemInHand(handIn);
 
-        if ((itemstack.isEmpty() && player.isShiftKeyDown()) || state.getValue(HorizontalDirectionalBlock.FACING).getOpposite() != hit.getDirection()) {
+        if ((itemstack.isEmpty() && player.isShiftKeyDown()) || state.getValue(HorizontalBlock.FACING).getOpposite() != hit.getDirection()) {
 
-            BlockEntity tileEntity = worldIn.getBlockEntity(pos);
+            TileEntity tileEntity = worldIn.getBlockEntity(pos);
 
             if(!worldIn.isClientSide()) {
                 if (tileEntity instanceof HerbJarTile) {
-                    MenuProvider containerProvider = createContainerProvider(worldIn, pos);
-                    NetworkHooks.openGui(((ServerPlayer) player), containerProvider, tileEntity.getBlockPos());
+                    INamedContainerProvider containerProvider = createContainerProvider(worldIn, pos);
+                    NetworkHooks.openGui(((ServerPlayerEntity) player), containerProvider, tileEntity.getBlockPos());
                 } else {
                     throw new IllegalStateException("Our Container provider is missing!");
                 }
             }
 
-            return InteractionResult.SUCCESS;
+            return ActionResultType.SUCCESS;
         }
 
-        BlockEntity tileEntity = worldIn.getBlockEntity(pos);
+        TileEntity tileEntity = worldIn.getBlockEntity(pos);
 
         if (tileEntity instanceof HerbJarTile) {
             ((HerbJarTile)tileEntity).interactPutItems(player);
         }
 
-        return InteractionResult.SUCCESS;
+        return ActionResultType.SUCCESS;
     }
 
 
     @Override
-    public void playerWillDestroy(Level world, BlockPos pos, BlockState state, Player player) {
+    public void playerWillDestroy(World world, BlockPos pos, BlockState state, PlayerEntity player) {
 
         ItemStack cloneItemStack = getCloneItemStack(world, pos, state);
         if(!world.isClientSide())
-            popResource((ServerLevel)world, pos, cloneItemStack);
+            popResource((ServerWorld)world, pos, cloneItemStack);
 
         super.playerWillDestroy(world, pos, state, player);
     }
     
-    protected BlockHitResult rayTraceEyeLevel(Level world, Player player, double length) {
-        Vec3 eyePos = player.getEyePosition(1);
-        Vec3 lookPos = player.getViewVector(1);
-        Vec3 endPos = eyePos.add(lookPos.x * length, lookPos.y * length, lookPos.z * length);
-        ClipContext context = new ClipContext(eyePos, endPos, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, player);
+    protected BlockRayTraceResult rayTraceEyeLevel(World world, PlayerEntity player, double length) {
+        Vector3d eyePos = player.getEyePosition(1);
+        Vector3d lookPos = player.getViewVector(1);
+        Vector3d endPos = eyePos.add(lookPos.x * length, lookPos.y * length, lookPos.z * length);
+        RayTraceContext context = new RayTraceContext(eyePos, endPos, RayTraceContext.BlockMode.OUTLINE, RayTraceContext.FluidMode.NONE, player);
         return world.clip(context);
     }
 
     @Override
-    public void attack(BlockState state, Level worldIn, BlockPos pos, Player playerIn) {
-        BlockHitResult rayResult = rayTraceEyeLevel(worldIn, playerIn, playerIn.getAttribute(net.minecraftforge.common.ForgeMod.REACH_DISTANCE.get()).getValue() + 1);
-        if (rayResult.getType() == HitResult.Type.MISS)
+    public void attack(BlockState state, World worldIn, BlockPos pos, PlayerEntity playerIn) {
+        BlockRayTraceResult rayResult = rayTraceEyeLevel(worldIn, playerIn, playerIn.getAttribute(net.minecraftforge.common.ForgeMod.REACH_DISTANCE.get()).getValue() + 1);
+        if (rayResult.getType() == RayTraceResult.Type.MISS)
             return;
 
         Direction side = rayResult.getDirection();
 
-        BlockEntity tile = worldIn.getBlockEntity(pos);
+        TileEntity tile = worldIn.getBlockEntity(pos);
         HerbJarTile herbJarTile = null;
         //System.out.println(worldIn.isClientSide());
         if(tile instanceof  HerbJarTile)
             herbJarTile = (HerbJarTile) tile;
-        if (state.getValue(HorizontalDirectionalBlock.FACING).getOpposite() != rayResult.getDirection())
+        if (state.getValue(HorizontalBlock.FACING).getOpposite() != rayResult.getDirection())
             return;
 
         ItemStack item;
@@ -186,15 +197,15 @@ public class HerbJar extends Block implements ITileEntity<HerbJarTile>, EntityBl
                 worldIn.sendBlockUpdated(pos, state, state, 3);
             }
             else
-                worldIn.playSound(null, pos.getX() + .5f, pos.getY() + .5f, pos.getZ() + .5f, SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, .2f, ((worldIn.random.nextFloat() - worldIn.random.nextFloat()) * .7f + 1) * 2);
+                worldIn.playSound(null, pos.getX() + .5f, pos.getY() + .5f, pos.getZ() + .5f, SoundEvents.ITEM_PICKUP, SoundCategory.PLAYERS, .2f, ((worldIn.random.nextFloat() - worldIn.random.nextFloat()) * .7f + 1) * 2);
         }
 
         super.attack(state, worldIn, pos, playerIn);
     }
 
-    private void dropItemStack (Level world, BlockPos pos, Player player, @Nonnull ItemStack stack) {
+    private void dropItemStack (World world, BlockPos pos, PlayerEntity player, @Nonnull ItemStack stack) {
         ItemEntity entity = new ItemEntity(world, pos.getX() + .5f, pos.getY() + .3f, pos.getZ() + .5f, stack);
-        Vec3 motion = entity.getDeltaMovement();
+        Vector3d motion = entity.getDeltaMovement();
         entity.push(-motion.x, -motion.y, -motion.z);
         world.addFreshEntity(entity);
     }
@@ -211,15 +222,15 @@ public class HerbJar extends Block implements ITileEntity<HerbJarTile>, EntityBl
 
     @SuppressWarnings("deprecation")
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(HorizontalDirectionalBlock.FACING, HANGING, WATERLOGGED);
+    protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
+        builder.add(HorizontalBlock.FACING, HANGING, WATERLOGGED);
     }
 
     @Override
-    public void onBlockExploded(BlockState state, Level world, BlockPos pos, Explosion explosion) {
+    public void onBlockExploded(BlockState state, World world, BlockPos pos, Explosion explosion) {
         super.onBlockExploded(state, world, pos, explosion);
 
-        if (world instanceof ServerLevel) {
+        if (world instanceof ServerWorld) {
             ItemStack cloneItemStack = getCloneItemStack(world, pos, state);
             if (world.getBlockState(pos) != state && !world.isClientSide()) {
                 world.addFreshEntity(new ItemEntity(world, pos.getX() + 0.5f, pos.getY() - 0.5f, pos.getZ() + 0.5f, cloneItemStack));
@@ -229,16 +240,16 @@ public class HerbJar extends Block implements ITileEntity<HerbJarTile>, EntityBl
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, @Nullable BlockGetter world, List<Component> tooltip, TooltipFlag flagIn) {
+    public void appendHoverText(ItemStack stack, @Nullable IBlockReader world, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
 
-        CompoundTag inv = stack.getOrCreateTag().getCompound("Inventory");
-        ListTag tagList = inv.getList("Items", Tag.TAG_COMPOUND);
+        CompoundNBT inv = stack.getOrCreateTag().getCompound("Inventory");
+        ListNBT tagList = inv.getList("Items", INBT.TAG_COMPOUND);
         if(Screen.hasShiftDown()) {
-            tooltip.add(new TranslatableComponent("<%s>", new TranslatableComponent("tooltip.hexerei.shift").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAA6600)))).withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
+            tooltip.add(new TranslationTextComponent("<%s>", new TranslationTextComponent("tooltip.hexerei.shift").withStyle(Style.EMPTY.withColor(Color.fromRgb(0xAA6600)))).withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
             if(tagList.size() >= 1) {
-                tooltip.add(new TranslatableComponent("tooltip.hexerei.herb_jar_shift_4").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
-                tooltip.add(new TranslatableComponent("tooltip.hexerei.herb_jar_shift_5").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
-                tooltip.add(new TranslatableComponent("tooltip.hexerei.herb_jar_shift_6").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
+                tooltip.add(new TranslationTextComponent("tooltip.hexerei.herb_jar_shift_4").withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
+                tooltip.add(new TranslationTextComponent("tooltip.hexerei.herb_jar_shift_5").withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
+                tooltip.add(new TranslationTextComponent("tooltip.hexerei.herb_jar_shift_6").withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
             }
             for (int i = 0; i < tagList.size(); i++)
             {
@@ -250,10 +261,10 @@ public class HerbJar extends Block implements ITileEntity<HerbJarTile>, EntityBl
 //
 //                tooltip.add(itemText);
 
-                CompoundTag itemTags = tagList.getCompound(i);
+                CompoundNBT itemTags = tagList.getCompound(i);
                 itemTags.putInt("Count", 1);
-                TranslatableComponent itemText2 = (TranslatableComponent) new TranslatableComponent(ItemStack.of(itemTags).getDescriptionId()).withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x998800)));
-                TranslatableComponent itemText = (TranslatableComponent) new TranslatableComponent(" - %s", itemText2).withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999)));
+                TranslationTextComponent itemText2 = (TranslationTextComponent) new TranslationTextComponent(ItemStack.of(itemTags).getDescriptionId()).withStyle(Style.EMPTY.withColor(Color.fromRgb(0x998800)));
+                TranslationTextComponent itemText = (TranslationTextComponent) new TranslationTextComponent(" - %s", itemText2).withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999)));
                 int countText = Integer.parseInt(String.valueOf(itemTags.get("ExtendedCount")));
                 itemText.append(" x" + countText);
 
@@ -261,28 +272,28 @@ public class HerbJar extends Block implements ITileEntity<HerbJarTile>, EntityBl
             }
             if(tagList.size() < 1)
             {
-                tooltip.add(new TranslatableComponent("tooltip.hexerei.coffer_shift").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
-                tooltip.add(new TranslatableComponent("tooltip.hexerei.coffer_shift_2").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
-                tooltip.add(new TranslatableComponent("tooltip.hexerei.coffer_shift_3").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
-                tooltip.add(new TranslatableComponent("tooltip.hexerei.herb_jar_shift_4").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
-                tooltip.add(new TranslatableComponent("tooltip.hexerei.herb_jar_shift_5").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
-                tooltip.add(new TranslatableComponent("tooltip.hexerei.herb_jar_shift_6").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
-                tooltip.add(new TranslatableComponent("tooltip.hexerei.herb_jar_shift_7").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
+                tooltip.add(new TranslationTextComponent("tooltip.hexerei.coffer_shift").withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
+                tooltip.add(new TranslationTextComponent("tooltip.hexerei.coffer_shift_2").withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
+                tooltip.add(new TranslationTextComponent("tooltip.hexerei.coffer_shift_3").withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
+                tooltip.add(new TranslationTextComponent("tooltip.hexerei.herb_jar_shift_4").withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
+                tooltip.add(new TranslationTextComponent("tooltip.hexerei.herb_jar_shift_5").withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
+                tooltip.add(new TranslationTextComponent("tooltip.hexerei.herb_jar_shift_6").withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
+                tooltip.add(new TranslationTextComponent("tooltip.hexerei.herb_jar_shift_7").withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
 
             }
 
         } else {
-            tooltip.add(new TranslatableComponent("[%s]", new TranslatableComponent("tooltip.hexerei.shift").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAAAA00)))).withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
+            tooltip.add(new TranslationTextComponent("[%s]", new TranslationTextComponent("tooltip.hexerei.shift").withStyle(Style.EMPTY.withColor(Color.fromRgb(0xAAAA00)))).withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
 
 //            tooltip.add(new TranslatableComponent("tooltip.hexerei.herb_jar_shift_4").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
 //            tooltip.add(new TranslatableComponent("tooltip.hexerei.herb_jar_shift_5").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
 
             for (int i = 0; i < Math.min(tagList.size(), 1); i++)
             {
-                CompoundTag itemTags = tagList.getCompound(i);
+                CompoundNBT itemTags = tagList.getCompound(i);
                 itemTags.putInt("Count", 1);
-                TranslatableComponent itemText2 = (TranslatableComponent) new TranslatableComponent(ItemStack.of(itemTags).getDescriptionId()).withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x998800)));
-                TranslatableComponent itemText = (TranslatableComponent) new TranslatableComponent(" - %s", itemText2).withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999)));
+                TranslationTextComponent itemText2 = (TranslationTextComponent) new TranslationTextComponent(ItemStack.of(itemTags).getDescriptionId()).withStyle(Style.EMPTY.withColor(Color.fromRgb(0x998800)));
+                TranslationTextComponent itemText = (TranslationTextComponent) new TranslationTextComponent(" - %s", itemText2).withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999)));
                 int countText = Integer.parseInt(String.valueOf(itemTags.get("ExtendedCount")));
                 itemText.append(" x" + countText);
 
@@ -305,22 +316,22 @@ public class HerbJar extends Block implements ITileEntity<HerbJarTile>, EntityBl
     
 
     @Override
-    public ItemStack getCloneItemStack(BlockGetter worldIn, BlockPos pos, BlockState state) {
+    public ItemStack getCloneItemStack(IBlockReader worldIn, BlockPos pos, BlockState state) {
         ItemStack item = new ItemStack(this);
         Optional<HerbJarTile> tileEntityOptional = Optional.ofNullable(getBlockEntity(worldIn, pos));
 //        System.out.println(worldIn.getBlockEntity(pos));e
-        CompoundTag tag = item.getOrCreateTag();
+        CompoundNBT tag = item.getOrCreateTag();
         JarHandler empty = tileEntityOptional.map(herb_jar -> herb_jar.itemHandler)
                 .orElse(new JarHandler(1,1024));
-        CompoundTag inv = tileEntityOptional.map(herb_jar -> herb_jar.itemHandler.serializeNBT())
-                .orElse(new CompoundTag());
+        CompoundNBT inv = tileEntityOptional.map(herb_jar -> herb_jar.itemHandler.serializeNBT())
+                .orElse(new CompoundNBT());
 
 
         if(!empty.getStackInSlot(0).isEmpty())
             tag.put("Inventory", inv);
 
 
-        Component customName = tileEntityOptional.map(HerbJarTile::getCustomName)
+        ITextComponent customName = tileEntityOptional.map(HerbJarTile::getCustomName)
                 .orElse(null);
 
         if (customName != null)
@@ -331,11 +342,11 @@ public class HerbJar extends Block implements ITileEntity<HerbJarTile>, EntityBl
 
 
     @Override
-    public void setPlacedBy(Level worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+    public void setPlacedBy(World worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
         super.setPlacedBy(worldIn, pos, state, placer, stack);
 
         if (stack.hasCustomHoverName()) {
-            BlockEntity tileentity = worldIn.getBlockEntity(pos);
+            TileEntity tileentity = worldIn.getBlockEntity(pos);
             ((HerbJarTile)tileentity).customName = stack.getHoverName();
         }
 
@@ -350,7 +361,7 @@ public class HerbJar extends Block implements ITileEntity<HerbJarTile>, EntityBl
 
     }
 
-    public boolean placeLiquid(LevelAccessor worldIn, BlockPos pos, BlockState state, FluidState fluidStateIn) {
+    public boolean placeLiquid(IWorld worldIn, BlockPos pos, BlockState state, FluidState fluidStateIn) {
         if (!state.getValue(BlockStateProperties.WATERLOGGED) && fluidStateIn.getType() == Fluids.WATER) {
 
             worldIn.setBlock(pos, state.setValue(WATERLOGGED, Boolean.valueOf(true)), 3);
@@ -363,12 +374,12 @@ public class HerbJar extends Block implements ITileEntity<HerbJarTile>, EntityBl
 
     @SuppressWarnings("deprecation")
     @Override
-    public BlockState updateShape(BlockState stateIn, Direction facing, BlockState facingState, LevelAccessor worldIn, BlockPos currentPos, BlockPos facingPos) {
+    public BlockState updateShape(BlockState stateIn, Direction facing, BlockState facingState, IWorld worldIn, BlockPos currentPos, BlockPos facingPos) {
         if(!stateIn.canSurvive(worldIn, currentPos))
         {
-            if(!worldIn.isClientSide() && worldIn instanceof ServerLevel) {
+            if(!worldIn.isClientSide() && worldIn instanceof ServerWorld) {
                 ItemStack cloneItemStack = getCloneItemStack(worldIn, currentPos, stateIn);
-                worldIn.addFreshEntity(new ItemEntity(((ServerLevel) worldIn).getLevel(), currentPos.getX() + 0.5f, currentPos.getY() - 0.5f, currentPos.getZ() + 0.5f, cloneItemStack));
+                worldIn.addFreshEntity(new ItemEntity(((ServerWorld) worldIn).getLevel(), currentPos.getX() + 0.5f, currentPos.getY() - 0.5f, currentPos.getZ() + 0.5f, cloneItemStack));
             }
         }
 
@@ -377,7 +388,7 @@ public class HerbJar extends Block implements ITileEntity<HerbJarTile>, EntityBl
 
     @SuppressWarnings("deprecation")
     @Override
-    public boolean canSurvive(BlockState state, LevelReader worldIn, BlockPos pos) {
+    public boolean canSurvive(BlockState state, IWorldReader worldIn, BlockPos pos) {
         Direction direction = getBlockConnected(state).getOpposite();
         return Block.canSupportCenter(worldIn, pos.relative(direction), direction.getOpposite());
     }
@@ -392,29 +403,29 @@ public class HerbJar extends Block implements ITileEntity<HerbJarTile>, EntityBl
     }
 
     @Override
-    public boolean propagatesSkylightDown(BlockState state, BlockGetter reader, BlockPos pos) {
+    public boolean propagatesSkylightDown(BlockState state, IBlockReader reader, BlockPos pos) {
         return !state.getValue(WATERLOGGED);
     }
 
 
     @Override
     @OnlyIn(Dist.CLIENT)
-    public void animateTick(BlockState state, Level world, BlockPos pos, Random rand) {
+    public void animateTick(BlockState state, World world, BlockPos pos, Random rand) {
     }
 
-    private MenuProvider createContainerProvider(Level worldIn, BlockPos pos) {
-        return new MenuProvider() {
+    private INamedContainerProvider createContainerProvider(World worldIn, BlockPos pos) {
+        return new INamedContainerProvider() {
             @Nullable
             @Override
-            public AbstractContainerMenu createMenu(int i, Inventory playerInventory, Player playerEntity) {
+            public Container createMenu(int i, PlayerInventory playerInventory, PlayerEntity playerEntity) {
                 return new HerbJarContainer(i, worldIn, pos, playerInventory, playerEntity);
             }
 
             @Override
-            public Component getDisplayName() {
+            public ITextComponent getDisplayName() {
                 if(((HerbJarTile)worldIn.getBlockEntity(pos)).customName != null)
-                    return new TranslatableComponent(((HerbJarTile)worldIn.getBlockEntity(pos)).customName.getString());
-                return new TranslatableComponent("screen.hexerei.herb_jar");
+                    return new TranslationTextComponent(((HerbJarTile)worldIn.getBlockEntity(pos)).customName.getString());
+                return new TranslationTextComponent("screen.hexerei.herb_jar");
             }
 
         };
@@ -427,7 +438,7 @@ public class HerbJar extends Block implements ITileEntity<HerbJarTile>, EntityBl
 
     @Nullable
     @Override
-    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+    public TileEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new HerbJarTile(ModTileEntities.HERB_JAR_TILE.get(), pos, state);
     }
 

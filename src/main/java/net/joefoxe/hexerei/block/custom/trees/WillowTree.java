@@ -2,12 +2,12 @@ package net.joefoxe.hexerei.block.custom.trees;
 
 
 import net.joefoxe.hexerei.world.gen.ModConfiguredFeatures;
-import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
-import net.minecraft.world.level.block.grower.AbstractTreeGrower;
+import net.minecraft.world.gen.feature.ConfiguredFeature;
+import net.minecraft.block.trees.Tree;
 
 import java.util.Random;
 
-public class WillowTree extends AbstractTreeGrower {
+public class WillowTree extends Tree {
 
 
     @org.jetbrains.annotations.Nullable

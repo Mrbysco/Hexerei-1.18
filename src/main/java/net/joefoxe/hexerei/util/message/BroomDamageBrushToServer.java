@@ -2,9 +2,9 @@ package net.joefoxe.hexerei.util.message;
 
 import net.joefoxe.hexerei.Hexerei;
 import net.joefoxe.hexerei.client.renderer.entity.custom.BroomEntity;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.Level;
+import net.minecraft.network.PacketBuffer;
+import net.minecraft.entity.Entity;
+import net.minecraft.world.World;
 import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.network.NetworkEvent;
 
@@ -17,22 +17,22 @@ public class BroomDamageBrushToServer {
     public BroomDamageBrushToServer(Entity entity) {
         this.sourceId = entity.getId();
     }
-    public BroomDamageBrushToServer(FriendlyByteBuf buf) {
+    public BroomDamageBrushToServer(PacketBuffer buf) {
         this.sourceId = buf.readInt();
 
     }
 
-    public static void encode(BroomDamageBrushToServer object, FriendlyByteBuf buffer) {
+    public static void encode(BroomDamageBrushToServer object, PacketBuffer buffer) {
         buffer.writeInt(object.sourceId);
     }
 
-    public static BroomDamageBrushToServer decode(FriendlyByteBuf buffer) {
+    public static BroomDamageBrushToServer decode(PacketBuffer buffer) {
         return new BroomDamageBrushToServer(buffer);
     }
 
     public static void consume(BroomDamageBrushToServer packet, Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
-            Level world;
+            World world;
             if (ctx.get().getDirection() == NetworkDirection.PLAY_TO_CLIENT) {
                 world = Hexerei.proxy.getLevel();
             }

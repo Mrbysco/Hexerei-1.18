@@ -10,14 +10,14 @@ import net.joefoxe.hexerei.Hexerei;
 import net.joefoxe.hexerei.config.HexConfig;
 import net.joefoxe.hexerei.world.structure.structures.DarkCovenStructure;
 import net.joefoxe.hexerei.world.structure.structures.WitchHutStructure;
-import net.minecraft.data.BuiltinRegistries;
+import net.minecraft.util.registry.WorldGenRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.levelgen.StructureSettings;
-import net.minecraft.world.level.levelgen.feature.StructureFeature;
-import net.minecraft.world.level.levelgen.feature.configurations.JigsawConfiguration;
+import net.minecraft.world.gen.settings.DimensionStructuresSettings;
+import net.minecraft.world.gen.feature.structure.Structure;
+import net.minecraft.world.gen.feature.structure.VillageConfig;
 import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
-import net.minecraft.world.level.levelgen.feature.configurations.StructureFeatureConfiguration;
+import net.minecraft.world.gen.settings.StructureSeparationSettings;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.*;
 import net.minecraftforge.registries.RegistryObject;
@@ -29,11 +29,11 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 public class ModStructures {
-    public static final DeferredRegister<StructureFeature<?>> STRUCTURES =
+    public static final DeferredRegister<Structure<?>> STRUCTURES =
             DeferredRegister.create(ForgeRegistries.STRUCTURE_FEATURES, Hexerei.MOD_ID);
 
-    public static final RegistryObject<StructureFeature<JigsawConfiguration>> WITCH_HUT = STRUCTURES.register("witch_hut", () -> (new WitchHutStructure(JigsawConfiguration.CODEC)));
-    public static final RegistryObject<StructureFeature<JigsawConfiguration>> DARK_COVEN = STRUCTURES.register("dark_coven", () -> (new DarkCovenStructure(JigsawConfiguration.CODEC)));
+    public static final RegistryObject<Structure<VillageConfig>> WITCH_HUT = STRUCTURES.register("witch_hut", () -> (new WitchHutStructure(VillageConfig.CODEC)));
+    public static final RegistryObject<Structure<VillageConfig>> DARK_COVEN = STRUCTURES.register("dark_coven", () -> (new DarkCovenStructure(VillageConfig.CODEC)));
 
 
 //    public static final RegistryObject<StructureFeature<NoneFeatureConfiguration>> WITCH_HUT =
@@ -45,7 +45,7 @@ public class ModStructures {
 
 //    public static final RegistryObject<StructureFeature<NoneFeatureConfiguration>> DARK_COVEN = addToStructureMaps("dark_coven", () -> (new GenericJigsawStructure.Builder<>(new ResourceLocation(Hexerei.MOD_ID, "coven/dark_coven/town_centers")).setStructureSize(6).setBiomeRange(1).setStructureBlacklistRange(6).build()));
 
-    private static <T extends StructureFeature<?>> RegistryObject<T> addToStructureMaps(String name, Supplier<T> structure) {
+    private static <T extends Structure<?>> RegistryObject<T> addToStructureMaps(String name, Supplier<T> structure) {
         return STRUCTURES.register(name, structure);
     }
 
@@ -55,13 +55,13 @@ public class ModStructures {
     Make this large and unique. */
     public static void setupStructures() {
         setupMapSpacingAndLand(WITCH_HUT.get(),
-                new StructureFeatureConfiguration(HexConfig.WITCH_HUT_SPACING.get(),HexConfig.WITCH_HUT_SEPARATION.get(), 1234567890), // Spacing and Separation config
+                new StructureSeparationSettings(HexConfig.WITCH_HUT_SPACING.get(),HexConfig.WITCH_HUT_SEPARATION.get(), 1234567890), // Spacing and Separation config
                 false);
 //        setupMapSpacingAndLand(MANGROVE_TREE.get(),
 //                new StructureFeatureConfiguration(3,1, 1234567890),
 //                false);
         setupMapSpacingAndLand(DARK_COVEN.get(),
-                new StructureFeatureConfiguration(HexConfig.DARK_COVEN_SPACING.get(),HexConfig.DARK_COVEN_SEPARATION.get(), 1418987890),
+                new StructureSeparationSettings(HexConfig.DARK_COVEN_SPACING.get(),HexConfig.DARK_COVEN_SEPARATION.get(), 1418987890),
                 false);
     }
 
@@ -71,10 +71,10 @@ public class ModStructures {
      * this method in the structureSeparationSettings argument.
      * This method is called by setupStructures above.
      **/
-    public static <F extends StructureFeature<?>> void setupMapSpacingAndLand(F structure, StructureFeatureConfiguration structureSeparationSettings,
+    public static <F extends Structure<?>> void setupMapSpacingAndLand(F structure, StructureSeparationSettings structureSeparationSettings,
                                                                        boolean transformSurroundingLand) {
         //add our structures into the map in StructureFeature class
-        StructureFeature.STRUCTURES_REGISTRY.put(structure.getRegistryName().toString(), structure);
+        Structure.STRUCTURES_REGISTRY.put(structure.getRegistryName().toString(), structure);
 
         /*
          * Whether surrounding land will be modified automatically to conform to the bottom of the structure.
@@ -83,9 +83,9 @@ public class ModStructures {
          *
          */
         if(transformSurroundingLand){
-            StructureFeature.NOISE_AFFECTING_FEATURES =
-                    ImmutableList.<StructureFeature<?>>builder()
-                            .addAll(StructureFeature.NOISE_AFFECTING_FEATURES)
+            Structure.NOISE_AFFECTING_FEATURES =
+                    ImmutableList.<Structure<?>>builder()
+                            .addAll(Structure.NOISE_AFFECTING_FEATURES)
                             .add(structure)
                             .build();
         }
@@ -103,9 +103,9 @@ public class ModStructures {
          *
          * DEFAULTS requires AccessTransformer  (See resources/META-INF/accesstransformer.cfg)
          */
-        StructureSettings.DEFAULTS =
-                ImmutableMap.<StructureFeature<?>, StructureFeatureConfiguration>builder()
-                        .putAll(StructureSettings.DEFAULTS)
+        DimensionStructuresSettings.DEFAULTS =
+                ImmutableMap.<Structure<?>, StructureSeparationSettings>builder()
+                        .putAll(DimensionStructuresSettings.DEFAULTS)
                         .put(structure, structureSeparationSettings)
                         .build();
 
@@ -119,8 +119,8 @@ public class ModStructures {
          * So yeah, don't do DimensionSettings.BUILTIN_OVERWORLD. Use the NOISE_GENERATOR_SETTINGS loop
          * below instead if you must.
          */
-        BuiltinRegistries.NOISE_GENERATOR_SETTINGS.entrySet().forEach(settings -> {
-            Map<StructureFeature<?>, StructureFeatureConfiguration> structureMap =
+        WorldGenRegistries.NOISE_GENERATOR_SETTINGS.entrySet().forEach(settings -> {
+            Map<Structure<?>, StructureSeparationSettings> structureMap =
                     settings.getValue().structureSettings().structureConfig;
             /*
              * Pre-caution in case a mod makes the structure map immutable like datapacks do.
@@ -129,7 +129,7 @@ public class ModStructures {
              * structureConfig requires AccessTransformer  (See resources/META-INF/accesstransformer.cfg)
              */
             if (structureMap instanceof ImmutableMap) {
-                Map<StructureFeature<?>, StructureFeatureConfiguration> tempMap = new HashMap<>(structureMap);
+                Map<Structure<?>, StructureSeparationSettings> tempMap = new HashMap<>(structureMap);
                 tempMap.put(structure, structureSeparationSettings);
                 settings.getValue().structureSettings().structureConfig();
 

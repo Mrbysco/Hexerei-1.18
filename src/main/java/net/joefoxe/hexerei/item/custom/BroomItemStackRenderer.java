@@ -4,27 +4,27 @@ package net.joefoxe.hexerei.item.custom;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.IVertexBuilder;
 import com.mojang.math.Vector3f;
 import net.joefoxe.hexerei.Hexerei;
 import net.joefoxe.hexerei.client.renderer.entity.model.BroomModel;
 import net.joefoxe.hexerei.item.ModItems;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.EntityModelSet;
-import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
+import net.minecraft.client.renderer.tileentity.ItemStackTileEntityRenderer;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
-import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
-import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
-import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.client.renderer.model.ItemCameraTransforms;
+import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
+import net.minecraft.client.renderer.ItemRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.item.ItemStack;
 import net.minecraftforge.client.ForgeHooksClient;
 
 import javax.annotation.Nonnull;
@@ -76,20 +76,20 @@ import javax.annotation.Nonnull;
 //    }
 //}
 
-public class BroomItemStackRenderer extends BlockEntityWithoutLevelRenderer {
+public class BroomItemStackRenderer extends ItemStackTileEntityRenderer {
     private final BroomModel normalModel;
 
-    public BroomItemStackRenderer(BlockEntityRenderDispatcher p_172550_, EntityModelSet p_172551_) {
+    public BroomItemStackRenderer(TileEntityRendererDispatcher p_172550_, EntityModelSet p_172551_) {
         super(p_172550_, p_172551_);
         normalModel = new BroomModel(p_172551_.bakeLayer(BroomModel.LAYER_LOCATION));
     }
 
     @Override
-    public void renderByItem(ItemStack p_239207_1_, ItemTransforms.TransformType p_239207_2_, PoseStack p_239207_3_, MultiBufferSource p_239207_4_, int p_239207_5_, int p_239207_6_) {
+    public void renderByItem(ItemStack p_239207_1_, ItemCameraTransforms.TransformType p_239207_2_, MatrixStack p_239207_3_, IRenderTypeBuffer p_239207_4_, int p_239207_5_, int p_239207_6_) {
         {
             p_239207_3_.pushPose();
             p_239207_3_.scale(1.0F, -1.0F, -1.0F);
-            VertexConsumer ivertexbuilder = ItemRenderer.getFoilBufferDirect(p_239207_4_, this.normalModel.renderType(this.getTexture(p_239207_1_)), true, p_239207_1_.hasFoil());
+            IVertexBuilder ivertexbuilder = ItemRenderer.getFoilBufferDirect(p_239207_4_, this.normalModel.renderType(this.getTexture(p_239207_1_)), true, p_239207_1_.hasFoil());
             this.normalModel.renderToBuffer(p_239207_3_, ivertexbuilder, p_239207_5_, p_239207_6_, 1.0F, 1.0F, 1.0F, 1.0F);
             p_239207_3_.popPose();
         }

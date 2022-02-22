@@ -1,11 +1,11 @@
 package net.joefoxe.hexerei.util;
 
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.world.World;
 
 public interface SidedProxy {
-    Player getPlayer();
-    Level getLevel();
+    PlayerEntity getPlayer();
+    World getLevel();
     void init();
 
     void openCodexGui();

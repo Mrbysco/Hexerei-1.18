@@ -13,60 +13,60 @@ import net.joefoxe.hexerei.util.HexereiPacketHandler;
 import net.joefoxe.hexerei.util.HexereiTags;
 import net.joefoxe.hexerei.util.IPacket;
 import net.joefoxe.hexerei.util.message.*;
-import net.minecraft.BlockUtil;
+import net.minecraft.util.TeleportationRepositioner;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.Options;
-import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.core.NonNullList;
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ServerboundPaddleBoatPacket;
-import net.minecraft.network.syncher.EntityDataAccessor;
-import net.minecraft.network.syncher.EntityDataSerializers;
-import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
+import net.minecraft.client.GameSettings;
+import net.minecraft.client.world.ClientWorld;
+import net.minecraft.client.entity.player.ClientPlayerEntity;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.Direction;
+import net.minecraft.util.NonNullList;
+import net.minecraft.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.network.IPacket;
+import net.minecraft.network.play.client.CSteerBoatPacket;
+import net.minecraft.network.datasync.DataParameter;
+import net.minecraft.network.datasync.DataSerializers;
+import net.minecraft.network.datasync.EntityDataManager;
+import net.minecraft.world.server.ServerWorld;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.util.SoundEvent;
+import net.minecraft.util.SoundEvents;
+import net.minecraft.util.SoundCategory;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.*;
 import net.minecraft.world.*;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
-import net.minecraft.world.entity.animal.Animal;
-import net.minecraft.world.entity.animal.WaterAnimal;
+import net.minecraft.entity.passive.AnimalEntity;
+import net.minecraft.entity.passive.WaterMobEntity;
 import net.minecraft.world.entity.animal.horse.Llama;
-import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.entity.item.ItemEntity;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.entity.vehicle.DismountHelper;
-import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.inventory.container.Container;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.WaterlilyBlock;
+import net.minecraft.block.Block;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.LilyPadBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.level.portal.PortalShape;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.shapes.BooleanOp;
-import net.minecraft.world.phys.shapes.Shapes;
-import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.block.BlockState;
+import net.minecraft.fluid.FluidState;
+import net.minecraft.block.PortalSize;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.util.math.shapes.IBooleanFunction;
+import net.minecraft.util.math.shapes.VoxelShapes;
+import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.util.LazyOptional;
@@ -84,18 +84,30 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 
-public class BroomEntity extends Entity implements Container, MenuProvider{
-    private static final EntityDataAccessor<Integer> TIME_SINCE_HIT = SynchedEntityData.defineId(BroomEntity.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<Integer> FORWARD_DIRECTION = SynchedEntityData.defineId(BroomEntity.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<Float> DAMAGE_TAKEN = SynchedEntityData.defineId(BroomEntity.class, EntityDataSerializers.FLOAT);
-    private static final EntityDataAccessor<Boolean> LEFT_PADDLE = SynchedEntityData.defineId(BroomEntity.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Boolean> RIGHT_PADDLE = SynchedEntityData.defineId(BroomEntity.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Integer> ROCKING_TICKS = SynchedEntityData.defineId(BroomEntity.class, EntityDataSerializers.INT);
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntitySize;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.MoverType;
+import net.minecraft.entity.Pose;
+import net.minecraft.inventory.IInventory;
+import net.minecraft.inventory.ItemStackHelper;
+import net.minecraft.inventory.container.INamedContainerProvider;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.world.entity.Entity.RemovalReason;
 
-    private static final EntityDataAccessor<Integer> BROOM_TYPE = SynchedEntityData.defineId(BroomEntity.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<Integer> FIRST_SLOT = SynchedEntityData.defineId(BroomEntity.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<Integer> SECOND_SLOT = SynchedEntityData.defineId(BroomEntity.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<Integer> THIRD_SLOT = SynchedEntityData.defineId(BroomEntity.class, EntityDataSerializers.INT);
+public class BroomEntity extends Entity implements IInventory, INamedContainerProvider{
+    private static final DataParameter<Integer> TIME_SINCE_HIT = EntityDataManager.defineId(BroomEntity.class, DataSerializers.INT);
+    private static final DataParameter<Integer> FORWARD_DIRECTION = EntityDataManager.defineId(BroomEntity.class, DataSerializers.INT);
+    private static final DataParameter<Float> DAMAGE_TAKEN = EntityDataManager.defineId(BroomEntity.class, DataSerializers.FLOAT);
+    private static final DataParameter<Boolean> LEFT_PADDLE = EntityDataManager.defineId(BroomEntity.class, DataSerializers.BOOLEAN);
+    private static final DataParameter<Boolean> RIGHT_PADDLE = EntityDataManager.defineId(BroomEntity.class, DataSerializers.BOOLEAN);
+    private static final DataParameter<Integer> ROCKING_TICKS = EntityDataManager.defineId(BroomEntity.class, DataSerializers.INT);
+
+    private static final DataParameter<Integer> BROOM_TYPE = EntityDataManager.defineId(BroomEntity.class, DataSerializers.INT);
+    private static final DataParameter<Integer> FIRST_SLOT = EntityDataManager.defineId(BroomEntity.class, DataSerializers.INT);
+    private static final DataParameter<Integer> SECOND_SLOT = EntityDataManager.defineId(BroomEntity.class, DataSerializers.INT);
+    private static final DataParameter<Integer> THIRD_SLOT = EntityDataManager.defineId(BroomEntity.class, DataSerializers.INT);
     public float speedMultiplier = 0.75f;
 //    protected boolean charging;
     private final float[] paddlePositions = new float[2];
@@ -138,10 +150,10 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
     public NonNullList<ItemStack> items = NonNullList.withSize(30, ItemStack.EMPTY);
 
 
-    public BroomEntity(Level worldIn, double x, double y, double z) {
+    public BroomEntity(World worldIn, double x, double y, double z) {
         this(ModEntityTypes.BROOM.get(), worldIn);
         this.setPos(x, y, z);
-        this.setDeltaMovement(Vec3.ZERO);
+        this.setDeltaMovement(Vector3d.ZERO);
         this.xo = x;
         this.yo = y;
         this.zo = z;
@@ -149,12 +161,12 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
 
     }
 
-    public BroomEntity(EntityType<BroomEntity> broomEntityEntityType, Level world) {
+    public BroomEntity(EntityType<BroomEntity> broomEntityEntityType, World world) {
         super(broomEntityEntityType, world);
     }
 
     @Override
-    protected float getEyeHeight(Pose poseIn, EntityDimensions sizeIn) {
+    protected float getEyeHeight(Pose poseIn, EntitySize sizeIn) {
         return sizeIn.height;
     }
 
@@ -200,8 +212,8 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
     }
 
     @Override
-    protected Vec3 getRelativePortalPosition(Direction.Axis axis, BlockUtil.FoundRectangle result) {
-        return PortalShape.getRelativePosition(result, axis, this.position(), this.getDimensions(this.getPose()));
+    protected Vector3d getRelativePortalPosition(Direction.Axis axis, TeleportationRepositioner.Result result) {
+        return PortalSize.getRelativePosition(result, axis, this.position(), this.getDimensions(this.getPose()));
     }
 
     /**
@@ -224,7 +236,7 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
             this.setTimeSinceHit(10);
             this.setDamageTaken(this.getDamageTaken() + amount * 10.0F);
             this.markHurt();
-            boolean flag = source.getDirectEntity() instanceof Player && ((Player)source.getDirectEntity()).getAbilities().instabuild;
+            boolean flag = source.getDirectEntity() instanceof PlayerEntity && ((PlayerEntity)source.getDirectEntity()).getAbilities().instabuild;
             if (flag || this.getDamageTaken() > 50.0F) {
                 if (!flag) {
 //                    this.spawnAtLocation(this.getItemBoat());
@@ -245,8 +257,8 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
     public ItemStack getCloneItemStack() {
         ItemStack item = new ItemStack(getItemBoat());
 
-        CompoundTag tag = item.getOrCreateTag();
-        CompoundTag inv = itemHandler.serializeNBT();
+        CompoundNBT tag = item.getOrCreateTag();
+        CompoundNBT inv = itemHandler.serializeNBT();
         boolean flag = false;
         for(int i = 0; i < 30; i++)
         {
@@ -353,7 +365,7 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
         this.itemHandler.getStackInSlot(2).hurt(1, new Random(), null);
         if (this.itemHandler.getStackInSlot(2).getDamageValue() >= this.itemHandler.getStackInSlot(2).getMaxDamage()) {
             this.itemHandler.setStackInSlot(2, ItemStack.EMPTY);
-            this.level.playSound((Player)null, this, SoundEvents.ITEM_BREAK, SoundSource.PLAYERS, 1.0F, random.nextFloat() * 0.4F + 1.0F);
+            this.level.playSound((PlayerEntity)null, this, SoundEvents.ITEM_BREAK, SoundCategory.PLAYERS, 1.0F, random.nextFloat() * 0.4F + 1.0F);
             sync();
         }
     }
@@ -361,7 +373,7 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
         this.itemHandler.getStackInSlot(0).hurt(1, new Random(), null);
         if (this.itemHandler.getStackInSlot(0).getDamageValue() >= this.itemHandler.getStackInSlot(0).getMaxDamage()) {
             this.itemHandler.setStackInSlot(0, ItemStack.EMPTY);
-            this.level.playSound((Player)null, this, SoundEvents.ITEM_BREAK, SoundSource.PLAYERS, 1.0F, random.nextFloat() * 0.4F + 1.0F);
+            this.level.playSound((PlayerEntity)null, this, SoundEvents.ITEM_BREAK, SoundCategory.PLAYERS, 1.0F, random.nextFloat() * 0.4F + 1.0F);
             sync();
         }
     }
@@ -372,11 +384,11 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
     @Override
     public void tick() {
 
-        if(!this.broomSync && this.level instanceof ServerLevel) {
+        if(!this.broomSync && this.level instanceof ServerWorld) {
             sync();
             this.broomSync = true;
         }
-        if(!this.broomSync && this.level instanceof ClientLevel) {
+        if(!this.broomSync && this.level instanceof ClientWorld) {
 
             if (level.isClientSide)
                 HexereiPacketHandler.sendToServer(new BroomAskForSyncPacket(this));
@@ -409,7 +421,7 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
         Entity entityPassenger = this.getControllingPassenger();
         if(this.level.isClientSide()) {
             if (entityPassenger instanceof LivingEntity && entityPassenger.equals(Minecraft.getInstance().player)) {
-                LocalPlayer player = Minecraft.getInstance().player;
+                ClientPlayerEntity player = Minecraft.getInstance().player;
                 this.setNoGravity(true);
                 updateInputs(player.input.left, player.input.right, player.input.up, player.input.down, player.input.jumping, player.input.shiftKeyDown);
             } else if (entityPassenger == null) {
@@ -418,7 +430,7 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
         }
         else
         {
-            if (entityPassenger instanceof LivingEntity && entityPassenger instanceof Player) {
+            if (entityPassenger instanceof LivingEntity && entityPassenger instanceof PlayerEntity) {
                 this.setNoGravity(true);
             } else if (entityPassenger == null) {
                 this.setNoGravity(floatMode);
@@ -431,7 +443,7 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
         else
         {
             if(this.level.isClientSide()) {
-                if (entityPassenger instanceof LivingEntity && entityPassenger instanceof Player) {
+                if (entityPassenger instanceof LivingEntity && entityPassenger instanceof PlayerEntity) {
 
                     if (getPaddleState(0) || getPaddleState(1))
                         drainTime--;
@@ -449,7 +461,7 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
         super.tick();
         this.tickLerp();
         if (this.isControlledByLocalInstance()) {
-            if (this.getPassengers().isEmpty() || !(this.getPassengers().get(0) instanceof Player)) {
+            if (this.getPassengers().isEmpty() || !(this.getPassengers().get(0) instanceof PlayerEntity)) {
                 this.setPaddleState(false, false);
             }
 
@@ -463,7 +475,7 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
             this.updateMotion();
             if (this.level.isClientSide) {
                 this.controlBoat();
-                this.level.sendPacketToServer(new ServerboundPaddleBoatPacket(this.getPaddleState(0), this.getPaddleState(1)));
+                this.level.sendPacketToServer(new CSteerBoatPacket(this.getPaddleState(0), this.getPaddleState(1)));
                 HexereiPacketHandler.sendToServer(new BroomSyncRotationToServer(this, getRotation()));
 
             }
@@ -500,7 +512,7 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
 
 
         } else {
-            this.setDeltaMovement(Vec3.ZERO);
+            this.setDeltaMovement(Vector3d.ZERO);
             if(this.floatMode) {
                 if(level.isClientSide) {
                     LocalDateTime time = LocalDateTime.now();
@@ -544,10 +556,10 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
                 if (!this.isSilent() && (double)(this.paddlePositions[i] % ((float)Math.PI * 2F)) <= (double)((float)Math.PI / 4F) && ((double)this.paddlePositions[i] + (double)((float)Math.PI / 8F)) % (double)((float)Math.PI * 2F) >= (double)((float)Math.PI / 4F)) {
                     SoundEvent soundevent = this.getPaddleSound();
                     if (soundevent != null) {
-                        Vec3 vector3d = this.getViewVector(1.0F);
+                        Vector3d vector3d = this.getViewVector(1.0F);
                         double d0 = i == 1 ? -vector3d.z : vector3d.z;
                         double d1 = i == 1 ? vector3d.x : -vector3d.x;
-                        this.level.playSound((Player)null, this.getX() + d0, this.getY(), this.getZ() + d1, soundevent, this.getSoundSource(), 1.0F, 0.8F + 0.4F * this.random.nextFloat());
+                        this.level.playSound((PlayerEntity)null, this.getX() + d0, this.getY(), this.getZ() + d1, soundevent, this.getSoundSource(), 1.0F, 0.8F + 0.4F * this.random.nextFloat());
                     }
                 }
 
@@ -558,14 +570,14 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
         }
 
         this.checkInsideBlocks();
-        List<Entity> list = this.level.getEntities(this, this.getBoundingBox().inflate((double)0.2F, (double)-0.01F, (double)0.2F), EntitySelector.pushableBy(this));
+        List<Entity> list = this.level.getEntities(this, this.getBoundingBox().inflate((double)0.2F, (double)-0.01F, (double)0.2F), EntityPredicates.pushableBy(this));
         if (!list.isEmpty()) {
-            boolean flag = !this.level.isClientSide && !(this.getControllingPassenger() instanceof Player);
+            boolean flag = !this.level.isClientSide && !(this.getControllingPassenger() instanceof PlayerEntity);
 
             for(int j = 0; j < list.size(); ++j) {
                 Entity entity = list.get(j);
                 if (!entity.hasPassenger(this)) {
-                    if (flag && this.getPassengers().size() < 1 && !entity.isPassenger() && entity.getBbWidth() < this.getBbWidth() && entity instanceof LivingEntity && !(entity instanceof WaterAnimal) && !(entity instanceof Player)) {
+                    if (flag && this.getPassengers().size() < 1 && !entity.isPassenger() && entity.getBbWidth() < this.getBbWidth() && entity instanceof LivingEntity && !(entity instanceof WaterMobEntity) && !(entity instanceof PlayerEntity)) {
                         //entity.startRiding(this);
                     } else {
                         this.push(entity);
@@ -681,7 +693,7 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
 
     public static AccelerationDirection getAccelerationDirection(LivingEntity entity)
     {
-        Options settings = Minecraft.getInstance().options;
+        GameSettings settings = Minecraft.getInstance().options;
         boolean forward = settings.keyUp.isDown();
         boolean reverse = settings.keyDown.isDown();
         if(forward && reverse)
@@ -709,7 +721,7 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
                 this.rockingIntensity -= 0.1F;
             }
 
-            this.rockingIntensity = Mth.clamp(this.rockingIntensity, 0.0F, 1.0F);
+            this.rockingIntensity = MathHelper.clamp(this.rockingIntensity, 0.0F, 1.0F);
             this.prevRockingAngle = this.rockingAngle;
             
             this.rockingAngle = 10.0F * (float)Math.sin((double)(0.5F * (float)this.level.getGameTime())) * this.rockingIntensity;
@@ -725,13 +737,13 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
                 int j = 60 - k - 1;
                 if (j > 0 && k == 0) {
                     this.setRockingTicks(0);
-                    Vec3 vector3d = this.getDeltaMovement();
+                    Vector3d vector3d = this.getDeltaMovement();
                     if (this.downwards) {
                         this.setDeltaMovement(vector3d.add(0.0D, -0.7D, 0.0D));
                         this.ejectPassengers();
                     } else {
                         this.setDeltaMovement(vector3d.x, this.hasPassenger((p_150274_) -> {
-                            return p_150274_ instanceof Player;
+                            return p_150274_ instanceof PlayerEntity;
                         }) ? 2.7D : 0.6D, vector3d.z);
                     }
                 }
@@ -767,7 +779,7 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
             double d0 = this.getX() + (this.lerpX - this.getX()) / (double)this.lerpSteps;
             double d1 = this.getY() + (this.lerpY - this.getY()) / (double)this.lerpSteps;
             double d2 = this.getZ() + (this.lerpZ - this.getZ()) / (double)this.lerpSteps;
-            double d3 = Mth.wrapDegrees(this.getYRot() - (double)this.getYRot());
+            double d3 = MathHelper.wrapDegrees(this.getYRot() - (double)this.getYRot());
             this.setYRot((float)((double)this.getYRot() + d3 / (double)this.lerpSteps));
             this.setXRot((float)((double)this.getXRot() + (this.lerpPitch - (double)this.getXRot()) / (double)this.lerpSteps));
             --this.lerpSteps;
@@ -784,7 +796,7 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
 
     @OnlyIn(Dist.CLIENT)
     public float getRowingTime(int side, float limbSwing) {
-        return this.getPaddleState(side) ? (float)Mth.clampedLerp((double)this.paddlePositions[side] - (double)((float)Math.PI / 8F), (double)this.paddlePositions[side], (double)limbSwing) : 0.0F;
+        return this.getPaddleState(side) ? (float)MathHelper.clampedLerp((double)this.paddlePositions[side] - (double)((float)Math.PI / 8F), (double)this.paddlePositions[side], (double)limbSwing) : 0.0F;
     }
 
     /**
@@ -809,14 +821,14 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
     }
 
     public float getWaterLevelAbove() {
-        AABB axisalignedbb = this.getBoundingBox();
-        int i = Mth.floor(axisalignedbb.minX);
-        int j = Mth.ceil(axisalignedbb.maxX);
-        int k = Mth.floor(axisalignedbb.maxY);
-        int l = Mth.ceil(axisalignedbb.maxY - this.lastYd);
-        int i1 = Mth.floor(axisalignedbb.minZ);
-        int j1 = Mth.ceil(axisalignedbb.maxZ);
-        BlockPos.MutableBlockPos blockpos$mutable = new BlockPos.MutableBlockPos();
+        AxisAlignedBB axisalignedbb = this.getBoundingBox();
+        int i = MathHelper.floor(axisalignedbb.minX);
+        int j = MathHelper.ceil(axisalignedbb.maxX);
+        int k = MathHelper.floor(axisalignedbb.maxY);
+        int l = MathHelper.ceil(axisalignedbb.maxY - this.lastYd);
+        int i1 = MathHelper.floor(axisalignedbb.minZ);
+        int j1 = MathHelper.ceil(axisalignedbb.maxZ);
+        BlockPos.Mutable blockpos$mutable = new BlockPos.Mutable();
 
         label39:
         for(int k1 = k; k1 < l; ++k1) {
@@ -848,18 +860,18 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
      * Decides how much the boat should be gliding on the land (based on any slippery blocks)
      */
     public float getBoatGlide() {
-        AABB axisalignedbb = this.getBoundingBox();
-        AABB axisalignedbb1 = new AABB(axisalignedbb.minX, axisalignedbb.minY - 0.001D, axisalignedbb.minZ, axisalignedbb.maxX, axisalignedbb.minY, axisalignedbb.maxZ);
-        int i = Mth.floor(axisalignedbb1.minX) - 1;
-        int j = Mth.ceil(axisalignedbb1.maxX) + 1;
-        int k = Mth.floor(axisalignedbb1.minY) - 1;
-        int l = Mth.ceil(axisalignedbb1.maxY) + 1;
-        int i1 = Mth.floor(axisalignedbb1.minZ) - 1;
-        int j1 = Mth.ceil(axisalignedbb1.maxZ) + 1;
-        VoxelShape voxelshape = Shapes.create(axisalignedbb1);
+        AxisAlignedBB axisalignedbb = this.getBoundingBox();
+        AxisAlignedBB axisalignedbb1 = new AxisAlignedBB(axisalignedbb.minX, axisalignedbb.minY - 0.001D, axisalignedbb.minZ, axisalignedbb.maxX, axisalignedbb.minY, axisalignedbb.maxZ);
+        int i = MathHelper.floor(axisalignedbb1.minX) - 1;
+        int j = MathHelper.ceil(axisalignedbb1.maxX) + 1;
+        int k = MathHelper.floor(axisalignedbb1.minY) - 1;
+        int l = MathHelper.ceil(axisalignedbb1.maxY) + 1;
+        int i1 = MathHelper.floor(axisalignedbb1.minZ) - 1;
+        int j1 = MathHelper.ceil(axisalignedbb1.maxZ) + 1;
+        VoxelShape voxelshape = VoxelShapes.create(axisalignedbb1);
         float f = 0.0F;
         int k1 = 0;
-        BlockPos.MutableBlockPos blockpos$mutable = new BlockPos.MutableBlockPos();
+        BlockPos.Mutable blockpos$mutable = new BlockPos.Mutable();
 
         for(int l1 = i; l1 < j; ++l1) {
             for(int i2 = i1; i2 < j1; ++i2) {
@@ -869,7 +881,7 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
                         if (j2 <= 0 || k2 != k && k2 != l - 1) {
                             blockpos$mutable.set(l1, k2, i2);
                             BlockState blockstate = this.level.getBlockState(blockpos$mutable);
-                            if (!(blockstate.getBlock() instanceof WaterlilyBlock) && Shapes.joinIsNotEmpty(blockstate.getCollisionShape(this.level, blockpos$mutable).move((double)l1, (double)k2, (double)i2), voxelshape, BooleanOp.AND)) {
+                            if (!(blockstate.getBlock() instanceof LilyPadBlock) && VoxelShapes.joinIsNotEmpty(blockstate.getCollisionShape(this.level, blockpos$mutable).move((double)l1, (double)k2, (double)i2), voxelshape, IBooleanFunction.AND)) {
                                 f += blockstate.getFriction(this.level, blockpos$mutable, this);
                                 ++k1;
                             }
@@ -889,16 +901,16 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
 
     private boolean checkInWater() {
 
-        AABB axisalignedbb = this.getBoundingBox();
-        int i = Mth.floor(axisalignedbb.minX);
-        int j = Mth.ceil(axisalignedbb.maxX);
-        int k = Mth.floor(axisalignedbb.minY);
-        int l = Mth.ceil(axisalignedbb.minY + 0.001D);
-        int i1 = Mth.floor(axisalignedbb.minZ);
-        int j1 = Mth.ceil(axisalignedbb.maxZ);
+        AxisAlignedBB axisalignedbb = this.getBoundingBox();
+        int i = MathHelper.floor(axisalignedbb.minX);
+        int j = MathHelper.ceil(axisalignedbb.maxX);
+        int k = MathHelper.floor(axisalignedbb.minY);
+        int l = MathHelper.ceil(axisalignedbb.minY + 0.001D);
+        int i1 = MathHelper.floor(axisalignedbb.minZ);
+        int j1 = MathHelper.ceil(axisalignedbb.maxZ);
         boolean flag = false;
         this.waterLevel = Double.MIN_VALUE;
-        BlockPos.MutableBlockPos blockpos$mutable = new BlockPos.MutableBlockPos();
+        BlockPos.Mutable blockpos$mutable = new BlockPos.Mutable();
 
         for(int k1 = i; k1 < j; ++k1) {
             for(int l1 = k; l1 < l; ++l1) {
@@ -923,17 +935,17 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
     @Nullable
     private BroomEntity.Status getUnderwaterStatus() {
 
-        AABB axisalignedbb = this.getBoundingBox();
+        AxisAlignedBB axisalignedbb = this.getBoundingBox();
         double d0 = axisalignedbb.maxY + 0.001D;
-        int i = Mth.floor(axisalignedbb.minX);
-        int j = Mth.ceil(axisalignedbb.maxX);
-        int k = Mth.floor(axisalignedbb.maxY);
-        int l = Mth.ceil(d0);
-        int i1 = Mth.floor(axisalignedbb.minZ);
-        int j1 = Mth.ceil(axisalignedbb.maxZ);
+        int i = MathHelper.floor(axisalignedbb.minX);
+        int j = MathHelper.ceil(axisalignedbb.maxX);
+        int k = MathHelper.floor(axisalignedbb.maxY);
+        int l = MathHelper.ceil(d0);
+        int i1 = MathHelper.floor(axisalignedbb.minZ);
+        int j1 = MathHelper.ceil(axisalignedbb.maxZ);
         boolean flag = false;
         boolean lavaFlag = false;
-        BlockPos.MutableBlockPos blockpos$mutable = new BlockPos.MutableBlockPos();
+        BlockPos.Mutable blockpos$mutable = new BlockPos.Mutable();
 
         for(int k1 = i; k1 < j; ++k1) {
             for(int l1 = k; l1 < l; ++l1) {
@@ -984,7 +996,7 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
             this.lastYd = 0.0D;
             this.status = BroomEntity.Status.IN_WATER;
         } else {
-            Vec3 vector3d = this.getDeltaMovement();
+            Vector3d vector3d = this.getDeltaMovement();
             if (this.status == BroomEntity.Status.IN_WATER) {
                 d2 = (this.waterLevel - this.getY()) / (double)this.getBbHeight();
                 this.momentum = 0.9F;
@@ -1040,7 +1052,7 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
                 this.momentum = 0.9F;
             } else if (this.status == BroomEntity.Status.ON_LAND) {
                 this.momentum = this.boatGlide;
-                if (this.getControllingPassenger() instanceof Player) {
+                if (this.getControllingPassenger() instanceof PlayerEntity) {
                     this.boatGlide /= 2.0F;
                 }
             }
@@ -1048,12 +1060,12 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
             this.setDeltaMovement(vector3d.x * (double)this.momentum, vector3d.y + d1, vector3d.z * (double)this.momentum);
             this.deltaRotation *= this.momentum;
             if (d2 > 0.0D) {
-                Vec3 vector3d1 = this.getDeltaMovement();
+                Vector3d vector3d1 = this.getDeltaMovement();
                 this.setDeltaMovement(vector3d1.x, (vector3d1.y + d2 * 0.06153846016296973D) * 0.75D, vector3d1.z);
             }
         }
-        if(this.isNoGravity() && Mth.abs((float)(this.getDeltaMovement().y()/(1.15f + (Mth.abs((float)this.getDeltaMovement().y())/6f)))) > 0f)
-            this.setDeltaMovement(this.getDeltaMovement().x(), Mth.abs((float)(this.getDeltaMovement().y()/(1.15f + (Mth.abs((float)this.getDeltaMovement().y())/6f)))) < 0.1f ? 0 : this.getDeltaMovement().y()/(1.15f + (Mth.abs((float)this.getDeltaMovement().y())/6f)), this.getDeltaMovement().z());
+        if(this.isNoGravity() && MathHelper.abs((float)(this.getDeltaMovement().y()/(1.15f + (MathHelper.abs((float)this.getDeltaMovement().y())/6f)))) > 0f)
+            this.setDeltaMovement(this.getDeltaMovement().x(), MathHelper.abs((float)(this.getDeltaMovement().y()/(1.15f + (MathHelper.abs((float)this.getDeltaMovement().y())/6f)))) < 0.1f ? 0 : this.getDeltaMovement().y()/(1.15f + (MathHelper.abs((float)this.getDeltaMovement().y())/6f)), this.getDeltaMovement().z());
         if(this.getDeltaMovement().y() > this.speedMultiplier/4f)
             this.setDeltaMovement(this.getDeltaMovement().x(),this.speedMultiplier/4f,this.getDeltaMovement().z());
         if(this.getDeltaMovement().y() < -this.speedMultiplier/4f)
@@ -1062,7 +1074,7 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
 
     private void controlBoat() {
 
-        Options settings = Minecraft.getInstance().options;
+        GameSettings settings = Minecraft.getInstance().options;
         boolean down = ModKeyBindings.broomDescend.isDown();
 
         if (this.isVehicle()) {
@@ -1093,7 +1105,7 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
             if(down) {
                 this.setDeltaMovement(this.getDeltaMovement().add(0, -0.1275f + (0.01f * speedMultiplier), 0));
             }
-            this.setDeltaMovement(this.getDeltaMovement().add((double)(Mth.sin((float)-(this.getYRot() + 90) * ((float)Math.PI / 180F)) * f) * speedMultiplier, 0.0D, (double)(Mth.cos((float)(this.getYRot() + 90) * ((float)Math.PI / 180F)) * f) * speedMultiplier));
+            this.setDeltaMovement(this.getDeltaMovement().add((double)(MathHelper.sin((float)-(this.getYRot() + 90) * ((float)Math.PI / 180F)) * f) * speedMultiplier, 0.0D, (double)(MathHelper.cos((float)(this.getYRot() + 90) * ((float)Math.PI / 180F)) * f) * speedMultiplier));
             this.setPaddleState(this.rightInputDown && !this.leftInputDown || this.forwardInputDown, this.leftInputDown && !this.rightInputDown || this.forwardInputDown);
         }
     }
@@ -1111,19 +1123,19 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
                     f = -0.6F;
                 }
 
-                if (passenger instanceof Animal) {
+                if (passenger instanceof AnimalEntity) {
                     f = (float)((double)f + 0.2D);
                 }
             }
 
-            Vec3 vector3d = (new Vec3((double)f, 0.0D, 0.0D)).yRot((float)-this.getYRot() * ((float)Math.PI / 180F) - ((float)Math.PI / 2F));
+            Vector3d vector3d = (new Vector3d((double)f, 0.0D, 0.0D)).yRot((float)-this.getYRot() * ((float)Math.PI / 180F) - ((float)Math.PI / 2F));
             passenger.setPos(this.getX() + vector3d.x, this.getY() + (double)f1, this.getZ() + vector3d.z);
             passenger.setYRot(passenger.getYRot() + this.deltaRotation);
             passenger.setYHeadRot(passenger.getYHeadRot() + this.deltaRotation);
             this.applyYawToEntity(passenger);
-            if (passenger instanceof Animal && this.getPassengers().size() > 1) {
+            if (passenger instanceof AnimalEntity && this.getPassengers().size() > 1) {
                 int j = passenger.getId() % 2 == 0 ? 90 : 270;
-                passenger.setYBodyRot(((Animal)passenger).yBodyRot + (float)j);
+                passenger.setYBodyRot(((AnimalEntity)passenger).yBodyRot + (float)j);
                 passenger.setYHeadRot(passenger.getYHeadRot() + (float)j);
             }
 
@@ -1135,8 +1147,8 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
      */
     protected void applyYawToEntity(Entity entityToUpdate) {
         entityToUpdate.setYBodyRot(this.getYRot());
-        float f = Mth.wrapDegrees(entityToUpdate.getYRot() - this.getYRot());
-        float f1 = Mth.clamp(f, -105.0F, 105.0F);
+        float f = MathHelper.wrapDegrees(entityToUpdate.getYRot() - this.getYRot());
+        float f1 = MathHelper.clamp(f, -105.0F, 105.0F);
         entityToUpdate.yRotO += f1 - f;
         entityToUpdate.setYRot(entityToUpdate.getYRot() + f1 - f);
         entityToUpdate.setYHeadRot(entityToUpdate.getYRot());
@@ -1152,7 +1164,7 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
     }
 
     @Override
-    protected void addAdditionalSaveData(CompoundTag compound) {
+    protected void addAdditionalSaveData(CompoundNBT compound) {
         compound.putString("Type", this.getBroomType().getName());
         compound.put("inv", itemHandler.serializeNBT());
         compound.putBoolean("floatMode", floatMode);
@@ -1162,7 +1174,7 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
      * (abstract) Protected helper method to read subclass entity data from NBT.
      */
     @Override
-    protected void readAdditionalSaveData(CompoundTag compound) {
+    protected void readAdditionalSaveData(CompoundNBT compound) {
 
         if (compound.contains("Type", 8)) {
             this.setBroomType(BroomEntity.Type.getTypeFromString(compound.getString("Type")));
@@ -1174,7 +1186,7 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
     }
 
     @Override
-    public void load(CompoundTag compound) {
+    public void load(CompoundNBT compound) {
         super.load(compound);
 
         itemHandler.deserializeNBT(compound.getCompound("inv"));
@@ -1224,17 +1236,17 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
     }
 
 
-    private MenuProvider createContainerProvider(Level worldIn, BlockPos pos) {
-        return new MenuProvider() {
+    private INamedContainerProvider createContainerProvider(World worldIn, BlockPos pos) {
+        return new INamedContainerProvider() {
             @org.jetbrains.annotations.Nullable
             @Override
-            public AbstractContainerMenu createMenu(int i, Inventory playerInventory, Player playerEntity) {
+            public Container createMenu(int i, PlayerInventory playerInventory, PlayerEntity playerEntity) {
                 return new BroomContainer(i, BroomEntity.this, playerInventory, playerEntity);
             }
 
             @Override
-            public Component getDisplayName() {
-                return new TranslatableComponent("");
+            public ITextComponent getDisplayName() {
+                return new TranslationTextComponent("");
             }
 
 
@@ -1243,34 +1255,34 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
 
 
     @Override
-    public InteractionResult interact(Player player, InteractionHand hand) {
+    public ActionResultType interact(PlayerEntity player, Hand hand) {
         if (player.isSecondaryUseActive()) {
             if (!level.isClientSide()) {
-                MenuProvider containerProvider = createContainerProvider(level, blockPosition());
+                INamedContainerProvider containerProvider = createContainerProvider(level, blockPosition());
 
 //                NetworkHooks.openGui(((ServerPlayer) player), containerProvider, blockPosition());
-                NetworkHooks.openGui((ServerPlayer) player, containerProvider, b -> b.writeInt(this.getId()));
+                NetworkHooks.openGui((ServerPlayerEntity) player, containerProvider, b -> b.writeInt(this.getId()));
 
 //                    throw new IllegalStateException("Our Container provider is missing!");
-                return InteractionResult.SUCCESS;
+                return ActionResultType.SUCCESS;
             }
-            return InteractionResult.PASS;
+            return ActionResultType.PASS;
         } else if (this.outOfControlTicks < 60.0F) {
             if (!this.level.isClientSide) {
                 if(player.startRiding(this) ) {
                     //this.setDeltaMovement(getDeltaMovement().getX(), getDeltaMovement().getY() - 1, getDeltaMovement().getZ());
                     if(this.itemHandler.getStackInSlot(3).is(HexereiTags.Items.BROOM_BRUSH))
                         this.push(0,0.25,0);
-                    return InteractionResult.CONSUME;
+                    return ActionResultType.CONSUME;
                 }
                 else {
-                    return InteractionResult.PASS;
+                    return ActionResultType.PASS;
                 }
             } else {
-                return InteractionResult.SUCCESS;
+                return ActionResultType.SUCCESS;
             }
         } else {
-            return InteractionResult.PASS;
+            return ActionResultType.PASS;
         }
     }
 
@@ -1375,7 +1387,7 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
 
     @OnlyIn(Dist.CLIENT)
     public float getRockingAngle(float partialTicks) {
-        return Mth.lerp(partialTicks, this.prevRockingAngle, this.rockingAngle);
+        return MathHelper.lerp(partialTicks, this.prevRockingAngle, this.rockingAngle);
     }
 
     /**
@@ -1439,7 +1451,7 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
     }
 
     @Override
-    public Packet<?> getAddEntityPacket() {
+    public IPacket<?> getAddEntityPacket() {
         return NetworkHooks.getEntitySpawningPacket(this);
     }
 
@@ -1485,7 +1497,7 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
     @Override
     public ItemStack removeItem(int index, int count) {
 
-        ItemStack itemStack = ContainerHelper.removeItem(this.items, index, count);
+        ItemStack itemStack = ItemStackHelper.removeItem(this.items, index, count);
         if(itemStack.getCount() < 1)
             itemStack.setCount(1);
         return itemStack;
@@ -1494,7 +1506,7 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
     @Override
     public ItemStack removeItemNoUpdate(int index) {
 
-        return ContainerHelper.takeItem(this.items, index);
+        return ItemStackHelper.takeItem(this.items, index);
     }
 
     @Override
@@ -1518,14 +1530,14 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
         setChanged();
         if (!level.isClientSide) {
 
-            HexereiPacketHandler.instance.send(PacketDistributor.TRACKING_CHUNK.with(() -> level.getChunkAt(blockPosition())), new BroomSyncPacket(this, saveWithoutId(new CompoundTag())));
+            HexereiPacketHandler.instance.send(PacketDistributor.TRACKING_CHUNK.with(() -> level.getChunkAt(blockPosition())), new BroomSyncPacket(this, saveWithoutId(new CompoundNBT())));
         }
 
     }
 
 
     @Override
-    public boolean stillValid(Player player) {
+    public boolean stillValid(PlayerEntity player) {
         if (this.isRemoved()) {
             return false;
         } else {
@@ -1540,14 +1552,14 @@ public class BroomEntity extends Entity implements Container, MenuProvider{
 
     @org.jetbrains.annotations.Nullable
     @Override
-    public AbstractContainerMenu createMenu(int id, Inventory inv, Player player) {
+    public Container createMenu(int id, PlayerInventory inv, PlayerEntity player) {
         return new BroomContainer(id, this, inv, player);
     }
 
 //    private net.minecraftforge.common.util.LazyOptional<?> handler = net.minecraftforge.common.util.LazyOptional.of(() -> new net.minecraftforge.items.wrapper.InvWrapper(this));
 
     @Override
-    public <T> net.minecraftforge.common.util.LazyOptional<T> getCapability(net.minecraftforge.common.capabilities.Capability<T> capability, @Nullable net.minecraft.core.Direction facing) {
+    public <T> net.minecraftforge.common.util.LazyOptional<T> getCapability(net.minecraftforge.common.capabilities.Capability<T> capability, @Nullable net.minecraft.util.Direction facing) {
         if (this.isAlive() && capability == net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
             return handler.cast();
         return super.getCapability(capability, facing);

@@ -1,29 +1,29 @@
 package net.joefoxe.hexerei.tileentity.renderer;
 
-import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.matrix.MatrixStack;
 import net.joefoxe.hexerei.block.ModBlocks;
 import net.joefoxe.hexerei.block.custom.Candle;
 import net.joefoxe.hexerei.tileentity.CandleTile;
 import net.joefoxe.hexerei.tileentity.CrystalBallTile;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.HorizontalBlock;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.core.Direction;
-import com.mojang.math.Vector3f;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.Direction;
+import net.minecraft.util.math.vector.Vector3f;
 import net.minecraftforge.client.model.data.EmptyModelData;
 
-public class CandleRenderer implements BlockEntityRenderer<CandleTile> {
+public class CandleRenderer implements TileEntityRenderer<CandleTile> {
 
 
     @Override
-    public void render(CandleTile tileEntityIn, float partialTicks, PoseStack matrixStackIn,
-                       MultiBufferSource bufferIn, int combinedLightIn, int combinedOverlayIn) {
+    public void render(CandleTile tileEntityIn, float partialTicks, MatrixStack matrixStackIn,
+                       IRenderTypeBuffer bufferIn, int combinedLightIn, int combinedOverlayIn) {
 
         if(!tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).hasBlockEntity())
             return;
@@ -39,13 +39,13 @@ public class CandleRenderer implements BlockEntityRenderer<CandleTile> {
             matrixStackIn.pushPose();
             matrixStackIn.translate(8f/16f , 0f/16f, 8f/16f);
             matrixStackIn.translate(tileEntityIn.candlePosX1 , tileEntityIn.candlePosY1, tileEntityIn.candlePosZ1);
-            if(tileEntityIn.getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.EAST) {
+            if(tileEntityIn.getBlockState().getValue(HorizontalBlock.FACING) == Direction.EAST) {
                 matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(270f));
 //                matrixStackIn.translate(0 , 0, -1);
-            } else if(tileEntityIn.getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.SOUTH) {
+            } else if(tileEntityIn.getBlockState().getValue(HorizontalBlock.FACING) == Direction.SOUTH) {
                 matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(180f));
 //                matrixStackIn.translate(-1 , 0, -1);
-            } else if(tileEntityIn.getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.WEST) {
+            } else if(tileEntityIn.getBlockState().getValue(HorizontalBlock.FACING) == Direction.WEST) {
                 matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(90f));
 //                matrixStackIn.translate(-1 , 0, 0);
             }
@@ -82,13 +82,13 @@ public class CandleRenderer implements BlockEntityRenderer<CandleTile> {
             matrixStackIn.pushPose();
             matrixStackIn.translate(tileEntityIn.candlePosX2 , tileEntityIn.candlePosY2, tileEntityIn.candlePosZ2);
             matrixStackIn.translate(8f/16f , 0f/16f, 8f/16f);
-            if(tileEntityIn.getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.EAST) {
+            if(tileEntityIn.getBlockState().getValue(HorizontalBlock.FACING) == Direction.EAST) {
                 matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(270f));
 //                matrixStackIn.translate(0 , 0, -1);
-            } else if(tileEntityIn.getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.SOUTH) {
+            } else if(tileEntityIn.getBlockState().getValue(HorizontalBlock.FACING) == Direction.SOUTH) {
                 matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(180f));
 //                matrixStackIn.translate(-1 , 0, -1);
-            } else if(tileEntityIn.getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.WEST) {
+            } else if(tileEntityIn.getBlockState().getValue(HorizontalBlock.FACING) == Direction.WEST) {
                 matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(90f));
 //                matrixStackIn.translate(-1 , 0, 0);
             }
@@ -125,13 +125,13 @@ public class CandleRenderer implements BlockEntityRenderer<CandleTile> {
             matrixStackIn.pushPose();
             matrixStackIn.translate(8f/16f , 0f/16f, 8f/16f);
             matrixStackIn.translate(tileEntityIn.candlePosX3 , tileEntityIn.candlePosY3, tileEntityIn.candlePosZ3);
-            if(tileEntityIn.getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.EAST) {
+            if(tileEntityIn.getBlockState().getValue(HorizontalBlock.FACING) == Direction.EAST) {
                 matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(270f));
 //                matrixStackIn.translate(0 , 0, -1);
-            } else if(tileEntityIn.getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.SOUTH) {
+            } else if(tileEntityIn.getBlockState().getValue(HorizontalBlock.FACING) == Direction.SOUTH) {
                 matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(180f));
 //                matrixStackIn.translate(-1 , 0, -1);
-            } else if(tileEntityIn.getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.WEST) {
+            } else if(tileEntityIn.getBlockState().getValue(HorizontalBlock.FACING) == Direction.WEST) {
                 matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(90f));
 //                matrixStackIn.translate(-1 , 0, 0);
             }
@@ -166,13 +166,13 @@ public class CandleRenderer implements BlockEntityRenderer<CandleTile> {
             matrixStackIn.pushPose();
             matrixStackIn.translate(8f/16f , 0f/16f, 8f/16f);;
             matrixStackIn.translate(tileEntityIn.candlePosX4 , tileEntityIn.candlePosY4, tileEntityIn.candlePosZ4);
-            if(tileEntityIn.getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.EAST) {
+            if(tileEntityIn.getBlockState().getValue(HorizontalBlock.FACING) == Direction.EAST) {
                 matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(270f));
 //                matrixStackIn.translate(0 , 0, -1);
-            } else if(tileEntityIn.getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.SOUTH) {
+            } else if(tileEntityIn.getBlockState().getValue(HorizontalBlock.FACING) == Direction.SOUTH) {
                 matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(180f));
 //                matrixStackIn.translate(-1 , 0, -1);
-            } else if(tileEntityIn.getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.WEST) {
+            } else if(tileEntityIn.getBlockState().getValue(HorizontalBlock.FACING) == Direction.WEST) {
                 matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(90f));
 //                matrixStackIn.translate(-1 , 0, 0);
             }
@@ -201,14 +201,14 @@ public class CandleRenderer implements BlockEntityRenderer<CandleTile> {
 
     }
 
-    private void renderItem(ItemStack stack, float partialTicks, PoseStack matrixStackIn, MultiBufferSource bufferIn,
+    private void renderItem(ItemStack stack, float partialTicks, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn,
                             int combinedLightIn) {
-        Minecraft.getInstance().getItemRenderer().renderStatic(stack, ItemTransforms.TransformType.FIXED, combinedLightIn,
+        Minecraft.getInstance().getItemRenderer().renderStatic(stack, ItemCameraTransforms.TransformType.FIXED, combinedLightIn,
                 OverlayTexture.NO_OVERLAY, matrixStackIn, bufferIn,1);
     }
 
 
-    private void renderBlock(PoseStack matrixStackIn, MultiBufferSource bufferIn, int combinedLightIn, BlockState state) {
+    private void renderBlock(MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int combinedLightIn, BlockState state) {
         Minecraft.getInstance().getBlockRenderer().renderSingleBlock(state, matrixStackIn, bufferIn, combinedLightIn, OverlayTexture.NO_OVERLAY, EmptyModelData.INSTANCE);
 
     }

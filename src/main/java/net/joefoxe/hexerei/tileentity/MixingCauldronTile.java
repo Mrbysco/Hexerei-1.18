@@ -21,45 +21,45 @@ import net.minecraft.SharedConstants;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.Tickable;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.core.particles.BlockParticleOption;
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.Connection;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.Direction;
+import net.minecraft.particles.BlockParticleData;
+import net.minecraft.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.network.NetworkManager;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.network.IPacket;
+import net.minecraft.client.network.play.IClientPlayNetHandler;
+import net.minecraft.network.play.server.SUpdateTileEntityPacket;
+import net.minecraft.world.server.ServerWorld;
+import net.minecraft.util.SoundEvents;
+import net.minecraft.util.SoundCategory;
 import net.minecraft.world.*;
-import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.MobSpawnType;
-import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.level.block.Block;
+import net.minecraft.util.DamageSource;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.SpawnReason;
+import net.minecraft.entity.item.ItemEntity;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.inventory.container.Container;
+import net.minecraft.item.Item;
+import net.minecraft.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.world.level.block.entity.TickingBlockEntity;
-import net.minecraft.core.NonNullList;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.*;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.item.ItemStack;
+import net.minecraft.tileentity.LockableLootTileEntity;
+import net.minecraft.block.BlockState;
 import net.minecraft.world.level.material.Fluids;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.shapes.BooleanOp;
-import net.minecraft.world.phys.shapes.Shapes;
-import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.shapes.IBooleanFunction;
+import net.minecraft.util.math.shapes.VoxelShapes;
+import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.IItemRenderProperties;
@@ -88,7 +88,15 @@ import java.util.function.Supplier;
 
 import static net.joefoxe.hexerei.block.custom.MixingCauldron.LEVEL;
 
-public class MixingCauldronTile extends RandomizableContainerBlockEntity implements WorldlyContainer, Clearable, MenuProvider, IFluidHandler {
+import net.minecraft.inventory.IClearable;
+import net.minecraft.inventory.ISidedInventory;
+import net.minecraft.inventory.Inventory;
+import net.minecraft.inventory.ItemStackHelper;
+import net.minecraft.inventory.container.INamedContainerProvider;
+import net.minecraft.util.math.MathHelper;
+import net.minecraftforge.fluids.capability.IFluidHandler.FluidAction;
+
+public class MixingCauldronTile extends LockableLootTileEntity implements ISidedInventory, IClearable, INamedContainerProvider, IFluidHandler {
 
 //    private final ItemStackHandler itemHandler = createHandler();
 //    private final LazyOptional<IItemHandler> handler = LazyOptional.of(() -> itemHandler);
@@ -113,7 +121,7 @@ public class MixingCauldronTile extends RandomizableContainerBlockEntity impleme
 
 
 
-    public MixingCauldronTile(BlockEntityType<?> tileEntityTypeIn, BlockPos blockPos, BlockState blockState) {
+    public MixingCauldronTile(TileEntityType<?> tileEntityTypeIn, BlockPos blockPos, BlockState blockState) {
         super(tileEntityTypeIn, blockPos, blockState);
     }
 
@@ -146,8 +154,8 @@ public class MixingCauldronTile extends RandomizableContainerBlockEntity impleme
     }
 
     @Override
-    protected Component getDefaultName() {
-        return new TranslatableComponent("container." + Hexerei.MOD_ID + ".mixing_cauldron");
+    protected ITextComponent getDefaultName() {
+        return new TranslationTextComponent("container." + Hexerei.MOD_ID + ".mixing_cauldron");
     }
 
     
@@ -165,7 +173,7 @@ public class MixingCauldronTile extends RandomizableContainerBlockEntity impleme
     @Override
     public ItemStack removeItem(int index, int count) {
 //        setChanged();
-        ItemStack itemStack = ContainerHelper.removeItem(this.items, index, count);
+        ItemStack itemStack = ItemStackHelper.removeItem(this.items, index, count);
         if(itemStack.getCount() < 1)
             itemStack.setCount(1);
         return itemStack;
@@ -177,7 +185,7 @@ public class MixingCauldronTile extends RandomizableContainerBlockEntity impleme
     @Override
     public ItemStack removeItemNoUpdate(int index) {
 
-        return ContainerHelper.takeItem(this.items, index);
+        return ItemStackHelper.takeItem(this.items, index);
     }
 
     /**
@@ -241,7 +249,7 @@ public class MixingCauldronTile extends RandomizableContainerBlockEntity impleme
 
 
     @Override
-    protected AbstractContainerMenu createMenu(int id, Inventory player) {
+    protected Container createMenu(int id, PlayerInventory player) {
         return new MixingCauldronContainer(id, this.level, this.getPos(), player, player.player);
     }
 
@@ -257,8 +265,8 @@ public class MixingCauldronTile extends RandomizableContainerBlockEntity impleme
 //    }
 
     @Override
-    public AABB getRenderBoundingBox() {
-        AABB aabb = super.getRenderBoundingBox().inflate(5, 5, 5);
+    public AxisAlignedBB getRenderBoundingBox() {
+        AxisAlignedBB aabb = super.getRenderBoundingBox().inflate(5, 5, 5);
         return aabb;
     }
 
@@ -274,44 +282,44 @@ public class MixingCauldronTile extends RandomizableContainerBlockEntity impleme
     }
 
     @Override
-    public void load(CompoundTag compoundTag) {
+    public void load(CompoundNBT compoundTag) {
         super.load(compoundTag);
 
         this.items = NonNullList.withSize(this.getContainerSize(), ItemStack.EMPTY);
         this.fluidStack = FluidStack.loadFluidStackFromNBT(compoundTag.getCompound("fluid"));
 
         if (!this.tryLoadLootTable(compoundTag)) {
-            ContainerHelper.loadAllItems(compoundTag, this.items);
+            ItemStackHelper.loadAllItems(compoundTag, this.items);
         }
     }
 
-    public void saveAdditional(CompoundTag compound) {
-        ContainerHelper.saveAllItems(compound, this.items);
-        compound.put("fluid", this.fluidStack.writeToNBT(new CompoundTag()));
+    public void saveAdditional(CompoundNBT compound) {
+        ItemStackHelper.saveAllItems(compound, this.items);
+        compound.put("fluid", this.fluidStack.writeToNBT(new CompoundNBT()));
     }
 
 //    @Override
-    public CompoundTag save(CompoundTag tag) {
+    public CompoundNBT save(CompoundNBT tag) {
         super.saveAdditional(tag);
-        ContainerHelper.saveAllItems(tag, this.items);
-        tag.put("fluid", this.fluidStack.writeToNBT(new CompoundTag()));
+        ItemStackHelper.saveAllItems(tag, this.items);
+        tag.put("fluid", this.fluidStack.writeToNBT(new CompoundNBT()));
         return tag;
     }
 
     @Override
-    public CompoundTag getUpdateTag()
+    public CompoundNBT getUpdateTag()
     {
-        return this.save(new CompoundTag());
+        return this.save(new CompoundNBT());
     }
 
     @Nullable
-    public Packet<ClientGamePacketListener> getUpdatePacket() {
+    public IPacket<IClientPlayNetHandler> getUpdatePacket() {
 
-        return ClientboundBlockEntityDataPacket.create(this, (tag) -> this.getUpdateTag());
+        return SUpdateTileEntityPacket.create(this, (tag) -> this.getUpdateTag());
     }
 
     @Override
-    public void onDataPacket(final Connection net, final ClientboundBlockEntityDataPacket pkt)
+    public void onDataPacket(final NetworkManager net, final SUpdateTileEntityPacket pkt)
     {
         this.deserializeNBT(pkt.getTag());
     }
@@ -319,7 +327,7 @@ public class MixingCauldronTile extends RandomizableContainerBlockEntity impleme
     public void sync() {
         setChanged();
         if (!level.isClientSide)
-            HexereiPacketHandler.instance.send(PacketDistributor.TRACKING_CHUNK.with(() -> level.getChunkAt(worldPosition)), new TESyncPacket(worldPosition, save(new CompoundTag())));
+            HexereiPacketHandler.instance.send(PacketDistributor.TRACKING_CHUNK.with(() -> level.getChunkAt(worldPosition)), new TESyncPacket(worldPosition, save(new CompoundNBT())));
 
         if(this.level != null)
             this.level.sendBlockUpdated(this.getPos(), this.level.getBlockState(this.getPos()), this.level.getBlockState(this.getPos()),
@@ -328,12 +336,12 @@ public class MixingCauldronTile extends RandomizableContainerBlockEntity impleme
 
 
     @Override
-    public void deserializeNBT(CompoundTag nbt) {
+    public void deserializeNBT(CompoundNBT nbt) {
         super.deserializeNBT(nbt);
     }
 
     @Override
-    public CompoundTag serializeNBT() {
+    public CompoundNBT serializeNBT() {
         return super.serializeNBT();
     }
 
@@ -348,7 +356,7 @@ public class MixingCauldronTile extends RandomizableContainerBlockEntity impleme
 //    }
 
     @Override
-    public void handleUpdateTag(CompoundTag tag) {
+    public void handleUpdateTag(CompoundNBT tag) {
         super.handleUpdateTag(tag);
     }
 
@@ -407,22 +415,22 @@ public class MixingCauldronTile extends RandomizableContainerBlockEntity impleme
 
     private void strikeLightning() {
         if(!this.level.isClientSide()) {
-            EntityType.LIGHTNING_BOLT.spawn((ServerLevel)level, null, null,
-                    worldPosition, MobSpawnType.TRIGGERED, true, true);
+            EntityType.LIGHTNING_BOLT.spawn((ServerWorld)level, null, null,
+                    worldPosition, SpawnReason.TRIGGERED, true, true);
         }
     }
 
     public void entityInside(Entity entity) {
         BlockPos blockpos = this.getPos();
         if (entity instanceof ItemEntity) {
-            if (Shapes.joinIsNotEmpty(Shapes.create(entity.getBoundingBox().move((double)(-blockpos.getX()), (double)(-blockpos.getY()), (double)(-blockpos.getZ()))), HOPPER_SHAPE, BooleanOp.AND)) {
+            if (VoxelShapes.joinIsNotEmpty(VoxelShapes.create(entity.getBoundingBox().move((double)(-blockpos.getX()), (double)(-blockpos.getY()), (double)(-blockpos.getZ()))), HOPPER_SHAPE, IBooleanFunction.AND)) {
                 if(captureItem((ItemEntity)entity) && !level.isClientSide) {
                     HexereiPacketHandler.instance.send(PacketDistributor.TRACKING_CHUNK.with(() -> level.getChunkAt(worldPosition)), new EmitParticlesPacket(worldPosition, 2, true));
                 }
             }
         }else
         {
-            if (Shapes.joinIsNotEmpty(Shapes.create(entity.getBoundingBox().move((double)(-blockpos.getX()), (double)(-blockpos.getY()), (double)(-blockpos.getZ()))), BLOOD_SIGIL_SHAPE, BooleanOp.AND)) {
+            if (VoxelShapes.joinIsNotEmpty(VoxelShapes.create(entity.getBoundingBox().move((double)(-blockpos.getX()), (double)(-blockpos.getY()), (double)(-blockpos.getZ()))), BLOOD_SIGIL_SHAPE, IBooleanFunction.AND)) {
                 if(this.isColliding <= 1 && this.getItemInSlot(9).asItem() == ModItems.BLOOD_SIGIL.get()) {
                     Random random = new Random();
                     entity.hurt(DamageSource.MAGIC, 3.0f);
@@ -439,7 +447,7 @@ public class MixingCauldronTile extends RandomizableContainerBlockEntity impleme
                                 this.getFluidStack().grow(1);
                             sync();
                         }
-                        entity.getLevel().playSound((Player)null, entity.blockPosition(), SoundEvents.HONEY_DRINK, SoundSource.BLOCKS, 1.0F, 1.0F);
+                        entity.getLevel().playSound((PlayerEntity)null, entity.blockPosition(), SoundEvents.HONEY_DRINK, SoundCategory.BLOCKS, 1.0F, 1.0F);
                         if(!level.isClientSide)
                             HexereiPacketHandler.instance.send(PacketDistributor.TRACKING_CHUNK.with(() -> level.getChunkAt(worldPosition)), new EmitParticlesPacket(worldPosition, 2, true));
 
@@ -489,7 +497,7 @@ public class MixingCauldronTile extends RandomizableContainerBlockEntity impleme
 
 
     public void craft(){
-        SimpleContainer inv = new SimpleContainer(10);
+        Inventory inv = new Inventory(10);
         for (int i = 0; i < 9; i++) {
             inv.setItem(i, this.items.get(i));
         }
@@ -532,7 +540,7 @@ public class MixingCauldronTile extends RandomizableContainerBlockEntity impleme
             this.craftDelay--;
         this.crafting = false;
         if(this.craftDelay > 0 && !level.isClientSide)
-            this.level.setBlock(worldPosition, this.level.getBlockState(this.worldPosition).setValue(MixingCauldron.CRAFT_DELAY, Integer.valueOf(Mth.clamp(this.craftDelay - 1, 0, MixingCauldronTile.craftDelayMax))), 2);
+            this.level.setBlock(worldPosition, this.level.getBlockState(this.worldPosition).setValue(MixingCauldron.CRAFT_DELAY, Integer.valueOf(MathHelper.clamp(this.craftDelay - 1, 0, MixingCauldronTile.craftDelayMax))), 2);
         if(this.craftDelay < 10)
             this.crafted = false;
 
@@ -609,11 +617,11 @@ public class MixingCauldronTile extends RandomizableContainerBlockEntity impleme
             {
                 if(this.emitParticleSpout){
                     if (rand.nextInt(3) == 0)
-                        level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, level.getBlockState(worldPosition)), worldPosition.getX() + 0.5f, worldPosition.getY() + height, worldPosition.getZ() + 0.5f, (rand.nextDouble() - 0.5d) / 20d, (rand.nextDouble() + 0.5d) * 2d, (rand.nextDouble() - 0.5d) / 20d);
+                        level.addParticle(new BlockParticleData(ParticleTypes.BLOCK, level.getBlockState(worldPosition)), worldPosition.getX() + 0.5f, worldPosition.getY() + height, worldPosition.getZ() + 0.5f, (rand.nextDouble() - 0.5d) / 20d, (rand.nextDouble() + 0.5d) * 2d, (rand.nextDouble() - 0.5d) / 20d);
                     if (rand.nextInt(3) == 0)
-                        level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, level.getBlockState(worldPosition)), worldPosition.getX() + 0.5f, worldPosition.getY() + height, worldPosition.getZ() + 0.5f, (rand.nextDouble() - 0.5d) / 20d, (rand.nextDouble() + 0.5d) * 2d, (rand.nextDouble() - 0.5d) / 20d);
+                        level.addParticle(new BlockParticleData(ParticleTypes.BLOCK, level.getBlockState(worldPosition)), worldPosition.getX() + 0.5f, worldPosition.getY() + height, worldPosition.getZ() + 0.5f, (rand.nextDouble() - 0.5d) / 20d, (rand.nextDouble() + 0.5d) * 2d, (rand.nextDouble() - 0.5d) / 20d);
                     if (rand.nextInt(3) == 0)
-                        level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, level.getBlockState(worldPosition)), worldPosition.getX() + 0.5f, worldPosition.getY() + height, worldPosition.getZ() + 0.5f, (rand.nextDouble() - 0.5d) / 20d, (rand.nextDouble() + 0.5d) * 2d, (rand.nextDouble() - 0.5d) / 20d);
+                        level.addParticle(new BlockParticleData(ParticleTypes.BLOCK, level.getBlockState(worldPosition)), worldPosition.getX() + 0.5f, worldPosition.getY() + height, worldPosition.getZ() + 0.5f, (rand.nextDouble() - 0.5d) / 20d, (rand.nextDouble() + 0.5d) * 2d, (rand.nextDouble() - 0.5d) / 20d);
                     if (rand.nextInt(3) == 0)
                         level.addParticle(ParticleTypes.SMOKE, worldPosition.getX() + 0.5f, worldPosition.getY() + height, worldPosition.getZ() + 0.5f, (rand.nextDouble() - 0.5d) / 50d, (rand.nextDouble() + 0.5d) * 0.045d, (rand.nextDouble() - 0.5d) / 50d);
                     if (rand.nextInt(3) == 0)
@@ -738,7 +746,7 @@ public class MixingCauldronTile extends RandomizableContainerBlockEntity impleme
                 int amount = fluidHandler.fill(this.fluidStack.copy(), FluidAction.EXECUTE);
                 if (amount > 0) {
                     if(getLevel() != null)
-                        getLevel().playSound((Player) null, getPos().getX() + 0.5f, getPos().getY() + 0.5f, getPos().getZ() + 0.5f, fluidHandler.getFluidInTank(1).getFluid().getPickupSound().isPresent() ? fluidHandler.getFluidInTank(1).getFluid().getPickupSound().get() : SoundEvents.BUCKET_EMPTY, SoundSource.BLOCKS, 1.0F, 0.8F + 0.4F * random.nextFloat());
+                        getLevel().playSound((PlayerEntity) null, getPos().getX() + 0.5f, getPos().getY() + 0.5f, getPos().getZ() + 0.5f, fluidHandler.getFluidInTank(1).getFluid().getPickupSound().isPresent() ? fluidHandler.getFluidInTank(1).getFluid().getPickupSound().get() : SoundEvents.BUCKET_EMPTY, SoundCategory.BLOCKS, 1.0F, 0.8F + 0.4F * random.nextFloat());
                     this.fluidStack.shrink(amount);
                     this.sync();
                     return true;
@@ -754,7 +762,7 @@ public class MixingCauldronTile extends RandomizableContainerBlockEntity impleme
                 amount.grow(this.fluidStack.getAmount());
                 this.fluidStack = amount;
                 if(getLevel() != null)
-                    getLevel().playSound((Player) null, getPos().getX() + 0.5f, getPos().getY() + 0.5f, getPos().getZ() + 0.5f, amount.getFluid().getPickupSound().isPresent() ? amount.getFluid().getPickupSound().get() : SoundEvents.BUCKET_FILL, SoundSource.BLOCKS, 1.0F, 0.8F + 0.4F * random.nextFloat());
+                    getLevel().playSound((PlayerEntity) null, getPos().getX() + 0.5f, getPos().getY() + 0.5f, getPos().getZ() + 0.5f, amount.getFluid().getPickupSound().isPresent() ? amount.getFluid().getPickupSound().get() : SoundEvents.BUCKET_FILL, SoundCategory.BLOCKS, 1.0F, 0.8F + 0.4F * random.nextFloat());
                 this.sync();
                 return true;
             }

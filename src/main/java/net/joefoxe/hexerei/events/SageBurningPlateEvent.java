@@ -9,15 +9,15 @@ import net.joefoxe.hexerei.tileentity.ModTileEntities;
 import net.joefoxe.hexerei.tileentity.SageBurningPlateTile;
 import net.joefoxe.hexerei.util.HexereiTags;
 import net.joefoxe.hexerei.util.HexereiUtil;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.entity.Entity;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.entity.Entity;
 import net.minecraft.world.entity.Entity.RemovalReason;
-import net.minecraft.world.entity.MobSpawnType;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
+import net.minecraft.entity.SpawnReason;
+import net.minecraft.world.World;
+import net.minecraft.block.Block;
 import net.minecraft.world.level.block.ComposterBlock;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.block.BlockState;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingSpawnEvent;
 import net.minecraftforge.event.world.WorldEvent;
@@ -33,7 +33,7 @@ public class SageBurningPlateEvent {
 
     @SubscribeEvent
     public void onEntityJoin(LivingSpawnEvent.CheckSpawn e) {
-        Level world = e.getWorld().isClientSide() ? null : e.getWorld() instanceof Level ? (Level)e.getWorld() : null;
+        World world = e.getWorld().isClientSide() ? null : e.getWorld() instanceof World ? (World)e.getWorld() : null;
 
         if (world == null) {
             return;
@@ -41,7 +41,7 @@ public class SageBurningPlateEvent {
 
         //TODO Add server config check here
 
-        if(e.getSpawnReason() != MobSpawnType.NATURAL)
+        if(e.getSpawnReason() != SpawnReason.NATURAL)
             return;
 
         if(HexConfig.SAGE_BURNING_PLATE_RANGE.get()==0)return;
@@ -68,7 +68,7 @@ public class SageBurningPlateEvent {
         for (BlockPos nearbySageBurningPlate : nearbySageBurningPlates) {
             BlockState burning_platestate = world.getBlockState(nearbySageBurningPlate);
             Block block = burning_platestate.getBlock();
-            BlockEntity blockEntity = world.getBlockEntity(nearbySageBurningPlate);
+            TileEntity blockEntity = world.getBlockEntity(nearbySageBurningPlate);
             if(!burning_platestate.getValue(SageBurningPlate.LIT)) {
                 continue;
             }

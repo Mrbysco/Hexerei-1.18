@@ -3,12 +3,12 @@ package net.joefoxe.hexerei.events;
 
 import com.google.gson.JsonObject;
 import net.joefoxe.hexerei.Hexerei;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.GsonHelper;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.storage.loot.LootContext;
-import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.JSONUtils;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.loot.LootContext;
+import net.minecraft.loot.conditions.ILootCondition;
 import net.minecraftforge.common.loot.GlobalLootModifierSerializer;
 import net.minecraftforge.common.loot.LootModifier;
 import net.minecraftforge.event.RegistryEvent;
@@ -23,7 +23,7 @@ public class SageSeedAdditionModifier extends LootModifier {
     private final Item addition;
     private final int count;
 
-    protected SageSeedAdditionModifier(LootItemCondition[] conditionsIn, Item addition, int count) {
+    protected SageSeedAdditionModifier(ILootCondition[] conditionsIn, Item addition, int count) {
         super(conditionsIn);
         this.addition = addition;
         this.count = count;
@@ -47,10 +47,10 @@ public class SageSeedAdditionModifier extends LootModifier {
     public static class Serializer extends GlobalLootModifierSerializer<SageSeedAdditionModifier> {
 
         @Override
-        public SageSeedAdditionModifier read(ResourceLocation name, JsonObject object, LootItemCondition[] conditionsIn) {
+        public SageSeedAdditionModifier read(ResourceLocation name, JsonObject object, ILootCondition[] conditionsIn) {
             Item addition = ForgeRegistries.ITEMS.getValue(
-                    new ResourceLocation(GsonHelper.getAsString(object, "addition")));
-            int count = GsonHelper.getAsInt(object, "count", 1);
+                    new ResourceLocation(JSONUtils.getAsString(object, "addition")));
+            int count = JSONUtils.getAsInt(object, "count", 1);
             return new SageSeedAdditionModifier(conditionsIn, addition, count);
         }
 

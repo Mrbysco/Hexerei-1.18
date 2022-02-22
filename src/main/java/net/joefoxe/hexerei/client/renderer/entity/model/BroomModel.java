@@ -1,28 +1,28 @@
 package net.joefoxe.hexerei.client.renderer.entity.model;
 
 import com.google.common.collect.ImmutableList;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.IVertexBuilder;
 import net.joefoxe.hexerei.Hexerei;
 import net.joefoxe.hexerei.client.renderer.entity.custom.BroomEntity;
 import net.minecraft.client.model.EntityModel;
-import net.minecraft.client.model.ListModel;
+import net.minecraft.client.renderer.entity.model.SegmentedModel;
 import net.minecraft.client.model.geom.ModelLayerLocation;
-import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.renderer.model.ModelRenderer;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 
-public class BroomModel extends ListModel<BroomEntity> {
+public class BroomModel extends SegmentedModel<BroomEntity> {
     // This layer location should be baked with EntityRendererProvider.Context in the entity renderer and passed into this model's constructor
     public static final ModelLayerLocation LAYER_LOCATION = new ModelLayerLocation(new ResourceLocation(Hexerei.MOD_ID, "broom"), "main");
-    private final ModelPart brush;
-    private final ModelPart bb_main;
+    private final ModelRenderer brush;
+    private final ModelRenderer bb_main;
 
 
     public static LayerDefinition createBodyLayer() {
@@ -111,20 +111,20 @@ public class BroomModel extends ListModel<BroomEntity> {
         return LayerDefinition.create(meshdefinition, 64, 64);
     }
 
-    public BroomModel(ModelPart root) {
+    public BroomModel(ModelRenderer root) {
         this.brush = root.getChild("brush");
         this.bb_main = root.getChild("bb_main");
     }
 
 
     @Override
-    public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
+    public void renderToBuffer(MatrixStack poseStack, IVertexBuilder buffer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
         brush.render(poseStack, buffer, packedLight, packedOverlay);
         bb_main.render(poseStack, buffer, packedLight, packedOverlay);
     }
 
     @Override
-    public Iterable<ModelPart> parts() {
+    public Iterable<ModelRenderer> parts() {
         return ImmutableList.of(brush,bb_main);
     }
 

@@ -1,9 +1,9 @@
 package net.joefoxe.hexerei.client.renderer.entity.render;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.IVertexBuilder;
 import com.mojang.datafixers.util.Pair;
-import com.mojang.math.Quaternion;
+import net.minecraft.util.math.vector.Quaternion;
 import net.joefoxe.hexerei.Hexerei;
 import net.joefoxe.hexerei.block.ModBlocks;
 import net.joefoxe.hexerei.client.renderer.entity.custom.BroomEntity;
@@ -11,19 +11,19 @@ import net.joefoxe.hexerei.client.renderer.entity.model.*;
 import net.joefoxe.hexerei.item.ModItems;
 import net.joefoxe.hexerei.util.HexereiTags;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.core.NonNullList;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
-import com.mojang.math.Vector3f;
-import net.minecraft.world.ContainerHelper;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
+import net.minecraft.util.NonNullList;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.vector.Vector3f;
+import net.minecraft.inventory.ItemStackHelper;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -87,7 +87,7 @@ public class BroomRenderer extends EntityRenderer<BroomEntity>
         return TEXTURE;
     }
 
-    public void render(BroomEntity entityIn, float entityYaw, float partialTicks, PoseStack matrixStackIn, MultiBufferSource bufferIn, int packedLightIn) {
+    public void render(BroomEntity entityIn, float entityYaw, float partialTicks, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int packedLightIn) {
         matrixStackIn.pushPose();
         matrixStackIn.translate(0.0D, 0.375D + entityIn.floatingOffset, 0.0D);
         matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(180.0F - entityYaw - (entityIn.deltaRotation * 2)));
@@ -99,11 +99,11 @@ public class BroomRenderer extends EntityRenderer<BroomEntity>
         }
 
         if (f > 0.0F) {
-            matrixStackIn.mulPose(Vector3f.XP.rotationDegrees(Mth.sin(f) * f * f1 / 10.0F * (float)entityIn.getForwardDirection()));
+            matrixStackIn.mulPose(Vector3f.XP.rotationDegrees(MathHelper.sin(f) * f * f1 / 10.0F * (float)entityIn.getForwardDirection()));
         }
 
         float f2 = entityIn.getRockingAngle(partialTicks);
-        if (!Mth.equal(f2, 0.0F)) {
+        if (!MathHelper.equal(f2, 0.0F)) {
             matrixStackIn.mulPose(new Quaternion(new Vector3f(1.0F, 0.0F, 1.0F), entityIn.getRockingAngle(partialTicks), true));
         }
 
@@ -118,7 +118,7 @@ public class BroomRenderer extends EntityRenderer<BroomEntity>
         ResourceLocation loc = TEXTURE;
         if(entityIn.getBroomType() == BroomEntity.Type.WILLOW)
             loc = WILLOW_TEXTURE;
-        VertexConsumer ivertexbuilderStick = bufferIn.getBuffer(broomStickModel.renderType(loc));
+        IVertexBuilder ivertexbuilderStick = bufferIn.getBuffer(broomStickModel.renderType(loc));
         broomStickModel.renderToBuffer(matrixStackIn, ivertexbuilderStick, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
 
         if(entityIn.itemHandler.getStackInSlot(2).is(HexereiTags.Items.BROOM_BRUSH)) {
@@ -126,12 +126,12 @@ public class BroomRenderer extends EntityRenderer<BroomEntity>
             if(entityIn.itemHandler.getStackInSlot(2).is(ModItems.HERB_ENHANCED_BROOM_BRUSH.get())) {
                 BroomBrushBaseModel broomBrushModel = broomBrushResources.getSecond();
                 broomBrushModel.setupAnim(entityIn, partialTicks, 0.0F, -0.1F, 0.0F, 0.0F);
-                VertexConsumer ivertexbuilderBrush = bufferIn.getBuffer(broomBrushModel.renderType(HERB_BRUSH_TEXTURE));
+                IVertexBuilder ivertexbuilderBrush = bufferIn.getBuffer(broomBrushModel.renderType(HERB_BRUSH_TEXTURE));
                 broomBrushModel.renderToBuffer(matrixStackIn, ivertexbuilderBrush, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
             }else {
                 BroomBrushBaseModel broomBrushModel = broomBrushResources.getSecond();
                 broomBrushModel.setupAnim(entityIn, partialTicks, 0.0F, -0.1F, 0.0F, 0.0F);
-                VertexConsumer ivertexbuilderBrush = bufferIn.getBuffer(broomBrushModel.renderType(TEXTURE));
+                IVertexBuilder ivertexbuilderBrush = bufferIn.getBuffer(broomBrushModel.renderType(TEXTURE));
                 broomBrushModel.renderToBuffer(matrixStackIn, ivertexbuilderBrush, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
             }
 
@@ -141,19 +141,19 @@ public class BroomRenderer extends EntityRenderer<BroomEntity>
         if(entityIn.itemHandler.getStackInSlot(1).is(HexereiTags.Items.SMALL_SATCHELS)) {
             BroomSmallSatchelModel broomSmallSatchelModel = broomSmallSatchelResources.getSecond();
             broomSmallSatchelModel.setupAnim(entityIn, partialTicks, 0.0F, -0.1F, 0.0F, 0.0F);
-            VertexConsumer ivertexbuilderSatchel = bufferIn.getBuffer(broomSmallSatchelModel.renderType(SATCHEL_SMALL_TEXTURE));
+            IVertexBuilder ivertexbuilderSatchel = bufferIn.getBuffer(broomSmallSatchelModel.renderType(SATCHEL_SMALL_TEXTURE));
             broomSmallSatchelModel.renderToBuffer(matrixStackIn, ivertexbuilderSatchel, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
         }
         if(entityIn.itemHandler.getStackInSlot(1).is(HexereiTags.Items.MEDIUM_SATCHELS)) {
             BroomMediumSatchelModel broomMediumSatchelModel = broomMediumSatchelResources.getSecond();
             broomMediumSatchelModel.setupAnim(entityIn, partialTicks, 0.0F, -0.1F, 0.0F, 0.0F);
-            VertexConsumer ivertexbuilderSatchel = bufferIn.getBuffer(broomMediumSatchelModel.renderType(SATCHEL_TEXTURE));
+            IVertexBuilder ivertexbuilderSatchel = bufferIn.getBuffer(broomMediumSatchelModel.renderType(SATCHEL_TEXTURE));
             broomMediumSatchelModel.renderToBuffer(matrixStackIn, ivertexbuilderSatchel, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
         }
         if(entityIn.itemHandler.getStackInSlot(1).is(HexereiTags.Items.LARGE_SATCHELS)) {
             BroomLargeSatchelModel broomLargeSatchelModel = broomLargeSatchelResources.getSecond();
             broomLargeSatchelModel.setupAnim(entityIn, partialTicks, 0.0F, -0.1F, 0.0F, 0.0F);
-            VertexConsumer ivertexbuilderSatchel = bufferIn.getBuffer(broomLargeSatchelModel.renderType(SATCHEL_LARGE_TEXTURE));
+            IVertexBuilder ivertexbuilderSatchel = bufferIn.getBuffer(broomLargeSatchelModel.renderType(SATCHEL_LARGE_TEXTURE));
             broomLargeSatchelModel.renderToBuffer(matrixStackIn, ivertexbuilderSatchel, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
         }
 
@@ -164,7 +164,7 @@ public class BroomRenderer extends EntityRenderer<BroomEntity>
 
                 BroomKeychainModel broomKeychainModel = broomKeychainResources.getSecond();
                 broomKeychainModel.setupAnim(entityIn, partialTicks, 0.0F, -0.1F, 0.0F, 0.0F);
-                VertexConsumer ivertexbuilderRings = bufferIn.getBuffer(broomKeychainModel.renderType(broomKeychainResources.getFirst()));
+                IVertexBuilder ivertexbuilderRings = bufferIn.getBuffer(broomKeychainModel.renderType(broomKeychainResources.getFirst()));
                 broomKeychainModel.renderToBuffer(matrixStackIn, ivertexbuilderRings, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
 
                 matrixStackIn.translate(-19/16f, 0, -0.4f/16f);
@@ -178,7 +178,7 @@ public class BroomRenderer extends EntityRenderer<BroomEntity>
                 matrixStackIn.mulPose(Vector3f.YP.rotationDegrees((float)(Math.atan2(entityIn.getDeltaMovement().z(), entityIn.getDeltaMovement().x())/(2*Math.PI)*360) - entityYaw));
 //                matrixStackIn.mulPose(Vector3f.XP.rotationDegrees((entityIn.deltaRotation * -3f)));
 
-                matrixStackIn.mulPose(Vector3f.ZP.rotationDegrees(((float)Mth.length(entityIn.getDeltaMovement().x(), entityIn.getDeltaMovement().z())) * 50f));
+                matrixStackIn.mulPose(Vector3f.ZP.rotationDegrees(((float)MathHelper.length(entityIn.getDeltaMovement().x(), entityIn.getDeltaMovement().z())) * 50f));
 
 
                 matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(180.0F));
@@ -191,19 +191,19 @@ public class BroomRenderer extends EntityRenderer<BroomEntity>
 
                 BroomKeychainChainModel broomKeychainChainModel = broomKeychainChainResources.getSecond();
                 broomKeychainChainModel.setupAnim(entityIn, partialTicks, 0.0F, -0.1F, 0.0F, 0.0F);
-                VertexConsumer ivertexbuilderChain = bufferIn.getBuffer(broomKeychainChainModel.renderType(broomKeychainChainResources.getFirst()));
+                IVertexBuilder ivertexbuilderChain = bufferIn.getBuffer(broomKeychainChainModel.renderType(broomKeychainChainResources.getFirst()));
                 broomKeychainChainModel.renderToBuffer(matrixStackIn, ivertexbuilderRings, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
 
 
                 matrixStackIn.translate(0,  1+11.5/16f, 0);
                 matrixStackIn.mulPose(Vector3f.XP.rotationDegrees(180.0F));
-                matrixStackIn.mulPose(Vector3f.ZP.rotationDegrees(((float)Mth.length(entityIn.getDeltaMovement().x(), entityIn.getDeltaMovement().z())) * -20f));
+                matrixStackIn.mulPose(Vector3f.ZP.rotationDegrees(((float)MathHelper.length(entityIn.getDeltaMovement().x(), entityIn.getDeltaMovement().z())) * -20f));
                 matrixStackIn.scale(0.25f,0.25f,0.25f);
 
 
                 NonNullList<ItemStack> items = NonNullList.withSize(1, ItemStack.EMPTY);
                 if(entityIn.itemHandler.getStackInSlot(0).hasTag())
-                    ContainerHelper.loadAllItems(entityIn.itemHandler.getStackInSlot(0).getTag(), items);
+                    ItemStackHelper.loadAllItems(entityIn.itemHandler.getStackInSlot(0).getTag(), items);
                 renderItem(items.get(0), partialTicks, matrixStackIn, bufferIn, packedLightIn);
 
             }
@@ -213,7 +213,7 @@ public class BroomRenderer extends EntityRenderer<BroomEntity>
 
                 BroomNetheriteTipModel broomNetheriteTipModel = broomNetheriteTipResources.getSecond();
                 broomNetheriteTipModel.setupAnim(entityIn, partialTicks, 0.0F, -0.1F, 0.0F, 0.0F);
-                VertexConsumer ivertexbuilderRings = bufferIn.getBuffer(broomNetheriteTipModel.renderType(broomNetheriteTipResources.getFirst()));
+                IVertexBuilder ivertexbuilderRings = bufferIn.getBuffer(broomNetheriteTipModel.renderType(broomNetheriteTipResources.getFirst()));
                 broomNetheriteTipModel.renderToBuffer(matrixStackIn, ivertexbuilderRings, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
 
                 matrixStackIn.translate(-22/16f, 0, -0.4f/16f);
@@ -235,7 +235,7 @@ public class BroomRenderer extends EntityRenderer<BroomEntity>
 
                 BroomWaterproofTipModel broomWaterproofTipModel = broomWaterproofTipResources.getSecond();
                 broomWaterproofTipModel.setupAnim(entityIn, partialTicks, 0.0F, -0.1F, 0.0F, 0.0F);
-                VertexConsumer ivertexbuilderRings = bufferIn.getBuffer(broomWaterproofTipModel.renderType(broomWaterproofTipResources.getFirst()));
+                IVertexBuilder ivertexbuilderRings = bufferIn.getBuffer(broomWaterproofTipModel.renderType(broomWaterproofTipResources.getFirst()));
                 broomWaterproofTipModel.renderToBuffer(matrixStackIn, ivertexbuilderRings, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
 
                 matrixStackIn.translate(-22/16f, 0, -0.4f/16f);
@@ -255,22 +255,22 @@ public class BroomRenderer extends EntityRenderer<BroomEntity>
             {
                 BroomRingsModel broomRingsModel = broomRingsResources.getSecond();
                 broomRingsModel.setupAnim(entityIn, partialTicks, 0.0F, -0.1F, 0.0F, 0.0F);
-                VertexConsumer ivertexbuilderRings = bufferIn.getBuffer(broomRingsModel.renderType(broomRingsResources.getFirst()));
+                IVertexBuilder ivertexbuilderRings = bufferIn.getBuffer(broomRingsModel.renderType(broomRingsResources.getFirst()));
                 broomRingsModel.renderToBuffer(matrixStackIn, ivertexbuilderRings, packedLightIn, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
             }
         }
 
         if (!entityIn.canSwim()) {
-            VertexConsumer ivertexbuilder1 = bufferIn.getBuffer(RenderType.waterMask());
+            IVertexBuilder ivertexbuilder1 = bufferIn.getBuffer(RenderType.waterMask());
         }
 
         matrixStackIn.popPose();
         super.render(entityIn, entityYaw, partialTicks, matrixStackIn, bufferIn, packedLightIn);
     }
 
-    private void renderItem(ItemStack stack, float partialTicks, PoseStack matrixStackIn, MultiBufferSource bufferIn,
+    private void renderItem(ItemStack stack, float partialTicks, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn,
                             int combinedLightIn) {
-        Minecraft.getInstance().getItemRenderer().renderStatic(stack, ItemTransforms.TransformType.FIXED, combinedLightIn,
+        Minecraft.getInstance().getItemRenderer().renderStatic(stack, ItemCameraTransforms.TransformType.FIXED, combinedLightIn,
                 OverlayTexture.NO_OVERLAY, matrixStackIn, bufferIn, 1);
     }
 }

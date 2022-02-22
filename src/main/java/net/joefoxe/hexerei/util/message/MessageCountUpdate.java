@@ -3,11 +3,16 @@ package net.joefoxe.hexerei.util.message;
 import io.netty.buffer.ByteBuf;
 import net.joefoxe.hexerei.tileentity.HerbJarTile;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.network.PacketBuffer;
+import net.minecraft.world.World;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraftforge.api.distmarker.Dist;
+import java.util.function.Supplier;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.fml.DistExecutor;
+import net.minecraftforge.network.NetworkEvent;
+
         import net.minecraftforge.api.distmarker.OnlyIn;
         import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
@@ -51,7 +56,7 @@ public class MessageCountUpdate
         }
     }
 
-    public static void encode (MessageCountUpdate msg, FriendlyByteBuf buf) {
+    public static void encode (MessageCountUpdate msg, PacketBuffer buf) {
         buf.writeInt(msg.x);
         buf.writeShort(msg.y);
         buf.writeInt(msg.z);
@@ -66,10 +71,10 @@ public class MessageCountUpdate
     @OnlyIn(Dist.CLIENT)
     private static void handleClient(MessageCountUpdate msg, NetworkEvent.Context ctx) {
         if (!msg.failed) {
-            Level world = Minecraft.getInstance().level;
+            World world = Minecraft.getInstance().level;
             if (world != null) {
                 BlockPos pos = new BlockPos(msg.x, msg.y, msg.z);
-                BlockEntity tileEntity = world.getBlockEntity(pos);
+                TileEntity tileEntity = world.getBlockEntity(pos);
                 if (tileEntity instanceof HerbJarTile) {
                     ((HerbJarTile) tileEntity).clientUpdateCount(msg.slot, msg.count);
                 }

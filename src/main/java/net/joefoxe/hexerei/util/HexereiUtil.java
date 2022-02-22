@@ -1,16 +1,16 @@
 package net.joefoxe.hexerei.util;
 
 import io.netty.buffer.Unpooled;
-import net.minecraft.core.BlockPos;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.MobCategory;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.Property;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.network.PacketBuffer;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityClassification;
+import net.minecraft.world.World;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.tileentity.TileEntityType;
+import net.minecraft.block.BlockState;
+import net.minecraft.state.Property;
 import net.minecraftforge.registries.IForgeRegistryEntry;
 import net.minecraftforge.registries.IRegistryDelegate;
 import net.minecraftforge.registries.RegistryObject;
@@ -55,21 +55,21 @@ public class HexereiUtil {
     }
 
     public static boolean entityIsHostile(Entity entity) {
-        if (entity.getType().getCategory().equals(MobCategory.MONSTER)) {
+        if (entity.getType().getCategory().equals(EntityClassification.MONSTER)) {
             return true;
         }
 
         return false;
     }
 
-    public static List<BlockPos> getAllTileEntityPositionsNearby(BlockEntityType<?> te, Integer radius, Level world, Entity entity) {
+    public static List<BlockPos> getAllTileEntityPositionsNearby(TileEntityType<?> te, Integer radius, World world, Entity entity) {
         BlockPos entitypos = entity.blockPosition();
 
         List<BlockPos> nearby = new ArrayList<BlockPos>();
-        List<BlockEntity> tiles = getTileEntitiesAroundPosition(world, entitypos, radius);
+        List<TileEntity> tiles = getTileEntitiesAroundPosition(world, entitypos, radius);
 
-        for (BlockEntity tile : tiles) {
-            BlockEntityType<?> tileType = tile.getType();
+        for (TileEntity tile : tiles) {
+            TileEntityType<?> tileType = tile.getType();
             if (tileType == null) {
                 continue;
             }
@@ -85,8 +85,8 @@ public class HexereiUtil {
         return nearby;
     }
 
-    private static List<BlockEntity> getTileEntitiesAroundPosition(Level world, BlockPos pos, Integer radius) {
-        List<BlockEntity> blockentities = new ArrayList<BlockEntity>();
+    private static List<TileEntity> getTileEntitiesAroundPosition(World world, BlockPos pos, Integer radius) {
+        List<TileEntity> blockentities = new ArrayList<TileEntity>();
 
         int chunkradius = (int)Math.ceil(radius/16.0);
         int chunkPosX = pos.getX() >> 4;
@@ -96,9 +96,9 @@ public class HexereiUtil {
             for (int z = chunkPosZ - chunkradius; z < chunkPosZ + chunkradius; z++) {
 
                 if(world.hasChunk(x, z)){
-                    Iterator<BlockEntity> iterator = world.getChunk(x, z).getBlockEntities().values().iterator();
+                    Iterator<TileEntity> iterator = world.getChunk(x, z).getBlockEntities().values().iterator();
                     while (iterator.hasNext()) {
-                        BlockEntity be = iterator.next();
+                        TileEntity be = iterator.next();
                         if (!blockentities.contains(be)) {
                             blockentities.add(be);
                         }
@@ -126,8 +126,8 @@ public class HexereiUtil {
         return getResource(modId, name).toString();
     }
 
-    public static FriendlyByteBuf createBuf() {
-        return new FriendlyByteBuf(Unpooled.buffer());
+    public static PacketBuffer createBuf() {
+        return new PacketBuffer(Unpooled.buffer());
     }
 
     public static <T> T make(Supplier<T> supplier) {
@@ -150,7 +150,7 @@ public class HexereiUtil {
         return finalState;
     }
 
-    public static BlockState setBlockStateWithExistingProperties(Level level, BlockPos pos, BlockState newState, int flags) {
+    public static BlockState setBlockStateWithExistingProperties(World level, BlockPos pos, BlockState newState, int flags) {
         BlockState oldState = level.getBlockState(pos);
         BlockState finalState = getBlockStateWithExistingProperties(oldState, newState);
         level.sendBlockUpdated(pos, oldState, finalState, flags);

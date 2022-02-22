@@ -2,7 +2,7 @@ package net.joefoxe.hexerei.screen;
 
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.matrix.MatrixStack;
 import net.joefoxe.hexerei.Hexerei;
 import net.joefoxe.hexerei.block.ModBlocks;
 import net.joefoxe.hexerei.client.renderer.entity.custom.BroomEntity;
@@ -14,22 +14,22 @@ import net.joefoxe.hexerei.util.HexereiTags;
 import net.joefoxe.hexerei.util.message.BroomSyncFloatModeToServer;
 import net.joefoxe.hexerei.util.message.BroomSyncPacket;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.client.renderer.entity.ItemRenderer;
-import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.client.renderer.ItemRenderer;
+import net.minecraft.client.audio.SimpleSound;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.SoundEvents;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.item.ItemStack;
 import net.minecraftforge.network.PacketDistributor;
 
-public class BroomScreen extends AbstractContainerScreen<BroomContainer> {
+public class BroomScreen extends ContainerScreen<BroomContainer> {
     private final ResourceLocation GUI = new ResourceLocation(Hexerei.MOD_ID,
             "textures/gui/broom_gui.png");
     private final ResourceLocation INVENTORY = new ResourceLocation(Hexerei.MOD_ID,
@@ -39,7 +39,7 @@ public class BroomScreen extends AbstractContainerScreen<BroomContainer> {
     public float dropdownOffset = 0;
     public boolean dropdownClicked = false;
 
-    public BroomScreen(BroomContainer broomContainer, Inventory inv, Component titleIn) {
+    public BroomScreen(BroomContainer broomContainer, PlayerInventory inv, ITextComponent titleIn) {
         super(broomContainer, inv, titleIn);
         broomEntity = broomContainer.broomEntity;
         titleLabelY = 1;
@@ -63,7 +63,7 @@ public class BroomScreen extends AbstractContainerScreen<BroomContainer> {
     }
 
     @Override
-    public void render(PoseStack matrixStack, int mouseX, int mouseY, float partialTicks) {
+    public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
 
 
         this.renderBackground(matrixStack);
@@ -72,12 +72,12 @@ public class BroomScreen extends AbstractContainerScreen<BroomContainer> {
     }
 
     @Override
-    public Component getTitle() {
+    public ITextComponent getTitle() {
         return super.getTitle();
     }
 
     @Override
-    protected void renderBg(PoseStack matrixStack, float partialTicks, int x, int y) {
+    protected void renderBg(MatrixStack matrixStack, float partialTicks, int x, int y) {
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         RenderSystem.setShaderTexture(0, GUI);
@@ -162,9 +162,9 @@ public class BroomScreen extends AbstractContainerScreen<BroomContainer> {
                     this.topPos - 25);
 
 //        matrixStack.translate(this.leftPos + 42*1.666f, this.topPos + 14*1.666f, 0f);
-        TranslatableComponent misc = new TranslatableComponent("Misc.");
-        TranslatableComponent satchel = new TranslatableComponent("Satchel");
-        TranslatableComponent brush = new TranslatableComponent("Brush");
+        TranslationTextComponent misc = new TranslationTextComponent("Misc.");
+        TranslationTextComponent satchel = new TranslationTextComponent("Satchel");
+        TranslationTextComponent brush = new TranslationTextComponent("Brush");
 
         minecraft.font.draw(matrixStack, misc, this.leftPos + 34, this.topPos + 29, 0xFF606060);
         minecraft.font.draw(matrixStack, satchel, this.leftPos + 89, this.topPos + 29, 0xFF606060);
@@ -210,18 +210,18 @@ public class BroomScreen extends AbstractContainerScreen<BroomContainer> {
         if(dropdownOffset > 29){
             if (x > this.leftPos + 188.25f && x < this.leftPos + 188.25f + 18 && y > this.topPos + 88 + offset + ((int)dropdownOffset) && y < this.topPos + 88 + offset + ((int)dropdownOffset) + 18) {
                 this.menu.setFloatMode(false);
-                Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+                Minecraft.getInstance().getSoundManager().play(SimpleSound.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
 
             }
             if (x > this.leftPos + 188.25f && x < this.leftPos + 188.25f + 18 && y > this.topPos + 60 + offset + ((int)dropdownOffset) && y < this.topPos + 60 + offset + ((int)dropdownOffset) + 18) {
                 this.menu.setFloatMode(true);
-                Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+                Minecraft.getInstance().getSoundManager().play(SimpleSound.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
 
             }
 
         }
         if(x > this.leftPos + 188.25f && x < this.leftPos + 188.25f + 18 &&  y > this.topPos + 89 + offset && y < this.topPos + 89 + 18 + offset){
-            Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+            Minecraft.getInstance().getSoundManager().play(SimpleSound.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
             dropdownClicked = !dropdownClicked;
         }
 

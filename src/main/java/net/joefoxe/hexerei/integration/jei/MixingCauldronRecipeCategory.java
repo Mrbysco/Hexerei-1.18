@@ -1,6 +1,6 @@
 package net.joefoxe.hexerei.integration.jei;
 
-import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.matrix.MatrixStack;
 import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.gui.IRecipeLayout;
 import mezz.jei.api.gui.drawable.IDrawable;
@@ -15,11 +15,11 @@ import net.joefoxe.hexerei.fluid.ModFluids;
 import net.joefoxe.hexerei.state.properties.LiquidType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.ItemEntityRenderer;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.item.ItemStack;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraftforge.fluids.FluidStack;
 
@@ -52,7 +52,7 @@ public class MixingCauldronRecipeCategory implements IRecipeCategory<MixingCauld
     }
 
     @Override
-    public Component getTitle() {
+    public ITextComponent getTitle() {
         return ModBlocks.MIXING_CAULDRON.get().getName();
     }
 
@@ -91,7 +91,7 @@ public class MixingCauldronRecipeCategory implements IRecipeCategory<MixingCauld
         FluidStack output = recipe.getLiquidOutput();
         if(recipe.getFluidLevelsConsumed() != 0) {
             if(!input.isEmpty())
-                input.setAmount(Mth.clamp(recipe.getFluidLevelsConsumed(), 0, 2000));
+                input.setAmount(MathHelper.clamp(recipe.getFluidLevelsConsumed(), 0, 2000));
 
         }
         else {
@@ -114,7 +114,7 @@ public class MixingCauldronRecipeCategory implements IRecipeCategory<MixingCauld
     }
 
     @Override
-    public void draw(MixingCauldronRecipe recipe, PoseStack matrixStack, double mouseX, double mouseY) {
+    public void draw(MixingCauldronRecipe recipe, MatrixStack matrixStack, double mouseX, double mouseY) {
 
 
         Minecraft minecraft = Minecraft.getInstance();
@@ -122,8 +122,8 @@ public class MixingCauldronRecipeCategory implements IRecipeCategory<MixingCauld
         String outputName = recipe.getResultItem().getHoverName().getString();
         matrixStack.scale(0.6f, 0.6f, 0.6f);
         minecraft.font.draw(matrixStack, outputName, 43*1.666f, 4*1.666f, 0xFF404040);
-        minecraft.font.draw(matrixStack, new TranslatableComponent("gui.jei.category.mixing_cauldron.fluid"), 19*1.666f, 36*1.666f, 0xFF404040);
-        minecraft.font.draw(matrixStack, new TranslatableComponent("gui.jei.category.mixing_cauldron.output"), 140*1.666f, 24*1.666f, 0xFF404040);
+        minecraft.font.draw(matrixStack, new TranslationTextComponent("gui.jei.category.mixing_cauldron.fluid"), 19*1.666f, 36*1.666f, 0xFF404040);
+        minecraft.font.draw(matrixStack, new TranslationTextComponent("gui.jei.category.mixing_cauldron.output"), 140*1.666f, 24*1.666f, 0xFF404040);
 
     }
 }

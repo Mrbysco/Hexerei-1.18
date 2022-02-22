@@ -1,6 +1,6 @@
 package net.joefoxe.hexerei.integration.jei;
 
-import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.matrix.MatrixStack;
 import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.gui.IRecipeLayout;
 import mezz.jei.api.gui.drawable.IDrawable;
@@ -11,11 +11,11 @@ import net.joefoxe.hexerei.Hexerei;
 import net.joefoxe.hexerei.block.ModBlocks;
 import net.joefoxe.hexerei.data.recipes.DipperRecipe;
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.item.ItemStack;
 import net.minecraftforge.fluids.FluidStack;
 
 public class DipperRecipeCategory implements IRecipeCategory<DipperRecipe> {
@@ -49,7 +49,7 @@ public class DipperRecipeCategory implements IRecipeCategory<DipperRecipe> {
     }
 
     @Override
-    public Component getTitle() {
+    public ITextComponent getTitle() {
         return ModBlocks.CANDLE_DIPPER.get().getName();
     }
 
@@ -80,7 +80,7 @@ public class DipperRecipeCategory implements IRecipeCategory<DipperRecipe> {
         FluidStack input = recipe.getLiquid();
         if(recipe.getFluidLevelsConsumed() != 0) {
             if(!input.isEmpty())
-                input.setAmount(Mth.clamp(recipe.getFluidLevelsConsumed(), 0, 2000));
+                input.setAmount(MathHelper.clamp(recipe.getFluidLevelsConsumed(), 0, 2000));
         }
 
         if(!input.isEmpty()) {
@@ -90,7 +90,7 @@ public class DipperRecipeCategory implements IRecipeCategory<DipperRecipe> {
     }
 
     @Override
-    public void draw(DipperRecipe recipe, PoseStack matrixStack, double mouseX, double mouseY) {
+    public void draw(DipperRecipe recipe, MatrixStack matrixStack, double mouseX, double mouseY) {
 
         int numberOfDips = recipe.getNumberOfDips();
         int dippingTime = recipe.getDippingTime();
@@ -99,8 +99,8 @@ public class DipperRecipeCategory implements IRecipeCategory<DipperRecipe> {
 
         matrixStack.scale(0.6f, 0.6f, 0.6f);
         String numberOfDipsString = numberOfDips < Integer.MAX_VALUE ? Integer.toString(numberOfDips) : "?";
-        TranslatableComponent times_dipped_1 = new TranslatableComponent("gui.jei.category.dipper.times_dipped_1");
-        TranslatableComponent times_dipped_3 = new TranslatableComponent("gui.jei.category.dipper.result", numberOfDipsString);
+        TranslationTextComponent times_dipped_1 = new TranslationTextComponent("gui.jei.category.dipper.times_dipped_1");
+        TranslationTextComponent times_dipped_3 = new TranslationTextComponent("gui.jei.category.dipper.result", numberOfDipsString);
         minecraft.font.draw(matrixStack, times_dipped_1, 6*1.666f, 56*1.666f, 0xFF808080);
         minecraft.font.draw(matrixStack, times_dipped_3, 65*1.666f, 56*1.666f, 0xFF808080);
 //
@@ -109,8 +109,8 @@ public class DipperRecipeCategory implements IRecipeCategory<DipperRecipe> {
             dippingTimeString = dippingTimeString.substring(0, dippingTimeString.length()-1);
 //        TranslatableComponent dip_time = new TranslatableComponent("gui.jei.category.dipper.dip_time_1", dippingTimeString);
 //        minecraft.font.draw(matrixStack, dip_time, 42*1.666f, 27*1.666f, 0xFF808080);
-        TranslatableComponent dip_time_1 = new TranslatableComponent("gui.jei.category.dipper.dip_time_1");
-        TranslatableComponent dip_time_3 = new TranslatableComponent("gui.jei.category.dipper.resultSeconds", dippingTimeString);
+        TranslationTextComponent dip_time_1 = new TranslationTextComponent("gui.jei.category.dipper.dip_time_1");
+        TranslationTextComponent dip_time_3 = new TranslationTextComponent("gui.jei.category.dipper.resultSeconds", dippingTimeString);
         minecraft.font.draw(matrixStack, dip_time_1, 6*1.666f, 68*1.666f, 0xFF808080);
         minecraft.font.draw(matrixStack, dip_time_3, 65*1.666f, 68*1.666f, 0xFF808080);
 
@@ -119,8 +119,8 @@ public class DipperRecipeCategory implements IRecipeCategory<DipperRecipe> {
             dryingTimeString = dryingTimeString.substring(0, dryingTimeString.length()-1);
 //        TranslatableComponent dry_time = new TranslatableComponent("gui.jei.category.dipper.dry_time", dryingTimeString);
 //        minecraft.font.draw(matrixStack, dry_time, 42*1.666f, 42*1.666f, 0xFF808080);
-        TranslatableComponent dry_time_1 = new TranslatableComponent("gui.jei.category.dipper.dry_time_1");
-        TranslatableComponent dry_time_3 = new TranslatableComponent("gui.jei.category.dipper.resultSeconds", dryingTimeString);
+        TranslationTextComponent dry_time_1 = new TranslationTextComponent("gui.jei.category.dipper.dry_time_1");
+        TranslationTextComponent dry_time_3 = new TranslationTextComponent("gui.jei.category.dipper.resultSeconds", dryingTimeString);
         minecraft.font.draw(matrixStack, dry_time_1, 6*1.666f, 80*1.666f, 0xFF808080);
         minecraft.font.draw(matrixStack, dry_time_3, 65*1.666f, 80*1.666f, 0xFF808080);
 

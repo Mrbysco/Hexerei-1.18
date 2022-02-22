@@ -7,19 +7,19 @@ import com.google.gson.JsonSyntaxException;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.joefoxe.hexerei.Hexerei;
 import net.joefoxe.hexerei.block.ModBlocks;
-import net.minecraft.core.NonNullList;
-import net.minecraft.nbt.TagParser;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.GsonHelper;
-import net.minecraft.world.Container;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.item.crafting.RecipeSerializer;
-import net.minecraft.world.item.crafting.RecipeType;
-import net.minecraft.world.item.crafting.ShapedRecipe;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.material.Fluid;
+import net.minecraft.util.NonNullList;
+import net.minecraft.nbt.JsonToNBT;
+import net.minecraft.network.PacketBuffer;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.JSONUtils;
+import net.minecraft.inventory.IInventory;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.crafting.Ingredient;
+import net.minecraft.item.crafting.IRecipeSerializer;
+import net.minecraft.item.crafting.IRecipeType;
+import net.minecraft.item.crafting.ShapedRecipe;
+import net.minecraft.world.World;
+import net.minecraft.fluid.Fluid;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.ForgeRegistryEntry;
@@ -57,7 +57,7 @@ public class MixingCauldronRecipe implements IMixingCauldronRecipe{
 
 
     @Override
-    public boolean matches(Container inv, Level worldIn) {
+    public boolean matches(IInventory inv, World worldIn) {
 
         for(int i = 0; i < 8; i++)
             itemMatchesSlot.set(i, false);
@@ -117,7 +117,7 @@ public class MixingCauldronRecipe implements IMixingCauldronRecipe{
     }
 
     @Override
-    public ItemStack assemble(Container inv) {
+    public ItemStack assemble(IInventory inv) {
         return output;
     }
 
@@ -143,11 +143,11 @@ public class MixingCauldronRecipe implements IMixingCauldronRecipe{
     }
 
     @Override
-    public RecipeSerializer<?> getSerializer() {
+    public IRecipeSerializer<?> getSerializer() {
         return ModRecipeTypes.MIXING_SERIALIZER.get();
     }
 
-    public static class MixingCauldronRecipeType implements RecipeType<MixingCauldronRecipe> {
+    public static class MixingCauldronRecipeType implements IRecipeType<MixingCauldronRecipe> {
         @Override
         public String toString() {
             return MixingCauldronRecipe.TYPE_ID.toString();
@@ -155,18 +155,18 @@ public class MixingCauldronRecipe implements IMixingCauldronRecipe{
     }
 
     // for Serializing the recipe into/from a json
-    public static class Serializer extends ForgeRegistryEntry<RecipeSerializer<?>>
-            implements RecipeSerializer<MixingCauldronRecipe> {
+    public static class Serializer extends ForgeRegistryEntry<IRecipeSerializer<?>>
+            implements IRecipeSerializer<MixingCauldronRecipe> {
 
         @Override
         public MixingCauldronRecipe fromJson(ResourceLocation recipeId, JsonObject json) {
-            ItemStack output = ShapedRecipe.itemStackFromJson(GsonHelper.getAsJsonObject(json, "output"));
-            FluidStack liquid = deserializeFluidStack(GsonHelper.getAsJsonObject(json, "liquid"));
-            FluidStack liquidOutput = deserializeFluidStack(GsonHelper.getAsJsonObject(json, "liquidOutput"));
+            ItemStack output = ShapedRecipe.itemStackFromJson(JSONUtils.getAsJsonObject(json, "output"));
+            FluidStack liquid = deserializeFluidStack(JSONUtils.getAsJsonObject(json, "liquid"));
+            FluidStack liquidOutput = deserializeFluidStack(JSONUtils.getAsJsonObject(json, "liquidOutput"));
 
-            int fluidLevelsConsumed = GsonHelper.getAsInt(json, "fluidLevelsConsumed");
+            int fluidLevelsConsumed = JSONUtils.getAsInt(json, "fluidLevelsConsumed");
 
-            JsonArray ingredients = GsonHelper.getAsJsonArray(json, "ingredients");
+            JsonArray ingredients = JSONUtils.getAsJsonArray(json, "ingredients");
             NonNullList<Ingredient> inputs = NonNullList.withSize(8, Ingredient.EMPTY);
 
             for (int i = 0; i < inputs.size(); i++) {
@@ -179,7 +179,7 @@ public class MixingCauldronRecipe implements IMixingCauldronRecipe{
 
         @Nullable
         @Override
-        public MixingCauldronRecipe fromNetwork(ResourceLocation recipeId, FriendlyByteBuf buffer) {
+        public MixingCauldronRecipe fromNetwork(ResourceLocation recipeId, PacketBuffer buffer) {
             NonNullList<Ingredient> inputs = NonNullList.withSize(buffer.readInt(), Ingredient.EMPTY);
 
             for (int i = 0; i < inputs.size(); i++) {
@@ -191,7 +191,7 @@ public class MixingCauldronRecipe implements IMixingCauldronRecipe{
         }
 
         @Override
-        public void toNetwork(FriendlyByteBuf buffer, MixingCauldronRecipe recipe) {
+        public void toNetwork(PacketBuffer buffer, MixingCauldronRecipe recipe) {
             buffer.writeInt(recipe.getIngredients().size());
             for (Ingredient ing : recipe.getIngredients()) {
                 ing.toNetwork(buffer);
@@ -203,7 +203,7 @@ public class MixingCauldronRecipe implements IMixingCauldronRecipe{
         }
 
         public static FluidStack deserializeFluidStack(JsonObject json) {
-            ResourceLocation id = new ResourceLocation(GsonHelper.getAsString(json, "fluid"));
+            ResourceLocation id = new ResourceLocation(JSONUtils.getAsString(json, "fluid"));
             Fluid fluid = ForgeRegistries.FLUIDS.getValue(id);
             if (fluid == null)
                 throw new JsonSyntaxException("Unknown fluid '" + id + "'");
@@ -214,8 +214,8 @@ public class MixingCauldronRecipe implements IMixingCauldronRecipe{
 
             try {
                 JsonElement element = json.get("nbt");
-                stack.setTag(TagParser.parseTag(
-                        element.isJsonObject() ? Hexerei.GSON.toJson(element) : GsonHelper.convertToString(element, "nbt")));
+                stack.setTag(JsonToNBT.parseTag(
+                        element.isJsonObject() ? Hexerei.GSON.toJson(element) : JSONUtils.convertToString(element, "nbt")));
 
             } catch (CommandSyntaxException e) {
                 e.printStackTrace();

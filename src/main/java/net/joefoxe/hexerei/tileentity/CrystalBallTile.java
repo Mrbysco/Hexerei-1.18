@@ -3,18 +3,18 @@ package net.joefoxe.hexerei.tileentity;
 import net.joefoxe.hexerei.block.custom.CrystalBall;
 import net.joefoxe.hexerei.client.renderer.entity.ModEntityTypes;
 import net.minecraft.client.renderer.texture.Tickable;
-import net.minecraft.core.BlockPos;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.PlayerList;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.AABB;
+import net.minecraft.entity.Entity;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.tileentity.TileEntityType;
+import net.minecraft.block.BlockState;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraftforge.server.ServerLifecycleHooks;
 
 
-public class CrystalBallTile extends BlockEntity {
+public class CrystalBallTile extends TileEntity {
 
 //    public final ItemStackHandler itemHandler = createHandler();
 //    private final LazyOptional<IItemHandler> handler = LazyOptional.of(() -> itemHandler);
@@ -26,7 +26,7 @@ public class CrystalBallTile extends BlockEntity {
     public float smallRingOffset;
     public float largeRingOffset;
 
-    public CrystalBallTile(BlockEntityType<?> tileEntityTypeIn, BlockPos blockPos, BlockState blockState) {
+    public CrystalBallTile(TileEntityType<?> tileEntityTypeIn, BlockPos blockPos, BlockState blockState) {
         super(tileEntityTypeIn, blockPos, blockState);
 
         orbOffset = 0;
@@ -76,8 +76,8 @@ public class CrystalBallTile extends BlockEntity {
 //    }
 
     @Override
-    public AABB getRenderBoundingBox() {
-        AABB aabb = super.getRenderBoundingBox().inflate(5, 5, 5);
+    public AxisAlignedBB getRenderBoundingBox() {
+        AxisAlignedBB aabb = super.getRenderBoundingBox().inflate(5, 5, 5);
         return aabb;
     }
 

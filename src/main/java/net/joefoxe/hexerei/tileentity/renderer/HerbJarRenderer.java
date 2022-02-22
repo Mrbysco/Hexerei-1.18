@@ -1,32 +1,32 @@
 package net.joefoxe.hexerei.tileentity.renderer;
 
-import com.mojang.blaze3d.platform.NativeImage;
-import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.renderer.texture.NativeImage;
+import com.mojang.blaze3d.matrix.MatrixStack;
 import net.joefoxe.hexerei.block.ModBlocks;
 import net.joefoxe.hexerei.block.custom.HerbJar;
 import net.joefoxe.hexerei.item.ModItems;
 import net.joefoxe.hexerei.tileentity.HerbJarTile;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.HorizontalBlock;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.core.Direction;
-import net.minecraft.util.FormattedCharSequence;
-import com.mojang.math.Vector3f;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.Direction;
+import net.minecraft.util.IReorderingProcessor;
+import net.minecraft.util.math.vector.Vector3f;
 import net.minecraftforge.client.model.data.EmptyModelData;
 
 import java.util.List;
 
-public class HerbJarRenderer implements BlockEntityRenderer<HerbJarTile> {
+public class HerbJarRenderer implements TileEntityRenderer<HerbJarTile> {
 
-    private final Font font;
+    private final FontRenderer font;
 
     public HerbJarRenderer() {
         super();
@@ -34,17 +34,17 @@ public class HerbJarRenderer implements BlockEntityRenderer<HerbJarTile> {
     }
 
     @Override
-    public void render(HerbJarTile tileEntityIn, float partialTicks, PoseStack matrixStackIn,
-                       MultiBufferSource bufferIn, int combinedLightIn, int combinedOverlayIn) {
+    public void render(HerbJarTile tileEntityIn, float partialTicks, MatrixStack matrixStackIn,
+                       IRenderTypeBuffer bufferIn, int combinedLightIn, int combinedOverlayIn) {
 
         if(tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).hasBlockEntity()){
-            if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalDirectionalBlock.FACING) == Direction.NORTH)
+            if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalBlock.FACING) == Direction.NORTH)
                 renderItemsNorth(tileEntityIn, partialTicks, matrixStackIn, bufferIn, combinedLightIn);
-            if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalDirectionalBlock.FACING) == Direction.WEST)
+            if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalBlock.FACING) == Direction.WEST)
                 renderItemsWest(tileEntityIn, partialTicks, matrixStackIn, bufferIn, combinedLightIn);
-            if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalDirectionalBlock.FACING) == Direction.SOUTH)
+            if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalBlock.FACING) == Direction.SOUTH)
                 renderItemsSouth(tileEntityIn, partialTicks, matrixStackIn, bufferIn, combinedLightIn);
-            if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalDirectionalBlock.FACING) == Direction.EAST)
+            if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalBlock.FACING) == Direction.EAST)
                 renderItemsEast(tileEntityIn, partialTicks, matrixStackIn, bufferIn, combinedLightIn);
         }
         else
@@ -67,19 +67,19 @@ public class HerbJarRenderer implements BlockEntityRenderer<HerbJarTile> {
             for(int a = 0; a < ((float)tileEntityIn.itemHandler.getContents().get(0).getCount() / 1024f) * 10f; a++){
                 matrixStackIn.pushPose();
 
-                if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalDirectionalBlock.FACING) == Direction.NORTH) {
+                if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalBlock.FACING) == Direction.NORTH) {
                 matrixStackIn.translate(8D / 16D, 1D / 16D * a, 8D / 16D);
                     matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(90 * a));
                     matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(180 ));
-                } else if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalDirectionalBlock.FACING) == Direction.SOUTH) {
+                } else if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalBlock.FACING) == Direction.SOUTH) {
                     matrixStackIn.translate(8D / 16D, 1D / 16D * a, 8D / 16D);
                     matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(90 * a));
                     matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(0));
-                } else if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalDirectionalBlock.FACING) == Direction.EAST) {
+                } else if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalBlock.FACING) == Direction.EAST) {
                     matrixStackIn.translate(8D / 16D, 1D / 16D * a, 8D / 16D);
                     matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(90 * a));
                     matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(90));
-                } else if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalDirectionalBlock.FACING) == Direction.WEST) {
+                } else if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalBlock.FACING) == Direction.WEST) {
                     matrixStackIn.translate(8D / 16D, 1D / 16D * a, 8D / 16D);
                     matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(90 * a));
                     matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(270));
@@ -98,23 +98,23 @@ public class HerbJarRenderer implements BlockEntityRenderer<HerbJarTile> {
         int i1 = NativeImage.combine(   0, l, k, j);
         int j1 = 20;
 
-        if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalDirectionalBlock.FACING) == Direction.NORTH) {
+        if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalBlock.FACING) == Direction.NORTH) {
             matrixStackIn.translate(8D / 16D, 8D / 16D, 12.05D / 16D);
-        } else if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalDirectionalBlock.FACING) == Direction.SOUTH) {
+        } else if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalBlock.FACING) == Direction.SOUTH) {
             matrixStackIn.translate(8D / 16D, 8D / 16D, 1 - 12.05D / 16D);
             matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(180));
-        } else if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalDirectionalBlock.FACING) == Direction.EAST) {
+        } else if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalBlock.FACING) == Direction.EAST) {
             matrixStackIn.translate(1 - 12.05D / 16D, 8D / 16D, 8D / 16);
             matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(270));
-        } else if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalDirectionalBlock.FACING) == Direction.WEST) {
+        } else if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalBlock.FACING) == Direction.WEST) {
             matrixStackIn.translate(12.05D / 16D, 8D / 16D, 8D / 16);
             matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(90));
         }
 
         matrixStackIn.scale(0.010416667F / 1.5f, -0.010416667F / 1.5f, 0.010416667F / 1.5f);
-        FormattedCharSequence ireorderingprocessor = tileEntityIn.reorderText(0, (p_243502_1_) -> {
-            List<FormattedCharSequence> list = font.split(p_243502_1_, 90);
-            return list.isEmpty() ? FormattedCharSequence.EMPTY : list.get(0);
+        IReorderingProcessor ireorderingprocessor = tileEntityIn.reorderText(0, (p_243502_1_) -> {
+            List<IReorderingProcessor> list = font.split(p_243502_1_, 90);
+            return list.isEmpty() ? IReorderingProcessor.EMPTY : list.get(0);
         });
         if (ireorderingprocessor != null) {
             float f3 = (float)(-font.width(ireorderingprocessor) / 2);
@@ -123,8 +123,8 @@ public class HerbJarRenderer implements BlockEntityRenderer<HerbJarTile> {
 
     }
 
-    private void renderItemsNorth(HerbJarTile tileEntityIn, float partialTicks, PoseStack matrixStackIn,
-                                  MultiBufferSource bufferIn, int combinedLightIn)
+    private void renderItemsNorth(HerbJarTile tileEntityIn, float partialTicks, MatrixStack matrixStackIn,
+                                  IRenderTypeBuffer bufferIn, int combinedLightIn)
     {
 
         matrixStackIn.pushPose();
@@ -137,8 +137,8 @@ public class HerbJarRenderer implements BlockEntityRenderer<HerbJarTile> {
 
     }
 
-    private void renderItemsSouth(HerbJarTile tileEntityIn, float partialTicks, PoseStack matrixStackIn,
-                                 MultiBufferSource bufferIn, int combinedLightIn)
+    private void renderItemsSouth(HerbJarTile tileEntityIn, float partialTicks, MatrixStack matrixStackIn,
+                                 IRenderTypeBuffer bufferIn, int combinedLightIn)
     {
 
         matrixStackIn.pushPose();
@@ -151,8 +151,8 @@ public class HerbJarRenderer implements BlockEntityRenderer<HerbJarTile> {
 
     }
 
-    private void renderItemsWest(HerbJarTile tileEntityIn, float partialTicks, PoseStack matrixStackIn,
-                                 MultiBufferSource bufferIn, int combinedLightIn)
+    private void renderItemsWest(HerbJarTile tileEntityIn, float partialTicks, MatrixStack matrixStackIn,
+                                 IRenderTypeBuffer bufferIn, int combinedLightIn)
     {
 
         matrixStackIn.pushPose();
@@ -168,8 +168,8 @@ public class HerbJarRenderer implements BlockEntityRenderer<HerbJarTile> {
 
     }
 
-    private void renderItemsEast(HerbJarTile tileEntityIn, float partialTicks, PoseStack matrixStackIn,
-                                 MultiBufferSource bufferIn, int combinedLightIn)
+    private void renderItemsEast(HerbJarTile tileEntityIn, float partialTicks, MatrixStack matrixStackIn,
+                                 IRenderTypeBuffer bufferIn, int combinedLightIn)
     {
         matrixStackIn.pushPose();
         matrixStackIn.translate(1, 0, 0);
@@ -182,16 +182,16 @@ public class HerbJarRenderer implements BlockEntityRenderer<HerbJarTile> {
         matrixStackIn.popPose();
     }
 
-    private void renderItem(ItemStack stack, float partialTicks, PoseStack matrixStackIn, MultiBufferSource bufferIn,
+    private void renderItem(ItemStack stack, float partialTicks, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn,
                             int combinedLightIn) {
-        Minecraft.getInstance().getItemRenderer().renderStatic(stack, ItemTransforms.TransformType.FIXED, combinedLightIn,
+        Minecraft.getInstance().getItemRenderer().renderStatic(stack, ItemCameraTransforms.TransformType.FIXED, combinedLightIn,
                 OverlayTexture.NO_OVERLAY, matrixStackIn, bufferIn, 1);
     }
 
 
 
 
-    private void renderBlock(PoseStack matrixStackIn, MultiBufferSource bufferIn, int combinedLightIn, BlockState state) {
+    private void renderBlock(MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int combinedLightIn, BlockState state) {
         Minecraft.getInstance().getBlockRenderer().renderSingleBlock(state, matrixStackIn, bufferIn, combinedLightIn, OverlayTexture.NO_OVERLAY, EmptyModelData.INSTANCE);
 
     }

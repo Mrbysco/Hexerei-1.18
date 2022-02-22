@@ -1,25 +1,25 @@
 package net.joefoxe.hexerei.client.renderer.entity.model;
 
 import com.google.common.collect.ImmutableList;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.IVertexBuilder;
 import net.joefoxe.hexerei.Hexerei;
 import net.joefoxe.hexerei.client.renderer.entity.custom.BroomEntity;
-import net.minecraft.client.model.ListModel;
+import net.minecraft.client.renderer.entity.model.SegmentedModel;
 import net.minecraft.client.model.geom.ModelLayerLocation;
-import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.renderer.model.ModelRenderer;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 
-public class BroomRingsModel extends ListModel<BroomEntity> {
+public class BroomRingsModel extends SegmentedModel<BroomEntity> {
     // This layer location should be baked with EntityRendererProvider.Context in the entity renderer and passed into this model's constructor
     public static final ModelLayerLocation LAYER_LOCATION = new ModelLayerLocation(new ResourceLocation(Hexerei.MOD_ID, "broom_rings"), "main");
-    private final ModelPart bone2;
+    private final ModelRenderer bone2;
 
 
     public static LayerDefinition createBodyLayer() {
@@ -32,18 +32,18 @@ public class BroomRingsModel extends ListModel<BroomEntity> {
         return LayerDefinition.create(meshdefinition, 64, 64);
     }
 
-    public BroomRingsModel(ModelPart root) {
+    public BroomRingsModel(ModelRenderer root) {
         this.bone2 = root.getChild("bone2");
     }
 
 
     @Override
-    public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
+    public void renderToBuffer(MatrixStack poseStack, IVertexBuilder buffer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
         bone2.render(poseStack, buffer, packedLight, packedOverlay);
     }
 
     @Override
-    public Iterable<ModelPart> parts() {
+    public Iterable<ModelRenderer> parts() {
         return ImmutableList.of(bone2);
     }
 

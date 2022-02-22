@@ -1,28 +1,28 @@
 package net.joefoxe.hexerei.tileentity.renderer;
 
-import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Matrix4f;
-import com.mojang.math.Vector3f;
+import net.minecraft.util.math.vector.Vector3f;
 import net.joefoxe.hexerei.block.ModBlocks;
 import net.joefoxe.hexerei.block.custom.PestleAndMortar;
 import net.joefoxe.hexerei.item.ModItems;
 import net.joefoxe.hexerei.tileentity.PestleAndMortarTile;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BiomeColors;
-import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
-import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.client.renderer.model.ItemCameraTransforms;
+import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.util.Mth;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.HorizontalDirectionalBlock;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.util.Direction;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.item.ItemStack;
+import net.minecraft.block.HorizontalBlock;
+import net.minecraft.block.BlockState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraftforge.client.model.data.EmptyModelData;
 import net.minecraftforge.fluids.FluidStack;
@@ -30,11 +30,11 @@ import net.minecraftforge.fluids.FluidStack;
 import java.awt.*;
 import java.util.Objects;
 
-public class PestleAndMortarRenderer implements BlockEntityRenderer<PestleAndMortarTile> {
+public class PestleAndMortarRenderer implements TileEntityRenderer<PestleAndMortarTile> {
 
     @Override
-    public void render(PestleAndMortarTile tileEntityIn, float partialTicks, PoseStack matrixStackIn,
-                       MultiBufferSource bufferIn, int combinedLightIn, int combinedOverlayIn) {
+    public void render(PestleAndMortarTile tileEntityIn, float partialTicks, MatrixStack matrixStackIn,
+                       IRenderTypeBuffer bufferIn, int combinedLightIn, int combinedOverlayIn) {
 
         if(!tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).hasBlockEntity()){
             return;
@@ -55,7 +55,7 @@ public class PestleAndMortarRenderer implements BlockEntityRenderer<PestleAndMor
                 float currentTime = tileEntityIn.getLevel().getGameTime() + partialTicks;
 
                 //rotation offset when crafting
-                double itemRotationOffset = 2.512 * i + tileEntityIn.grindingTime/6f - (Math.pow(Mth.sin( craftPercent2 * 3.14f * 5 - 3.14f), 2));
+                double itemRotationOffset = 2.512 * i + tileEntityIn.grindingTime/6f - (Math.pow(MathHelper.sin( craftPercent2 * 3.14f * 5 - 3.14f), 2));
                 matrixStackIn.translate(
                         0D + Math.sin(itemRotationOffset) / (6.5f + ((craftPercent2 * craftPercent2) * 10.0f)),
                         -2/15f * craftPercent,
@@ -107,23 +107,23 @@ public class PestleAndMortarRenderer implements BlockEntityRenderer<PestleAndMor
         matrixStackIn.pushPose();
         matrixStackIn.translate(0.5D, 4.5/16f, 0.5D);
         int rotationOffset = 0;
-        if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalDirectionalBlock.FACING) == Direction.NORTH)
+        if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalBlock.FACING) == Direction.NORTH)
             rotationOffset = 0;
-        if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalDirectionalBlock.FACING) == Direction.WEST)
+        if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalBlock.FACING) == Direction.WEST)
             rotationOffset = 90;
-        if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalDirectionalBlock.FACING) == Direction.SOUTH)
+        if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalBlock.FACING) == Direction.SOUTH)
             rotationOffset = 180;
-        if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalDirectionalBlock.FACING) == Direction.EAST)
+        if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalBlock.FACING) == Direction.EAST)
             rotationOffset = 270;
-        double itemRotationOffset = 2.512 + tileEntityIn.grindingTime/6f - (Math.pow(Mth.sin( craftPercent2 * 3.14f * 5 - 3.14f), 2));
+        double itemRotationOffset = 2.512 + tileEntityIn.grindingTime/6f - (Math.pow(MathHelper.sin( craftPercent2 * 3.14f * 5 - 3.14f), 2));
 
 
 //        matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(45 - ((craftPercent * craftPercent) * 720f)));
 //        matrixStackIn.mulPose(Vector3f.XP.rotationDegrees(85f));
 //        matrixStackIn.mulPose(Vector3f.ZP.rotationDegrees(-2.5f));
-        double pestleYOffset = (Math.pow(Mth.sin( craftPercent2 * 3.14f * 5 - 1.2f), 10))/4f;
-        double pestleTwistOffset = (Math.pow(Mth.sin( craftPercent2 * 3.14f * 5 - 3.14f), 10))/4f;
-        double pestleTwistOffset2 = (Math.pow(Mth.sin( craftPercent2 * 3.14f * 5 - 3.14f), 10))/4f - (Math.pow(Mth.cos( craftPercent2 * 3.14f * 5 - 3.14f), 10))/4f;
+        double pestleYOffset = (Math.pow(MathHelper.sin( craftPercent2 * 3.14f * 5 - 1.2f), 10))/4f;
+        double pestleTwistOffset = (Math.pow(MathHelper.sin( craftPercent2 * 3.14f * 5 - 3.14f), 10))/4f;
+        double pestleTwistOffset2 = (Math.pow(MathHelper.sin( craftPercent2 * 3.14f * 5 - 3.14f), 10))/4f - (Math.pow(MathHelper.cos( craftPercent2 * 3.14f * 5 - 3.14f), 10))/4f;
         if(!tileEntityIn.crafting) {
             pestleYOffset = 0;
             pestleTwistOffset = 0;
@@ -144,13 +144,13 @@ public class PestleAndMortarRenderer implements BlockEntityRenderer<PestleAndMor
     }
 
     // THIS IS WHAT I WAS LOOKING FOR FOREVER AHHHHH
-    private void renderItem(ItemStack stack, float partialTicks, PoseStack matrixStackIn, MultiBufferSource bufferIn,
+    private void renderItem(ItemStack stack, float partialTicks, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn,
                             int combinedLightIn) {
-        Minecraft.getInstance().getItemRenderer().renderStatic(stack, ItemTransforms.TransformType.FIXED, combinedLightIn,
+        Minecraft.getInstance().getItemRenderer().renderStatic(stack, ItemCameraTransforms.TransformType.FIXED, combinedLightIn,
                 OverlayTexture.NO_OVERLAY, matrixStackIn, bufferIn, 1);
     }
 
-    private void renderBlock(PoseStack matrixStackIn, MultiBufferSource bufferIn, int combinedLightIn, BlockState state) {
+    private void renderBlock(MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int combinedLightIn, BlockState state) {
         Minecraft.getInstance().getBlockRenderer().renderSingleBlock(state, matrixStackIn, bufferIn, combinedLightIn, OverlayTexture.NO_OVERLAY, EmptyModelData.INSTANCE);
 
     }

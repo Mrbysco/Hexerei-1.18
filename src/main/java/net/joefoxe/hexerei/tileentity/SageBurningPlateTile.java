@@ -10,37 +10,37 @@ import net.joefoxe.hexerei.util.HexereiPacketHandler;
 import net.joefoxe.hexerei.util.message.EmitExtinguishParticlesPacket;
 import net.joefoxe.hexerei.util.message.EmitParticlesPacket;
 import net.joefoxe.hexerei.util.message.TESyncPacket;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.core.NonNullList;
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
-import net.minecraft.network.Connection;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.Mth;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.Direction;
+import net.minecraft.util.NonNullList;
+import net.minecraft.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.INBT;
+import net.minecraft.network.NetworkManager;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.network.IPacket;
+import net.minecraft.client.network.play.IClientPlayNetHandler;
+import net.minecraft.network.play.server.SUpdateTileEntityPacket;
+import net.minecraft.util.SoundEvents;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.*;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.HorizontalDirectionalBlock;
-import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.inventory.container.Container;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.block.Block;
+import net.minecraft.block.HorizontalBlock;
+import net.minecraft.tileentity.TileEntityType;
+import net.minecraft.tileentity.LockableLootTileEntity;
+import net.minecraft.block.BlockState;
+import net.minecraft.state.properties.BlockStateProperties;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.CapabilityItemHandler;
@@ -53,7 +53,13 @@ import javax.annotation.Nullable;
 import java.util.Optional;
 import java.util.Random;
 
-public class SageBurningPlateTile extends RandomizableContainerBlockEntity implements WorldlyContainer, Clearable, MenuProvider {
+import net.minecraft.inventory.IClearable;
+import net.minecraft.inventory.ISidedInventory;
+import net.minecraft.inventory.ItemStackHelper;
+import net.minecraft.inventory.container.INamedContainerProvider;
+import net.minecraft.util.Hand;
+
+public class SageBurningPlateTile extends LockableLootTileEntity implements ISidedInventory, IClearable, INamedContainerProvider {
 
 //    public final ItemStackHandler itemHandler = createHandler();
 //    private final LazyOptional<IItemHandler> handler = LazyOptional.of(() -> itemHandler);
@@ -62,7 +68,7 @@ public class SageBurningPlateTile extends RandomizableContainerBlockEntity imple
     public int burnTimeMax = 20;
     public int burnTime = 20;
 
-    public SageBurningPlateTile(BlockEntityType<?> tileEntityTypeIn, BlockPos blockPos, BlockState blockState) {
+    public SageBurningPlateTile(TileEntityType<?> tileEntityTypeIn, BlockPos blockPos, BlockState blockState) {
         super(tileEntityTypeIn, blockPos, blockState);
     }
 
@@ -89,7 +95,7 @@ public class SageBurningPlateTile extends RandomizableContainerBlockEntity imple
     public void sync() {
         setChanged();
         if (!level.isClientSide)
-            HexereiPacketHandler.instance.send(PacketDistributor.TRACKING_CHUNK.with(() -> level.getChunkAt(worldPosition)), new TESyncPacket(worldPosition, save(new CompoundTag())));
+            HexereiPacketHandler.instance.send(PacketDistributor.TRACKING_CHUNK.with(() -> level.getChunkAt(worldPosition)), new TESyncPacket(worldPosition, save(new CompoundNBT())));
 
         if(this.level != null)
             this.level.sendBlockUpdated(this.worldPosition, this.level.getBlockState(this.worldPosition), this.level.getBlockState(this.worldPosition),
@@ -126,17 +132,17 @@ public class SageBurningPlateTile extends RandomizableContainerBlockEntity imple
     }
 
     @Override
-    public void deserializeNBT(CompoundTag nbt) {
+    public void deserializeNBT(CompoundNBT nbt) {
         super.deserializeNBT(nbt);
     }
 
     @Override
-    public CompoundTag serializeNBT() {
+    public CompoundNBT serializeNBT() {
         return super.serializeNBT();
     }
 
     @Override
-    public void handleUpdateTag(CompoundTag tag) {
+    public void handleUpdateTag(CompoundNBT tag) {
         super.handleUpdateTag(tag);
     }
 
@@ -163,18 +169,18 @@ public class SageBurningPlateTile extends RandomizableContainerBlockEntity imple
 
     @Override
     public ItemStack removeItem(int index, int p_59614_) {
-        this.unpackLootTable((Player)null);
+        this.unpackLootTable((PlayerEntity)null);
         if(level.getBlockState(worldPosition).getValue(BlockStateProperties.LIT)) {
             Random random = new Random();
             level.setBlock(worldPosition, level.getBlockState(worldPosition).setValue(BlockStateProperties.LIT, false), 11);
-            this.level.playSound((Player) null, worldPosition, SoundEvents.CANDLE_EXTINGUISH, SoundSource.PLAYERS, 1.0F, random.nextFloat() * 0.4F + 1.0F);
+            this.level.playSound((PlayerEntity) null, worldPosition, SoundEvents.CANDLE_EXTINGUISH, SoundCategory.PLAYERS, 1.0F, random.nextFloat() * 0.4F + 1.0F);
 
             sync();
             if(!level.isClientSide)
                 HexereiPacketHandler.instance.send(PacketDistributor.TRACKING_CHUNK.with(() -> level.getChunkAt(worldPosition)), new EmitExtinguishParticlesPacket(worldPosition));
         }
 
-        ItemStack itemstack = ContainerHelper.removeItem(this.getItems(), index, p_59614_);
+        ItemStack itemstack = ItemStackHelper.removeItem(this.getItems(), index, p_59614_);
         sync();
 
 
@@ -183,36 +189,36 @@ public class SageBurningPlateTile extends RandomizableContainerBlockEntity imple
 
 
     @Override
-    public void load(CompoundTag nbt) {
+    public void load(CompoundNBT nbt) {
 //        itemHandler.deserializeNBT(nbt.getCompound("inv"));
         this.items = NonNullList.withSize(this.getContainerSize(), ItemStack.EMPTY);
         if (!this.tryLoadLootTable(nbt)) {
-            ContainerHelper.loadAllItems(nbt, this.items);
+            ItemStackHelper.loadAllItems(nbt, this.items);
         }
 //        super.read(state, nbt);
 //        if (nbt.contains("CustomName", 8))
 //            this.customName = Component.Serializer.fromJson(nbt.getString("CustomName"));
 
-        if (nbt.contains("burnTime",  Tag.TAG_INT))
+        if (nbt.contains("burnTime",  INBT.TAG_INT))
             burnTime = nbt.getInt("burnTime");
-        if (nbt.contains("burnTimeMax",  Tag.TAG_INT))
+        if (nbt.contains("burnTimeMax",  INBT.TAG_INT))
             burnTimeMax = nbt.getInt("burnTimeMax");
         super.load(nbt);
 
     }
 
     @Override
-    protected Component getDefaultName() {
-        return new TranslatableComponent("container." + Hexerei.MOD_ID + ".sage_burning_plate");
+    protected ITextComponent getDefaultName() {
+        return new TranslationTextComponent("container." + Hexerei.MOD_ID + ".sage_burning_plate");
     }
 
     @Override
-    protected AbstractContainerMenu createMenu(int p_58627_, Inventory p_58628_) {
+    protected Container createMenu(int p_58627_, PlayerInventory p_58628_) {
         return null;
     }
 
-    public void saveAdditional(CompoundTag compound) {
-        ContainerHelper.saveAllItems(compound, this.items);
+    public void saveAdditional(CompoundNBT compound) {
+        ItemStackHelper.saveAllItems(compound, this.items);
 
         compound.putInt("burnTime", burnTime);
 
@@ -221,12 +227,12 @@ public class SageBurningPlateTile extends RandomizableContainerBlockEntity imple
 
 
 //    @Override
-    public CompoundTag save(CompoundTag compound) {
+    public CompoundNBT save(CompoundNBT compound) {
         super.saveAdditional(compound);
 //        compound.put("inv", itemHandler.serializeNBT());
 //        if (this.customName != null)
 //            compound.putString("CustomName", Component.Serializer.toJson(this.customName));
-        ContainerHelper.saveAllItems(compound, this.items);
+        ItemStackHelper.saveAllItems(compound, this.items);
 
         compound.putInt("burnTime", burnTime);
 
@@ -236,19 +242,19 @@ public class SageBurningPlateTile extends RandomizableContainerBlockEntity imple
     }
 
     @Override
-    public CompoundTag getUpdateTag()
+    public CompoundNBT getUpdateTag()
     {
-        return this.save(new CompoundTag());
+        return this.save(new CompoundNBT());
     }
 
     @Nullable
-    public Packet<ClientGamePacketListener> getUpdatePacket() {
+    public IPacket<IClientPlayNetHandler> getUpdatePacket() {
 
-        return ClientboundBlockEntityDataPacket.create(this, (tag) -> this.getUpdateTag());
+        return SUpdateTileEntityPacket.create(this, (tag) -> this.getUpdateTag());
     }
 
     @Override
-    public void onDataPacket(final Connection net, final ClientboundBlockEntityDataPacket pkt)
+    public void onDataPacket(final NetworkManager net, final SUpdateTileEntityPacket pkt)
     {
         this.deserializeNBT(pkt.getTag());
     }
@@ -275,8 +281,8 @@ public class SageBurningPlateTile extends RandomizableContainerBlockEntity imple
 //    }
 
     @Override
-    public AABB getRenderBoundingBox() {
-        AABB aabb = super.getRenderBoundingBox().inflate(5, 5, 5);
+    public AxisAlignedBB getRenderBoundingBox() {
+        AxisAlignedBB aabb = super.getRenderBoundingBox().inflate(5, 5, 5);
         return aabb;
     }
 
@@ -330,7 +336,7 @@ public class SageBurningPlateTile extends RandomizableContainerBlockEntity imple
         return input;
     }
 
-    public float getAngle(Vec3 pos) {
+    public float getAngle(Vector3d pos) {
         float angle = (float) Math.toDegrees(Math.atan2(pos.z() - this.getBlockPos().getZ() - 0.5f, pos.x() - this.getBlockPos().getX() - 0.5f));
 
         if(angle < 0){
@@ -344,9 +350,9 @@ public class SageBurningPlateTile extends RandomizableContainerBlockEntity imple
         return (float)(0.01f + 0.10f * (Math.abs(pos - posTo) / 3f));
     }
 
-    public Vec3 rotateAroundVec(Vec3 vector3dCenter,float rotation,Vec3 vector3d)
+    public Vector3d rotateAroundVec(Vector3d vector3dCenter,float rotation,Vector3d vector3d)
     {
-        Vec3 newVec = vector3d.subtract(vector3dCenter);
+        Vector3d newVec = vector3d.subtract(vector3dCenter);
         newVec = newVec.yRot(rotation/180f*(float)Math.PI);
         newVec = newVec.add(vector3dCenter);
 
@@ -363,20 +369,20 @@ public class SageBurningPlateTile extends RandomizableContainerBlockEntity imple
             this.burnTime = this.burnTimeMax;
             sync();
             stack.shrink(1);
-            level.playSound((Player) null, worldPosition, SoundEvents.ITEM_PICKUP, SoundSource.BLOCKS, 1.0F, rand.nextFloat() * 0.4F + 1.0F);
+            level.playSound((PlayerEntity) null, worldPosition, SoundEvents.ITEM_PICKUP, SoundCategory.BLOCKS, 1.0F, rand.nextFloat() * 0.4F + 1.0F);
             return 1;
         }
 
         return 0;
     }
 
-    public int interactSageBurningPlate (Player player, BlockHitResult hit) {
+    public int interactSageBurningPlate (PlayerEntity player, BlockRayTraceResult hit) {
         if(!player.isShiftKeyDown()) {
 
-            if (!player.getItemInHand(InteractionHand.MAIN_HAND).isEmpty()) {
+            if (!player.getItemInHand(Hand.MAIN_HAND).isEmpty()) {
                 Random rand = new Random();
                 if (this.items.get(0).isEmpty()) {
-                    putItems(0, player.getItemInHand(InteractionHand.MAIN_HAND));
+                    putItems(0, player.getItemInHand(Hand.MAIN_HAND));
                     return 1;
                 }
             }
@@ -387,7 +393,7 @@ public class SageBurningPlateTile extends RandomizableContainerBlockEntity imple
 
             if (!this.items.get(0).isEmpty()) {
                 player.inventory.placeItemBackInInventory(this.items.get(0).copy());
-                level.playSound((Player) null, worldPosition, SoundEvents.ITEM_FRAME_REMOVE_ITEM, SoundSource.BLOCKS, 1.0F, level.random.nextFloat() * 0.4F + 1.0F);
+                level.playSound((PlayerEntity) null, worldPosition, SoundEvents.ITEM_FRAME_REMOVE_ITEM, SoundCategory.BLOCKS, 1.0F, level.random.nextFloat() * 0.4F + 1.0F);
                 removeItem(0, 1);
 
 
@@ -404,7 +410,7 @@ public class SageBurningPlateTile extends RandomizableContainerBlockEntity imple
         float offsetX = 0;
         float offsetZ = 0;
         float damageOutOf5 = (getItems().get(0).getMaxDamage()-getItems().get(0).getDamageValue())/(float)getItems().get(0).getMaxDamage()*5f;
-        if(this.getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.NORTH)
+        if(this.getBlockState().getValue(HorizontalBlock.FACING) == Direction.NORTH)
         {
             offsetX = -0.25f;
             if(damageOutOf5 <= 4f && damageOutOf5 > 3f)
@@ -416,7 +422,7 @@ public class SageBurningPlateTile extends RandomizableContainerBlockEntity imple
             if(damageOutOf5 <= 1f && damageOutOf5 >= 0f)
                 offsetX += 0.33;
         }
-        if(this.getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.SOUTH)
+        if(this.getBlockState().getValue(HorizontalBlock.FACING) == Direction.SOUTH)
         {
             offsetX = 0.25f;
             if(damageOutOf5 <= 4f && damageOutOf5 > 3f)
@@ -428,7 +434,7 @@ public class SageBurningPlateTile extends RandomizableContainerBlockEntity imple
             if(damageOutOf5 <= 1f && damageOutOf5 >= 0f)
                 offsetX -= 0.33;
         }
-        if(this.getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.WEST)
+        if(this.getBlockState().getValue(HorizontalBlock.FACING) == Direction.WEST)
         {
             offsetZ = 0.25f;
             if(damageOutOf5 <= 4f && damageOutOf5 > 3f)
@@ -440,7 +446,7 @@ public class SageBurningPlateTile extends RandomizableContainerBlockEntity imple
             if(damageOutOf5 <= 1f && damageOutOf5 >= 0f)
                 offsetZ -= 0.33;
         }
-        if(this.getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.EAST)
+        if(this.getBlockState().getValue(HorizontalBlock.FACING) == Direction.EAST)
         {
             offsetZ = -0.25f;
             if(damageOutOf5 <= 4f && damageOutOf5 > 3f)
@@ -467,7 +473,7 @@ public class SageBurningPlateTile extends RandomizableContainerBlockEntity imple
             float offsetX = 0;
             float offsetZ = 0;
             float damageOutOf5 = (getItems().get(0).getMaxDamage()-getItems().get(0).getDamageValue())/(float)getItems().get(0).getMaxDamage()*5f;
-            if(this.getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.NORTH)
+            if(this.getBlockState().getValue(HorizontalBlock.FACING) == Direction.NORTH)
             {
                 offsetX = -0.25f;
                 if(damageOutOf5 <= 4f && damageOutOf5 > 3f)
@@ -479,7 +485,7 @@ public class SageBurningPlateTile extends RandomizableContainerBlockEntity imple
                 if(damageOutOf5 <= 1f && damageOutOf5 > 0f)
                     offsetX += 0.33;
             }
-            if(this.getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.SOUTH)
+            if(this.getBlockState().getValue(HorizontalBlock.FACING) == Direction.SOUTH)
             {
                 offsetX = 0.25f;
                 if(damageOutOf5 <= 4f && damageOutOf5 > 3f)
@@ -491,7 +497,7 @@ public class SageBurningPlateTile extends RandomizableContainerBlockEntity imple
                 if(damageOutOf5 <= 1f && damageOutOf5 > 0f)
                     offsetX -= 0.33;
             }
-            if(this.getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.WEST)
+            if(this.getBlockState().getValue(HorizontalBlock.FACING) == Direction.WEST)
             {
                 offsetZ = 0.25f;
                 if(damageOutOf5 <= 4f && damageOutOf5 > 3f)
@@ -503,7 +509,7 @@ public class SageBurningPlateTile extends RandomizableContainerBlockEntity imple
                 if(damageOutOf5 <= 1f && damageOutOf5 > 0f)
                     offsetZ -= 0.33;
             }
-            if(this.getBlockState().getValue(HorizontalDirectionalBlock.FACING) == Direction.EAST)
+            if(this.getBlockState().getValue(HorizontalBlock.FACING) == Direction.EAST)
             {
                 offsetZ = -0.25f;
                 if(damageOutOf5 <= 4f && damageOutOf5 > 3f)
@@ -523,9 +529,9 @@ public class SageBurningPlateTile extends RandomizableContainerBlockEntity imple
 
         if(this.getBlockState().getValue(SageBurningPlate.MODE) != 3){
             for (int i = 0; i < 360; i++) {
-                Vec3 vec = new Vec3(Mth.sin((i / 360f) * (2 * Mth.PI)) * (rand.nextFloat() * HexConfig.SAGE_BURNING_PLATE_RANGE.get()), Mth.sin((rand.nextInt(360) / 360f) * (2 * Mth.PI)) * (rand.nextFloat() * HexConfig.SAGE_BURNING_PLATE_RANGE.get()), Mth.cos((i / 360f) * (2 * Mth.PI)) * (rand.nextFloat() * HexConfig.SAGE_BURNING_PLATE_RANGE.get()));
+                Vector3d vec = new Vector3d(MathHelper.sin((i / 360f) * (2 * MathHelper.PI)) * (rand.nextFloat() * HexConfig.SAGE_BURNING_PLATE_RANGE.get()), MathHelper.sin((rand.nextInt(360) / 360f) * (2 * MathHelper.PI)) * (rand.nextFloat() * HexConfig.SAGE_BURNING_PLATE_RANGE.get()), MathHelper.cos((i / 360f) * (2 * MathHelper.PI)) * (rand.nextFloat() * HexConfig.SAGE_BURNING_PLATE_RANGE.get()));
 
-                Vec3 vec2 = new Vec3(Mth.sin((i / 360f) * (2 * Mth.PI)) * (HexConfig.SAGE_BURNING_PLATE_RANGE.get()), 0, Mth.cos((i / 360f) * (2 * Mth.PI)) * (HexConfig.SAGE_BURNING_PLATE_RANGE.get()));
+                Vector3d vec2 = new Vector3d(MathHelper.sin((i / 360f) * (2 * MathHelper.PI)) * (HexConfig.SAGE_BURNING_PLATE_RANGE.get()), 0, MathHelper.cos((i / 360f) * (2 * MathHelper.PI)) * (HexConfig.SAGE_BURNING_PLATE_RANGE.get()));
                 BlockPos pos2 = new BlockPos(worldPosition.getX() + 0.5f + vec2.x(), worldPosition.getY() + 0.25f + vec2.y(), worldPosition.getZ() + 0.5f + vec2.z());
 
                 if (rand.nextInt(40) == 0 && (this.getBlockState().getValue(SageBurningPlate.MODE) == 0 || this.getBlockState().getValue(SageBurningPlate.MODE) == 1)) {

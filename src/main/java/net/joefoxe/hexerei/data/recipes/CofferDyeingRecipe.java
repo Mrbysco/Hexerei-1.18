@@ -8,15 +8,15 @@ import net.joefoxe.hexerei.block.custom.Coffer;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.Registry;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.Container;
-import net.minecraft.world.inventory.CraftingContainer;
-import net.minecraft.world.item.DyeColor;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.inventory.CraftingInventory;
+import net.minecraft.item.DyeColor;
+import net.minecraft.item.ItemStack;
 import net.minecraft.world.item.crafting.*;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
+import net.minecraft.world.World;
+import net.minecraft.block.Block;
 import net.minecraftforge.common.Tags;
 import net.minecraftforge.registries.ForgeRegistryEntry;
 
@@ -24,8 +24,12 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 
-public class CofferDyeingRecipe extends CustomRecipe {
-    public static final SimpleRecipeSerializer<CofferDyeingRecipe> SERIALIZER = new SimpleRecipeSerializer<>(CofferDyeingRecipe::new);
+import net.minecraft.item.crafting.IRecipeSerializer;
+import net.minecraft.item.crafting.SpecialRecipe;
+import net.minecraft.item.crafting.SpecialRecipeSerializer;
+
+public class CofferDyeingRecipe extends SpecialRecipe {
+    public static final SpecialRecipeSerializer<CofferDyeingRecipe> SERIALIZER = new SpecialRecipeSerializer<>(CofferDyeingRecipe::new);
 
     public CofferDyeingRecipe(ResourceLocation registryName) {
         super(registryName);
@@ -33,7 +37,7 @@ public class CofferDyeingRecipe extends CustomRecipe {
     }
 
     @Override
-    public boolean matches(CraftingContainer inventory, Level world) {
+    public boolean matches(CraftingInventory inventory, World world) {
         int coffers = 0;
         int dyes = 0;
 
@@ -58,7 +62,7 @@ public class CofferDyeingRecipe extends CustomRecipe {
     }
 
     @Override
-    public ItemStack assemble(CraftingContainer inventory) {
+    public ItemStack assemble(CraftingInventory inventory) {
         ItemStack coffer = ItemStack.EMPTY;
         DyeColor color = DyeColor.BROWN;
 
@@ -122,7 +126,7 @@ public class CofferDyeingRecipe extends CustomRecipe {
         return width >= 2 && height >= 1;
     }
     @Override
-    public RecipeSerializer<?> getSerializer() {
+    public IRecipeSerializer<?> getSerializer() {
         return SERIALIZER;
     }
 }

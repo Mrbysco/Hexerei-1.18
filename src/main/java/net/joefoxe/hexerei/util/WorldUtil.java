@@ -3,18 +3,18 @@ package net.joefoxe.hexerei.util;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
-import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.server.ServerWorld;
+import net.minecraft.entity.Entity;
+import net.minecraft.world.IBlockReader;
+import net.minecraft.world.World;
+import net.minecraft.tileentity.TileEntity;
 
 public class WorldUtil {
     @SuppressWarnings("unchecked")
     @Nullable
-    public static <T extends BlockEntity> T getBlockEntity(BlockGetter worldIn, BlockPos posIn, Class<T> type) {
-        BlockEntity tileEntity = worldIn.getBlockEntity(posIn);
+    public static <T extends TileEntity> T getBlockEntity(IBlockReader worldIn, BlockPos posIn, Class<T> type) {
+        TileEntity tileEntity = worldIn.getBlockEntity(posIn);
         if (tileEntity != null && tileEntity.getClass().isAssignableFrom(type)) {
             return (T) tileEntity;
         }
@@ -23,9 +23,9 @@ public class WorldUtil {
 
     @SuppressWarnings({ "unchecked", "deprecation" })
     @Nullable
-    public static <T extends Entity> T getCachedEntity(@Nullable Level worldIn, Class<T> type, @Nullable T cached, @Nullable UUID uuid) {
-        if ((cached == null || cached.isRemoved()) && uuid != null && worldIn instanceof ServerLevel) {
-            Entity entity = ((ServerLevel) worldIn).getPlayerByUUID(uuid);
+    public static <T extends Entity> T getCachedEntity(@Nullable World worldIn, Class<T> type, @Nullable T cached, @Nullable UUID uuid) {
+        if ((cached == null || cached.isRemoved()) && uuid != null && worldIn instanceof ServerWorld) {
+            Entity entity = ((ServerWorld) worldIn).getPlayerByUUID(uuid);
             if (entity != null && entity.getClass().isAssignableFrom(type)) {
                 return (T) entity;
             } else {

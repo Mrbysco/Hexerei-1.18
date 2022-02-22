@@ -7,19 +7,19 @@ import com.google.gson.JsonSyntaxException;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.joefoxe.hexerei.Hexerei;
 import net.joefoxe.hexerei.block.ModBlocks;
-import net.minecraft.core.NonNullList;
-import net.minecraft.nbt.TagParser;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.GsonHelper;
-import net.minecraft.world.Container;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.item.crafting.RecipeSerializer;
-import net.minecraft.world.item.crafting.RecipeType;
-import net.minecraft.world.item.crafting.ShapedRecipe;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.material.Fluid;
+import net.minecraft.util.NonNullList;
+import net.minecraft.nbt.JsonToNBT;
+import net.minecraft.network.PacketBuffer;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.JSONUtils;
+import net.minecraft.inventory.IInventory;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.crafting.Ingredient;
+import net.minecraft.item.crafting.IRecipeSerializer;
+import net.minecraft.item.crafting.IRecipeType;
+import net.minecraft.item.crafting.ShapedRecipe;
+import net.minecraft.world.World;
+import net.minecraft.fluid.Fluid;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.ForgeRegistryEntry;
@@ -61,7 +61,7 @@ public class DipperRecipe implements IDipperRecipe{
 
 
     @Override
-    public boolean matches(Container inv, Level worldIn) {
+    public boolean matches(IInventory inv, World worldIn) {
         if(recipeItems.get(0).test(inv.getItem(0) )||
                 recipeItems.get(0).test(inv.getItem(1)) ||
                         recipeItems.get(0).test(inv.getItem(2)))
@@ -78,7 +78,7 @@ public class DipperRecipe implements IDipperRecipe{
     }
 
     @Override
-    public ItemStack assemble(Container inv) {
+    public ItemStack assemble(IInventory inv) {
         return output;
     }
 
@@ -108,11 +108,11 @@ public class DipperRecipe implements IDipperRecipe{
     }
 
     @Override
-    public RecipeSerializer<?> getSerializer() {
+    public IRecipeSerializer<?> getSerializer() {
         return ModRecipeTypes.DIPPER_SERIALIZER.get();
     }
 
-    public static class DipperRecipeType implements RecipeType<DipperRecipe> {
+    public static class DipperRecipeType implements IRecipeType<DipperRecipe> {
         @Override
         public String toString() {
             return DipperRecipe.TYPE_ID.toString();
@@ -121,19 +121,19 @@ public class DipperRecipe implements IDipperRecipe{
 
 
     // for Serializing the recipe into/from a json
-    public static class Serializer extends ForgeRegistryEntry<RecipeSerializer<?>>
-            implements RecipeSerializer<DipperRecipe> {
+    public static class Serializer extends ForgeRegistryEntry<IRecipeSerializer<?>>
+            implements IRecipeSerializer<DipperRecipe> {
 
         @Override
         public DipperRecipe fromJson(ResourceLocation recipeId, JsonObject json) {
-            JsonArray ingredients = GsonHelper.getAsJsonArray(json, "ingredients");
+            JsonArray ingredients = JSONUtils.getAsJsonArray(json, "ingredients");
             NonNullList<Ingredient> inputs = NonNullList.withSize(1, Ingredient.EMPTY);
-            ItemStack output = ShapedRecipe.itemStackFromJson(GsonHelper.getAsJsonObject(json, "output"));
-            FluidStack liquid = deserializeFluidStack(GsonHelper.getAsJsonObject(json, "liquid"));
-            int fluidLevelsConsumed = GsonHelper.getAsInt(json, "fluidLevelsConsumed");
-            int dippingTime = GsonHelper.getAsInt(json, "dippingTimeInTicks");
-            int dryingTime = GsonHelper.getAsInt(json, "dryingTimeInTicks");
-            int numberOfDips = GsonHelper.getAsInt(json, "numberOfDips");
+            ItemStack output = ShapedRecipe.itemStackFromJson(JSONUtils.getAsJsonObject(json, "output"));
+            FluidStack liquid = deserializeFluidStack(JSONUtils.getAsJsonObject(json, "liquid"));
+            int fluidLevelsConsumed = JSONUtils.getAsInt(json, "fluidLevelsConsumed");
+            int dippingTime = JSONUtils.getAsInt(json, "dippingTimeInTicks");
+            int dryingTime = JSONUtils.getAsInt(json, "dryingTimeInTicks");
+            int numberOfDips = JSONUtils.getAsInt(json, "numberOfDips");
 
             inputs.set(0, Ingredient.fromJson(ingredients.get(0)));
 
@@ -143,7 +143,7 @@ public class DipperRecipe implements IDipperRecipe{
 
         @Nullable
         @Override
-        public DipperRecipe fromNetwork(ResourceLocation recipeId, FriendlyByteBuf buffer) {
+        public DipperRecipe fromNetwork(ResourceLocation recipeId, PacketBuffer buffer) {
             NonNullList<Ingredient> inputs = NonNullList.withSize(buffer.readInt(), Ingredient.EMPTY);
 //            inputs.add(Ingredient.fromNetwork(buffer));
             for (int i = 0; i < inputs.size(); i++) {
@@ -156,7 +156,7 @@ public class DipperRecipe implements IDipperRecipe{
         }
 
         @Override
-        public void toNetwork(FriendlyByteBuf buffer, DipperRecipe recipe) {
+        public void toNetwork(PacketBuffer buffer, DipperRecipe recipe) {
             buffer.writeInt(recipe.getIngredients().size());
             for (Ingredient ing : recipe.getIngredients())
                 ing.toNetwork(buffer);
@@ -171,7 +171,7 @@ public class DipperRecipe implements IDipperRecipe{
         }
 
         public static FluidStack deserializeFluidStack(JsonObject json) {
-            ResourceLocation id = new ResourceLocation(GsonHelper.getAsString(json, "fluid"));
+            ResourceLocation id = new ResourceLocation(JSONUtils.getAsString(json, "fluid"));
             Fluid fluid = ForgeRegistries.FLUIDS.getValue(id);
             if (fluid == null)
                 throw new JsonSyntaxException("Unknown fluid '" + id + "'");
@@ -182,8 +182,8 @@ public class DipperRecipe implements IDipperRecipe{
 
             try {
                 JsonElement element = json.get("nbt");
-                stack.setTag(TagParser.parseTag(
-                        element.isJsonObject() ? Hexerei.GSON.toJson(element) : GsonHelper.convertToString(element, "nbt")));
+                stack.setTag(JsonToNBT.parseTag(
+                        element.isJsonObject() ? Hexerei.GSON.toJson(element) : JSONUtils.convertToString(element, "nbt")));
 
             } catch (CommandSyntaxException e) {
                 e.printStackTrace();

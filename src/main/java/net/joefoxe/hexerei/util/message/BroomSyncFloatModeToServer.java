@@ -4,9 +4,9 @@ import net.joefoxe.hexerei.Hexerei;
 import net.joefoxe.hexerei.client.renderer.entity.custom.BroomEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.Level;
+import net.minecraft.network.PacketBuffer;
+import net.minecraft.entity.Entity;
+import net.minecraft.world.World;
 import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.network.NetworkEvent;
 
@@ -20,24 +20,24 @@ public class BroomSyncFloatModeToServer {
         this.sourceId = entity.getId();
         this.mode = tag;
     }
-    public BroomSyncFloatModeToServer(FriendlyByteBuf buf) {
+    public BroomSyncFloatModeToServer(PacketBuffer buf) {
         this.sourceId = buf.readInt();
         this.mode = buf.readBoolean();
 
     }
 
-    public static void encode(BroomSyncFloatModeToServer object, FriendlyByteBuf buffer) {
+    public static void encode(BroomSyncFloatModeToServer object, PacketBuffer buffer) {
         buffer.writeInt(object.sourceId);
         buffer.writeBoolean(object.mode);
     }
 
-    public static BroomSyncFloatModeToServer decode(FriendlyByteBuf buffer) {
+    public static BroomSyncFloatModeToServer decode(PacketBuffer buffer) {
         return new BroomSyncFloatModeToServer(buffer);
     }
 
     public static void consume(BroomSyncFloatModeToServer packet, Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
-            Level world;
+            World world;
             if (ctx.get().getDirection() == NetworkDirection.PLAY_TO_CLIENT) {
                 world = Hexerei.proxy.getLevel();
             }

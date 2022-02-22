@@ -1,7 +1,7 @@
 package net.joefoxe.hexerei.particle;
-import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.world.ClientWorld;
 import net.minecraft.client.particle.*;
-import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.particles.BasicParticleType;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
@@ -9,9 +9,9 @@ import javax.annotation.Nullable;
 import java.util.Random;
 
 @OnlyIn(Dist.CLIENT)
-public class FogParticle extends TextureSheetParticle {
+public class FogParticle extends SpriteTexturedParticle {
 
-    public FogParticle(ClientLevel world, double x, double y, double z, double motionX, double motionY, double motionZ) {
+    public FogParticle(ClientWorld world, double x, double y, double z, double motionX, double motionY, double motionZ) {
         super(world, x, y, z);
         this.xd = motionX;
         this.yd = motionY;
@@ -34,21 +34,21 @@ public class FogParticle extends TextureSheetParticle {
     }
 
     @Override
-    public ParticleRenderType getRenderType() {
-        return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
+    public IParticleRenderType getRenderType() {
+        return IParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
     }
 
     @OnlyIn(Dist.CLIENT)
-    public static class Factory implements ParticleProvider<SimpleParticleType> {
-        private final SpriteSet spriteSet;
+    public static class Factory implements IParticleFactory<BasicParticleType> {
+        private final IAnimatedSprite spriteSet;
 
-        public Factory(SpriteSet sprite) {
+        public Factory(IAnimatedSprite sprite) {
             this.spriteSet = sprite;
         }
 
         @Nullable
         @Override
-        public Particle createParticle(SimpleParticleType typeIn, ClientLevel worldIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
+        public Particle createParticle(BasicParticleType typeIn, ClientWorld worldIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
             Random rand = new Random();
             float colorOffset = (rand.nextFloat() * 0.4f);
             FogParticle fogParticle = new FogParticle(worldIn, x, y, z, xSpeed, ySpeed, zSpeed);

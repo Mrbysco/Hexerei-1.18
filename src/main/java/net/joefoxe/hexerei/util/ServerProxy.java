@@ -1,16 +1,16 @@
 package net.joefoxe.hexerei.util;
 
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.world.World;
 
 public class ServerProxy implements SidedProxy {
     @Override
-    public Player getPlayer() {
+    public PlayerEntity getPlayer() {
         return null;
     }
 
     @Override
-    public Level getLevel() {
+    public World getLevel() {
         return null;
     }
 

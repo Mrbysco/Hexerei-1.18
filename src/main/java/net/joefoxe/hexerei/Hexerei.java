@@ -17,22 +17,22 @@ import net.joefoxe.hexerei.screen.BroomScreen;
 import net.joefoxe.hexerei.world.gen.*;
 import net.joefoxe.hexerei.world.structure.structures.WitchHutStructure;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
-import net.minecraft.data.BuiltinRegistries;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.item.crafting.RecipeSerializer;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.biome.Biome;
-import net.minecraft.world.level.block.ComposterBlock;
-import net.minecraft.world.level.chunk.ChunkGenerator;
-import net.minecraft.world.level.levelgen.FlatLevelSource;
-import net.minecraft.world.level.levelgen.StructureSettings;
-import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
-import net.minecraft.world.level.levelgen.feature.ConfiguredStructureFeature;
-import net.minecraft.world.level.levelgen.feature.Feature;
-import net.minecraft.world.level.levelgen.feature.StructureFeature;
-import net.minecraft.world.level.levelgen.feature.configurations.StructureFeatureConfiguration;
-import net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessorType;
+import net.minecraft.util.registry.WorldGenRegistries;
+import net.minecraft.util.RegistryKey;
+import net.minecraft.world.server.ServerWorld;
+import net.minecraft.item.crafting.IRecipeSerializer;
+import net.minecraft.world.World;
+import net.minecraft.world.biome.Biome;
+import net.minecraft.block.ComposterBlock;
+import net.minecraft.world.gen.ChunkGenerator;
+import net.minecraft.world.gen.FlatChunkGenerator;
+import net.minecraft.world.gen.settings.DimensionStructuresSettings;
+import net.minecraft.world.gen.feature.ConfiguredFeature;
+import net.minecraft.world.gen.feature.StructureFeature;
+import net.minecraft.world.gen.feature.Feature;
+import net.minecraft.world.gen.feature.structure.Structure;
+import net.minecraft.world.gen.settings.StructureSeparationSettings;
+import net.minecraft.world.gen.feature.template.IStructureProcessorType;
 import net.joefoxe.hexerei.container.ModContainers;
 import net.joefoxe.hexerei.data.recipes.ModRecipeTypes;
 import net.joefoxe.hexerei.fluid.ModFluids;
@@ -48,14 +48,14 @@ import net.joefoxe.hexerei.world.processor.DarkCovenLegProcessor;
 import net.joefoxe.hexerei.world.processor.MangroveTreeLegProcessor;
 import net.joefoxe.hexerei.world.processor.WitchHutLegProcessor;
 import net.joefoxe.hexerei.world.structure.ModStructures;
-import net.minecraft.client.gui.screens.MenuScreens;
-import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.gui.ScreenManager;
+import net.minecraft.client.renderer.RenderTypeLookup;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.core.Registry;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.data.DataGenerator;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.AxeItem;
-import net.minecraft.world.level.block.Block;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.item.AxeItem;
+import net.minecraft.block.Block;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.MinecraftForge;
@@ -72,6 +72,8 @@ import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.*;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLPaths;
+import net.minecraftforge.fml.network.NetworkRegistry;
+import net.minecraftforge.fml.network.simple.SimpleChannel;
 import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 import net.minecraftforge.forge.event.lifecycle.GatherDataEvent;
 import net.minecraftforge.network.NetworkRegistry;
@@ -106,9 +108,9 @@ public class Hexerei
             .networkProtocolVersion(HexereiConstants.PROTOCOL_VERSION::toString)
             .simpleChannel();
 
-    public static StructureProcessorType<WitchHutLegProcessor> WITCH_HUT_LEG_PROCESSOR = () -> WitchHutLegProcessor.CODEC;
-    public static StructureProcessorType<DarkCovenLegProcessor> DARK_COVEN_LEG_PROCESSOR = () -> DarkCovenLegProcessor.CODEC;
-    public static StructureProcessorType<MangroveTreeLegProcessor> MANGROVE_TREE_LEG_PROCESSOR = () -> MangroveTreeLegProcessor.CODEC;
+    public static IStructureProcessorType<WitchHutLegProcessor> WITCH_HUT_LEG_PROCESSOR = () -> WitchHutLegProcessor.CODEC;
+    public static IStructureProcessorType<DarkCovenLegProcessor> DARK_COVEN_LEG_PROCESSOR = () -> DarkCovenLegProcessor.CODEC;
+    public static IStructureProcessorType<MangroveTreeLegProcessor> MANGROVE_TREE_LEG_PROCESSOR = () -> MangroveTreeLegProcessor.CODEC;
 
     public Hexerei() {
         // Register the setup method for modloading
@@ -117,7 +119,7 @@ public class Hexerei
 //        eventBus.addListener(this::gatherData);
 
         eventBus.addListener(HexereiDataGenerator::gatherData);
-        eventBus.addGenericListener(RecipeSerializer.class, ModItems::registerRecipeSerializers);
+        eventBus.addGenericListener(IRecipeSerializer.class, ModItems::registerRecipeSerializers);
         ModItems.register(eventBus);
         ModBlocks.register(eventBus);
         ModFluids.register(eventBus);
@@ -162,7 +164,7 @@ public class Hexerei
         event.enqueueWork(() -> {
             ModBiomeGeneration.generateBiomes();
 
-            AxeItem.STRIPPABLES = new ImmutableMap.Builder<Block, Block>().putAll(AxeItem.STRIPPABLES)
+            AxeItem.STRIPABLES = new ImmutableMap.Builder<Block, Block>().putAll(AxeItem.STRIPABLES)
                     .put(ModBlocks.MAHOGANY_LOG.get(), ModBlocks.STRIPPED_MAHOGANY_LOG.get())
                     .put(ModBlocks.MAHOGANY_WOOD.get(), ModBlocks.STRIPPED_MAHOGANY_WOOD.get())
                     .put(ModBlocks.WILLOW_LOG.get(), ModBlocks.STRIPPED_WILLOW_LOG.get())
@@ -216,53 +218,53 @@ public class Hexerei
         ModKeyBindings.init();
         event.enqueueWork(() -> {
 
-            ItemBlockRenderTypes.setRenderLayer(ModFluids.QUICKSILVER_FLUID.get(), RenderType.translucent());
-            ItemBlockRenderTypes.setRenderLayer(ModFluids.QUICKSILVER_FLOWING.get(), RenderType.translucent());
-            ItemBlockRenderTypes.setRenderLayer(ModFluids.QUICKSILVER_BLOCK.get(), RenderType.translucent());
+            RenderTypeLookup.setRenderLayer(ModFluids.QUICKSILVER_FLUID.get(), RenderType.translucent());
+            RenderTypeLookup.setRenderLayer(ModFluids.QUICKSILVER_FLOWING.get(), RenderType.translucent());
+            RenderTypeLookup.setRenderLayer(ModFluids.QUICKSILVER_BLOCK.get(), RenderType.translucent());
 
-            ItemBlockRenderTypes.setRenderLayer(ModFluids.BLOOD_FLUID.get(), RenderType.translucent());
-            ItemBlockRenderTypes.setRenderLayer(ModFluids.BLOOD_FLOWING.get(), RenderType.translucent());
-            ItemBlockRenderTypes.setRenderLayer(ModFluids.BLOOD_BLOCK.get(), RenderType.translucent());
-            ItemBlockRenderTypes.setRenderLayer(ModFluids.TALLOW_FLUID.get(), RenderType.translucent());
-            ItemBlockRenderTypes.setRenderLayer(ModFluids.TALLOW_FLOWING.get(), RenderType.translucent());
-            ItemBlockRenderTypes.setRenderLayer(ModFluids.TALLOW_BLOCK.get(), RenderType.translucent());
-            ItemBlockRenderTypes.setRenderLayer(ModBlocks.MAHOGANY_DOOR.get(), RenderType.translucent());
-            ItemBlockRenderTypes.setRenderLayer(ModBlocks.MAHOGANY_TRAPDOOR.get(), RenderType.translucent());
-            ItemBlockRenderTypes.setRenderLayer(ModBlocks.MAHOGANY_TRAPDOOR.get(), RenderType.translucent());
-            ItemBlockRenderTypes.setRenderLayer(ModBlocks.WILLOW_DOOR.get(), RenderType.translucent());
-            ItemBlockRenderTypes.setRenderLayer(ModBlocks.WILLOW_TRAPDOOR.get(), RenderType.translucent());
-            ItemBlockRenderTypes.setRenderLayer(ModBlocks.MIXING_CAULDRON.get(), RenderType.cutoutMipped());
+            RenderTypeLookup.setRenderLayer(ModFluids.BLOOD_FLUID.get(), RenderType.translucent());
+            RenderTypeLookup.setRenderLayer(ModFluids.BLOOD_FLOWING.get(), RenderType.translucent());
+            RenderTypeLookup.setRenderLayer(ModFluids.BLOOD_BLOCK.get(), RenderType.translucent());
+            RenderTypeLookup.setRenderLayer(ModFluids.TALLOW_FLUID.get(), RenderType.translucent());
+            RenderTypeLookup.setRenderLayer(ModFluids.TALLOW_FLOWING.get(), RenderType.translucent());
+            RenderTypeLookup.setRenderLayer(ModFluids.TALLOW_BLOCK.get(), RenderType.translucent());
+            RenderTypeLookup.setRenderLayer(ModBlocks.MAHOGANY_DOOR.get(), RenderType.translucent());
+            RenderTypeLookup.setRenderLayer(ModBlocks.MAHOGANY_TRAPDOOR.get(), RenderType.translucent());
+            RenderTypeLookup.setRenderLayer(ModBlocks.MAHOGANY_TRAPDOOR.get(), RenderType.translucent());
+            RenderTypeLookup.setRenderLayer(ModBlocks.WILLOW_DOOR.get(), RenderType.translucent());
+            RenderTypeLookup.setRenderLayer(ModBlocks.WILLOW_TRAPDOOR.get(), RenderType.translucent());
+            RenderTypeLookup.setRenderLayer(ModBlocks.MIXING_CAULDRON.get(), RenderType.cutoutMipped());
 
-            ItemBlockRenderTypes.setRenderLayer(ModBlocks.CRYSTAL_BALL.get(), RenderType.translucent());
-            ItemBlockRenderTypes.setRenderLayer(ModBlocks.CRYSTAL_BALL_ORB.get(), RenderType.translucent());
-            ItemBlockRenderTypes.setRenderLayer(ModBlocks.CRYSTAL_BALL_LARGE_RING.get(), RenderType.translucent());
-            ItemBlockRenderTypes.setRenderLayer(ModBlocks.CRYSTAL_BALL_SMALL_RING.get(), RenderType.translucent());
-            ItemBlockRenderTypes.setRenderLayer(ModBlocks.HERB_JAR.get(), RenderType.translucent());
-            ItemBlockRenderTypes.setRenderLayer(ModBlocks.HERB_DRYING_RACK_FULL.get(), RenderType.cutout());
-            ItemBlockRenderTypes.setRenderLayer(ModBlocks.HERB_DRYING_RACK.get(), RenderType.cutout());
-            ItemBlockRenderTypes.setRenderLayer(ModBlocks.MAHOGANY_SAPLING.get(), RenderType.cutout());
-            ItemBlockRenderTypes.setRenderLayer(ModBlocks.WILLOW_SAPLING.get(), RenderType.cutout());
-            ItemBlockRenderTypes.setRenderLayer(ModBlocks.MANDRAKE_FLOWER.get(), RenderType.cutout());
-            ItemBlockRenderTypes.setRenderLayer(ModBlocks.BELLADONNA_FLOWER.get(), RenderType.cutout());
-            ItemBlockRenderTypes.setRenderLayer(ModBlocks.MUGWORT_BUSH.get(), RenderType.cutout());
-            ItemBlockRenderTypes.setRenderLayer(ModBlocks.YELLOW_DOCK_BUSH.get(), RenderType.cutout());
-            ItemBlockRenderTypes.setRenderLayer(ModBlocks.CANDELABRA.get(), RenderType.cutout());
-            ItemBlockRenderTypes.setRenderLayer(ModBlocks.SAGE.get(), RenderType.cutout());
-            ItemBlockRenderTypes.setRenderLayer(ModBlocks.LILY_PAD_BLOCK.get(), RenderType.cutout());
-            ItemBlockRenderTypes.setRenderLayer(ModBlocks.WILLOW_VINES.get(), RenderType.cutout());
-            ItemBlockRenderTypes.setRenderLayer(ModBlocks.WILLOW_VINES_PLANT.get(), RenderType.cutout());
+            RenderTypeLookup.setRenderLayer(ModBlocks.CRYSTAL_BALL.get(), RenderType.translucent());
+            RenderTypeLookup.setRenderLayer(ModBlocks.CRYSTAL_BALL_ORB.get(), RenderType.translucent());
+            RenderTypeLookup.setRenderLayer(ModBlocks.CRYSTAL_BALL_LARGE_RING.get(), RenderType.translucent());
+            RenderTypeLookup.setRenderLayer(ModBlocks.CRYSTAL_BALL_SMALL_RING.get(), RenderType.translucent());
+            RenderTypeLookup.setRenderLayer(ModBlocks.HERB_JAR.get(), RenderType.translucent());
+            RenderTypeLookup.setRenderLayer(ModBlocks.HERB_DRYING_RACK_FULL.get(), RenderType.cutout());
+            RenderTypeLookup.setRenderLayer(ModBlocks.HERB_DRYING_RACK.get(), RenderType.cutout());
+            RenderTypeLookup.setRenderLayer(ModBlocks.MAHOGANY_SAPLING.get(), RenderType.cutout());
+            RenderTypeLookup.setRenderLayer(ModBlocks.WILLOW_SAPLING.get(), RenderType.cutout());
+            RenderTypeLookup.setRenderLayer(ModBlocks.MANDRAKE_FLOWER.get(), RenderType.cutout());
+            RenderTypeLookup.setRenderLayer(ModBlocks.BELLADONNA_FLOWER.get(), RenderType.cutout());
+            RenderTypeLookup.setRenderLayer(ModBlocks.MUGWORT_BUSH.get(), RenderType.cutout());
+            RenderTypeLookup.setRenderLayer(ModBlocks.YELLOW_DOCK_BUSH.get(), RenderType.cutout());
+            RenderTypeLookup.setRenderLayer(ModBlocks.CANDELABRA.get(), RenderType.cutout());
+            RenderTypeLookup.setRenderLayer(ModBlocks.SAGE.get(), RenderType.cutout());
+            RenderTypeLookup.setRenderLayer(ModBlocks.LILY_PAD_BLOCK.get(), RenderType.cutout());
+            RenderTypeLookup.setRenderLayer(ModBlocks.WILLOW_VINES.get(), RenderType.cutout());
+            RenderTypeLookup.setRenderLayer(ModBlocks.WILLOW_VINES_PLANT.get(), RenderType.cutout());
 
-            ItemBlockRenderTypes.setRenderLayer(ModBlocks.SELENITE_BLOCK.get(), RenderType.translucent());
-            ItemBlockRenderTypes.setRenderLayer(ModBlocks.SELENITE_CLUSTER.get(), RenderType.translucent());
-            ItemBlockRenderTypes.setRenderLayer(ModBlocks.BUDDING_SELENITE.get(), RenderType.translucent());
-            ItemBlockRenderTypes.setRenderLayer(ModBlocks.LARGE_SELENITE_BUD.get(), RenderType.translucent());
-            ItemBlockRenderTypes.setRenderLayer(ModBlocks.MEDIUM_SELENITE_BUD.get(), RenderType.translucent());
-            ItemBlockRenderTypes.setRenderLayer(ModBlocks.SMALL_SELENITE_BUD.get(), RenderType.translucent());
+//            RenderTypeLookup.setRenderLayer(ModBlocks.SELENITE_BLOCK.get(), RenderType.translucent()); TODO: There's no Amethyst blocks in 1.16.5
+//            RenderTypeLookup.setRenderLayer(ModBlocks.SELENITE_CLUSTER.get(), RenderType.translucent());
+//            RenderTypeLookup.setRenderLayer(ModBlocks.BUDDING_SELENITE.get(), RenderType.translucent());
+//            RenderTypeLookup.setRenderLayer(ModBlocks.LARGE_SELENITE_BUD.get(), RenderType.translucent());
+//            RenderTypeLookup.setRenderLayer(ModBlocks.MEDIUM_SELENITE_BUD.get(), RenderType.translucent());
+//            RenderTypeLookup.setRenderLayer(ModBlocks.SMALL_SELENITE_BUD.get(), RenderType.translucent());
 
-            MenuScreens.register(ModContainers.MIXING_CAULDRON_CONTAINER.get(), MixingCauldronScreen::new);
-            MenuScreens.register(ModContainers.COFFER_CONTAINER.get(), CofferScreen::new);
-            MenuScreens.register(ModContainers.HERB_JAR_CONTAINER.get(), HerbJarScreen::new);
-            MenuScreens.register(ModContainers.BROOM_CONTAINER.get(), BroomScreen::new);
+            ScreenManager.register(ModContainers.MIXING_CAULDRON_CONTAINER.get(), MixingCauldronScreen::new);
+            ScreenManager.register(ModContainers.COFFER_CONTAINER.get(), CofferScreen::new);
+            ScreenManager.register(ModContainers.HERB_JAR_CONTAINER.get(), HerbJarScreen::new);
+            ScreenManager.register(ModContainers.BROOM_CONTAINER.get(), BroomScreen::new);
 
         });
 
@@ -305,31 +307,31 @@ public class Hexerei
 
     private static Method GETCODEC_METHOD;
     public void addDimensionalSpacing(final WorldEvent.Load event) {
-        if(event.getWorld() instanceof ServerLevel serverLevel){
+        if(event.getWorld() instanceof ServerWorld serverLevel){
             ChunkGenerator chunkGenerator = serverLevel.getChunkSource().getGenerator();
             // Skip superflat to prevent issues with it. Plus, users don't want structures clogging up their superflat worlds.
-            if (chunkGenerator instanceof FlatLevelSource && serverLevel.dimension().equals(Level.OVERWORLD)) {
+            if (chunkGenerator instanceof FlatChunkGenerator && serverLevel.dimension().equals(World.OVERWORLD)) {
                 return;
             }
 
-            StructureSettings worldStructureConfig = chunkGenerator.getSettings();
+            DimensionStructuresSettings worldStructureConfig = chunkGenerator.getSettings();
 
             // Create a mutable map we will use for easier adding to biomes
-            HashMap<StructureFeature<?>, HashMultimap<ConfiguredStructureFeature<?, ?>, ResourceKey<Biome>>> structureToMultiMap = new HashMap<>();
-            HashMap<Feature<?>, HashMultimap<ConfiguredFeature<?, ?>, ResourceKey<Biome>>> featureToMultiMap = new HashMap<>();
+            HashMap<Structure<?>, HashMultimap<StructureFeature<?, ?>, RegistryKey<Biome>>> structureToMultiMap = new HashMap<>();
+            HashMap<Feature<?>, HashMultimap<ConfiguredFeature<?, ?>, RegistryKey<Biome>>> featureToMultiMap = new HashMap<>();
 
             // Add the resourcekey of all biomes that this Configured Structure can spawn in.
-            for(Map.Entry<ResourceKey<Biome>, Biome> biomeEntry : serverLevel.registryAccess().ownedRegistryOrThrow(Registry.BIOME_REGISTRY).entrySet()) {
+            for(Map.Entry<RegistryKey<Biome>, Biome> biomeEntry : serverLevel.registryAccess().ownedRegistryOrThrow(Registry.BIOME_REGISTRY).entrySet()) {
 
-                Biome.BiomeCategory biomeCategory = biomeEntry.getValue().getBiomeCategory();
+                Biome.Category biomeCategory = biomeEntry.getValue().getBiomeCategory();
 
-                if(biomeCategory == Biome.BiomeCategory.SWAMP) {
+                if(biomeCategory == Biome.Category.SWAMP) {
                     associateBiomeToConfiguredStructure(structureToMultiMap, ModConfiguredStructures.CONFIGURED_WITCH_HUT, biomeEntry.getKey());
                     associateBiomeToConfiguredStructure(structureToMultiMap, ModConfiguredStructures.CONFIGURED_DARK_COVEN, biomeEntry.getKey());
                 }
             }
 
-            ImmutableMap.Builder<StructureFeature<?>, ImmutableMultimap<ConfiguredStructureFeature<?, ?>, ResourceKey<Biome>>> tempStructureToMultiMap = ImmutableMap.builder();
+            ImmutableMap.Builder<Structure<?>, ImmutableMultimap<StructureFeature<?, ?>, RegistryKey<Biome>>> tempStructureToMultiMap = ImmutableMap.builder();
             worldStructureConfig.configuredStructures.entrySet().stream().filter(entry -> !structureToMultiMap.containsKey(entry.getKey())).forEach(tempStructureToMultiMap::put);
 
             // Add our structures to the structure map/multimap and set the world to use this combined map/multimap.
@@ -352,8 +354,8 @@ public class Hexerei
              * people seem to want their superflat worlds free of modded structures.
              * Also that vanilla superflat is really tricky and buggy to work with in my experience.
              */
-            if(chunkGenerator instanceof FlatLevelSource &&
-                    serverLevel.dimension().equals(Level.OVERWORLD)){
+            if(chunkGenerator instanceof FlatChunkGenerator &&
+                    serverLevel.dimension().equals(World.OVERWORLD)){
                 return;
             }
 
@@ -365,8 +367,8 @@ public class Hexerei
              * already added your default structure spacing to some dimensions. You would need to override the spacing with .put(...)
              * And if you want to do dimension blacklisting, you need to remove the spacing entry entirely from the map below to prevent generation safely.
              */
-            Map<StructureFeature<?>, StructureFeatureConfiguration> tempMap = new HashMap<>(worldStructureConfig.structureConfig());
-            tempMap.putIfAbsent(ModStructures.WITCH_HUT.get(), StructureSettings.DEFAULTS.get(ModStructures.WITCH_HUT.get()));
+            Map<Structure<?>, StructureSeparationSettings> tempMap = new HashMap<>(worldStructureConfig.structureConfig());
+            tempMap.putIfAbsent(ModStructures.WITCH_HUT.get(), DimensionStructuresSettings.DEFAULTS.get(ModStructures.WITCH_HUT.get()));
             worldStructureConfig.structureConfig = tempMap;
         }
     }
@@ -374,9 +376,9 @@ public class Hexerei
     /**
      * Helper method that handles setting up the map to multimap relationship to help prevent issues.
      */
-    private static void associateBiomeToConfiguredStructure(Map<StructureFeature<?>, HashMultimap<ConfiguredStructureFeature<?, ?>, ResourceKey<Biome>>> structureToMultiMap, ConfiguredStructureFeature<?, ?> configuredStructureFeature, ResourceKey<Biome> biomeRegistryKey) {
+    private static void associateBiomeToConfiguredStructure(Map<Structure<?>, HashMultimap<StructureFeature<?, ?>, RegistryKey<Biome>>> structureToMultiMap, StructureFeature<?, ?> configuredStructureFeature, RegistryKey<Biome> biomeRegistryKey) {
         structureToMultiMap.putIfAbsent(configuredStructureFeature.feature, HashMultimap.create());
-        HashMultimap<ConfiguredStructureFeature<?, ?>, ResourceKey<Biome>> configuredStructureToBiomeMultiMap = structureToMultiMap.get(configuredStructureFeature.feature);
+        HashMultimap<StructureFeature<?, ?>, RegistryKey<Biome>> configuredStructureToBiomeMultiMap = structureToMultiMap.get(configuredStructureFeature.feature);
         if(configuredStructureToBiomeMultiMap.containsValue(biomeRegistryKey)) {
             Hexerei.LOGGER.error("""
                     Detected 2 ConfiguredStructureFeatures that share the same base StructureFeature trying to be added to same biome. One will be prevented from spawning.
@@ -384,8 +386,8 @@ public class Hexerei
                     The two conflicting ConfiguredStructures are: {}, {}
                     The biome that is attempting to be shared: {}
                 """,
-                    BuiltinRegistries.CONFIGURED_STRUCTURE_FEATURE.getId(configuredStructureFeature),
-                    BuiltinRegistries.CONFIGURED_STRUCTURE_FEATURE.getId(configuredStructureToBiomeMultiMap.entries().stream().filter(e -> e.getValue() == biomeRegistryKey).findFirst().get().getKey()),
+                    WorldGenRegistries.CONFIGURED_STRUCTURE_FEATURE.getId(configuredStructureFeature),
+                    WorldGenRegistries.CONFIGURED_STRUCTURE_FEATURE.getId(configuredStructureToBiomeMultiMap.entries().stream().filter(e -> e.getValue() == biomeRegistryKey).findFirst().get().getKey()),
                     biomeRegistryKey
             );
         }

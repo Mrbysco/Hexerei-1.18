@@ -1,27 +1,27 @@
 package net.joefoxe.hexerei.client.renderer.entity.model;
 
 import com.google.common.collect.ImmutableList;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.IVertexBuilder;
 import net.joefoxe.hexerei.Hexerei;
 import net.joefoxe.hexerei.client.renderer.entity.custom.BroomEntity;
-import net.minecraft.client.model.ListModel;
+import net.minecraft.client.renderer.entity.model.SegmentedModel;
 import net.minecraft.client.model.geom.ModelLayerLocation;
-import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.renderer.model.ModelRenderer;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 
-public class BroomKeychainChainModel extends ListModel<BroomEntity> {
+public class BroomKeychainChainModel extends SegmentedModel<BroomEntity> {
     // This layer location should be baked with EntityRendererProvider.Context in the entity renderer and passed into this model's constructor
     public static final ModelLayerLocation LAYER_LOCATION = new ModelLayerLocation(new ResourceLocation(Hexerei.MOD_ID, "broom_keychain_chain"), "main");
-    private final ModelPart KeychainChain;
+    private final ModelRenderer KeychainChain;
 
-    public BroomKeychainChainModel(ModelPart root) {
+    public BroomKeychainChainModel(ModelRenderer root) {
         this.KeychainChain = root.getChild("Keychain");
     }
 
@@ -42,12 +42,12 @@ public class BroomKeychainChainModel extends ListModel<BroomEntity> {
 
 
     @Override
-    public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
+    public void renderToBuffer(MatrixStack poseStack, IVertexBuilder buffer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
         KeychainChain.render(poseStack, buffer, packedLight, packedOverlay);
     }
 
     @Override
-    public Iterable<ModelPart> parts() {
+    public Iterable<ModelRenderer> parts() {
         return ImmutableList.of(KeychainChain);
     }
 

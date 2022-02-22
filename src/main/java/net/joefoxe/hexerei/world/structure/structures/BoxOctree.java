@@ -1,7 +1,7 @@
 package net.joefoxe.hexerei.world.structure.structures;
 
-import net.minecraft.core.Vec3i;
-import net.minecraft.world.phys.AABB;
+import net.minecraft.util.math.vector.Vector3i;
+import net.minecraft.util.math.AxisAlignedBB;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,19 +11,19 @@ public class BoxOctree {
     private static final int subdivideThreshold = 10;
     private static final int maximumDepth = 3;
 
-    private final AABB boundary;
-    private final Vec3i size;
+    private final AxisAlignedBB boundary;
+    private final Vector3i size;
     private final int depth;
-    private final List<AABB> innerBoxes = new ArrayList<>();
+    private final List<AxisAlignedBB> innerBoxes = new ArrayList<>();
     private final List<BoxOctree> childrenOctants = new ArrayList<>();
 
-    public BoxOctree(AABB axisAlignedBB){
+    public BoxOctree(AxisAlignedBB axisAlignedBB){
         this(axisAlignedBB, 0);
     }
 
-    private BoxOctree(AABB axisAlignedBB, int parentDepth){
+    private BoxOctree(AxisAlignedBB axisAlignedBB, int parentDepth){
         boundary = axisAlignedBB.move(0, 0, 0); // deep copy
-        size = new Vec3i(boundary.getXsize(), boundary.getYsize(), boundary.getZsize());
+        size = new Vector3i(boundary.getXsize(), boundary.getYsize(), boundary.getZsize());
         depth = parentDepth + 1;
     }
 
@@ -36,47 +36,47 @@ public class BoxOctree {
         int halfYSize = size.getY()/2;
         int halfZSize = size.getZ()/2;
 
-        childrenOctants.add(new BoxOctree(new AABB(
+        childrenOctants.add(new BoxOctree(new AxisAlignedBB(
                 boundary.minX, boundary.minY, boundary.minZ,
                 boundary.minX + halfXSize, boundary.minY + halfYSize, boundary.minZ + halfZSize),
                 depth));
 
-        childrenOctants.add(new BoxOctree(new AABB(
+        childrenOctants.add(new BoxOctree(new AxisAlignedBB(
                 boundary.minX + halfXSize, boundary.minY, boundary.minZ,
                 boundary.maxX, boundary.minY + halfYSize, boundary.minZ + halfZSize),
                 depth));
 
-        childrenOctants.add(new BoxOctree(new AABB(
+        childrenOctants.add(new BoxOctree(new AxisAlignedBB(
                 boundary.minX, boundary.minY + halfYSize, boundary.minZ,
                 boundary.minX + halfXSize, boundary.maxY, boundary.minZ + halfZSize),
                 depth));
 
-        childrenOctants.add(new BoxOctree(new AABB(
+        childrenOctants.add(new BoxOctree(new AxisAlignedBB(
                 boundary.minX, boundary.minY, boundary.minZ + halfZSize,
                 boundary.minX + halfXSize, boundary.minY + halfYSize, boundary.maxZ),
                 depth));
 
-        childrenOctants.add(new BoxOctree(new AABB(
+        childrenOctants.add(new BoxOctree(new AxisAlignedBB(
                 boundary.minX + halfXSize, boundary.minY + halfYSize, boundary.minZ,
                 boundary.maxX, boundary.maxY, boundary.minZ + halfZSize),
                 depth));
 
-        childrenOctants.add(new BoxOctree(new AABB(
+        childrenOctants.add(new BoxOctree(new AxisAlignedBB(
                 boundary.minX, boundary.minY + halfYSize, boundary.minZ + halfZSize,
                 boundary.minX + halfXSize, boundary.maxY, boundary.maxZ),
                 depth));
 
-        childrenOctants.add(new BoxOctree(new AABB(
+        childrenOctants.add(new BoxOctree(new AxisAlignedBB(
                 boundary.minX + halfXSize, boundary.minY, boundary.minZ + halfZSize,
                 boundary.maxX, boundary.minY + halfYSize, boundary.maxZ),
                 depth));
 
-        childrenOctants.add(new BoxOctree(new AABB(
+        childrenOctants.add(new BoxOctree(new AxisAlignedBB(
                 boundary.minX + halfXSize, boundary.minY + halfYSize, boundary.minZ + halfZSize,
                 boundary.maxX, boundary.maxY, boundary.maxZ),
                 depth));
 
-        for(AABB parentInnerBox : innerBoxes) {
+        for(AxisAlignedBB parentInnerBox : innerBoxes) {
             for (BoxOctree octree : childrenOctants) {
                 if (octree.boundaryContainsFuzzy(parentInnerBox)) {
                     octree.addBox(parentInnerBox);
@@ -87,7 +87,7 @@ public class BoxOctree {
         innerBoxes.clear();
     }
 
-    public void addBox(AABB axisAlignedBB){
+    public void addBox(AxisAlignedBB axisAlignedBB){
         if(depth < maximumDepth && innerBoxes.size() > subdivideThreshold){
             subdivide();
         }
@@ -101,7 +101,7 @@ public class BoxOctree {
         }
         else{
             // Prevent re-adding the same box if it already exists
-            for(AABB parentInnerBox : innerBoxes) {
+            for(AxisAlignedBB parentInnerBox : innerBoxes) {
                 if(parentInnerBox.equals(axisAlignedBB)){
                     return;
                 }
@@ -111,15 +111,15 @@ public class BoxOctree {
         }
     }
 
-    public boolean boundaryContainsFuzzy(AABB axisAlignedBB){
+    public boolean boundaryContainsFuzzy(AxisAlignedBB axisAlignedBB){
         return boundary.inflate(axisAlignedBB.getXsize() / 2).intersects(axisAlignedBB);
     }
 
-    public boolean boundaryContains(AABB axisAlignedBB){
+    public boolean boundaryContains(AxisAlignedBB axisAlignedBB){
         return boundary.contains(axisAlignedBB.minX, axisAlignedBB.minY, axisAlignedBB.minZ) && boundary.contains(axisAlignedBB.maxX, axisAlignedBB.maxY, axisAlignedBB.maxZ);
     }
 
-    public boolean intersectsAnyBox(AABB axisAlignedBB){
+    public boolean intersectsAnyBox(AxisAlignedBB axisAlignedBB){
         if(!childrenOctants.isEmpty()){
             for(BoxOctree octree : childrenOctants){
                 if(octree.intersectsAnyBox(axisAlignedBB)){
@@ -128,7 +128,7 @@ public class BoxOctree {
             }
         }
         else{
-            for(AABB innerBox : innerBoxes) {
+            for(AxisAlignedBB innerBox : innerBoxes) {
                 if(innerBox.intersects(axisAlignedBB)){
                     return true;
                 }

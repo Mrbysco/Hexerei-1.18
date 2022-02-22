@@ -5,11 +5,11 @@ import net.joefoxe.hexerei.Hexerei;
 import net.joefoxe.hexerei.tileentity.HerbJarTile;
 import net.joefoxe.hexerei.tileentity.MixingCauldronTile;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.PacketBuffer;
 import net.minecraft.world.item.alchemy.PotionBrewing;
-import net.minecraft.world.level.Level;
+import net.minecraft.world.World;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -31,19 +31,19 @@ public class EmitParticlesPacket
         this.spout = spout;
     }
 
-    public static void encode(EmitParticlesPacket object, FriendlyByteBuf buffer) {
+    public static void encode(EmitParticlesPacket object, PacketBuffer buffer) {
         buffer.writeBlockPos(object.pos);
         buffer.writeInt(object.emitParticles);
         buffer.writeBoolean(object.spout);
     }
 
-    public static EmitParticlesPacket decode(FriendlyByteBuf buffer) {
+    public static EmitParticlesPacket decode(PacketBuffer buffer) {
         return new EmitParticlesPacket(buffer.readBlockPos(), buffer.readInt(), buffer.readBoolean());
     }
 
     public static void handle(EmitParticlesPacket packet, Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
-            Level world;
+            World world;
             if (ctx.get().getDirection() == NetworkDirection.PLAY_TO_CLIENT) {
                 world = Hexerei.proxy.getLevel();
             }

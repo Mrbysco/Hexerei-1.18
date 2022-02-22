@@ -1,17 +1,17 @@
 package net.joefoxe.hexerei.data.recipes;
 
 import net.joefoxe.hexerei.Hexerei;
-import net.minecraft.core.Registry;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.Container;
-import net.minecraft.world.item.crafting.Recipe;
-import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.util.registry.Registry;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.inventory.IInventory;
+import net.minecraft.item.crafting.IRecipe;
+import net.minecraft.item.crafting.IRecipeType;
 
-public interface IMixingCauldronRecipe extends Recipe<Container> {
+public interface IMixingCauldronRecipe extends IRecipe<IInventory> {
     ResourceLocation TYPE_ID = new ResourceLocation(Hexerei.MOD_ID, "mixingcauldron");
 
     @Override
-    default RecipeType<?> getType() {
+    default IRecipeType<?> getType() {
         return Registry.RECIPE_TYPE.getOptional(TYPE_ID).get();
     }
 

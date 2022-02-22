@@ -5,13 +5,13 @@ import net.joefoxe.hexerei.client.renderer.entity.custom.BroomEntity;
 import net.joefoxe.hexerei.tileentity.CofferTile;
 import net.joefoxe.hexerei.util.HexereiTags;
 import net.minecraft.core.BlockPos;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.SoundEvents;
+import net.minecraft.util.SoundCategory;
 import net.minecraft.world.SimpleContainer;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.world.inventory.*;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.common.extensions.IForgeMenuType;
@@ -23,8 +23,13 @@ import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.NotNull;
 
 
-public class BroomContainer extends AbstractContainerMenu {
-    private final Player playerEntity;
+import net.minecraft.inventory.container.ClickType;
+import net.minecraft.inventory.container.Container;
+import net.minecraft.inventory.container.Slot;
+import net.minecraft.util.IntReferenceHolder;
+
+public class BroomContainer extends Container {
+    private final PlayerEntity playerEntity;
     public final BroomEntity broomEntity;
     private final IItemHandler playerInventory;
 
@@ -34,7 +39,7 @@ public class BroomContainer extends AbstractContainerMenu {
 //        this(windowId, inv, new SimpleContainer(5));
 //    }
 
-    public BroomContainer(int windowId, BroomEntity broomEntity, Inventory playerInventory, Player player) {
+    public BroomContainer(int windowId, BroomEntity broomEntity, PlayerInventory playerInventory, PlayerEntity player) {
         super(ModContainers.BROOM_CONTAINER.get(), windowId);
         this.broomEntity = broomEntity;
         playerEntity = player;
@@ -81,7 +86,7 @@ public class BroomContainer extends AbstractContainerMenu {
                     }
 
                     @Override
-                    public boolean mayPickup(Player playerIn) {
+                    public boolean mayPickup(PlayerEntity playerIn) {
 
                         if(broomEntity.itemHandler.getStackInSlot(1).is(HexereiTags.Items.SMALL_SATCHELS)) {
                             if (broomEntity.itemHandler.getStackInSlot(3).getItem() == (ItemStack.EMPTY.getItem()) &&
@@ -231,7 +236,7 @@ public class BroomContainer extends AbstractContainerMenu {
             });
         }
 
-        addDataSlot(new DataSlot() {
+        addDataSlot(new IntReferenceHolder() {
             @Override
             public void set(int value) {
                 broomEntity.setFloatMode(value != 0);
@@ -247,7 +252,7 @@ public class BroomContainer extends AbstractContainerMenu {
     }
 
     @Override
-    public void clicked(int p_150400_, int p_150401_, ClickType p_150402_, Player p_150403_) {
+    public void clicked(int p_150400_, int p_150401_, ClickType p_150402_, PlayerEntity p_150403_) {
         super.clicked(p_150400_, p_150401_, p_150402_, p_150403_);
         int offset = 0;
         if(broomEntity.itemHandler.getStackInSlot(1).is(HexereiTags.Items.SMALL_SATCHELS)) {
@@ -302,7 +307,7 @@ public class BroomContainer extends AbstractContainerMenu {
     }
 
     public void playSound() {
-        this.broomEntity.getLevel().playSound((Player)null, this.broomEntity.blockPosition(), SoundEvents.UI_BUTTON_CLICK, SoundSource.BLOCKS, 1.0F, 1.0F);;
+        this.broomEntity.getLevel().playSound((PlayerEntity)null, this.broomEntity.blockPosition(), SoundEvents.UI_BUTTON_CLICK, SoundCategory.BLOCKS, 1.0F, 1.0F);;
     }
 
     public boolean getFloatMode() {
@@ -314,7 +319,7 @@ public class BroomContainer extends AbstractContainerMenu {
     }
 
     @Override
-    public boolean stillValid(Player playerIn) {
+    public boolean stillValid(PlayerEntity playerIn) {
 //        return stillValid(ContainerLevelAccess.create(broomEntity.getLevel(), broomEntity.blockPosition()),
 //                playerIn, ModBlocks.COFFER.get());
 
@@ -372,7 +377,7 @@ public class BroomContainer extends AbstractContainerMenu {
     private static final int TE_INVENTORY_SLOT_COUNT = 3;  // must match TileEntityInventoryBasic.NUMBER_OF_SLOTS
 
     @Override
-    public ItemStack quickMoveStack(Player playerIn, int index) {
+    public ItemStack quickMoveStack(PlayerEntity playerIn, int index) {
         Slot sourceSlot = slots.get(index);
         if (sourceSlot == null || !sourceSlot.hasItem()) return ItemStack.EMPTY;  //EMPTY_ITEM
         ItemStack sourceStack = sourceSlot.getItem();

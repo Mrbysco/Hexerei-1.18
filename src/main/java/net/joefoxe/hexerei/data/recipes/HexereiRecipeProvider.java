@@ -2,9 +2,9 @@ package net.joefoxe.hexerei.data.recipes;
 
 
 import net.minecraft.data.DataGenerator;
-import net.minecraft.data.recipes.FinishedRecipe;
-import net.minecraft.data.recipes.RecipeProvider;
-import net.minecraft.data.recipes.SpecialRecipeBuilder;
+import net.minecraft.data.IFinishedRecipe;
+import net.minecraft.data.RecipeProvider;
+import net.minecraft.data.CustomRecipeBuilder;
 
 import java.util.function.Consumer;
 
@@ -16,9 +16,9 @@ public class HexereiRecipeProvider extends RecipeProvider {
     }
 
     @Override
-    protected void buildCraftingRecipes(Consumer<FinishedRecipe> consumer) {
+    protected void buildCraftingRecipes(Consumer<IFinishedRecipe> consumer) {
 
-        SpecialRecipeBuilder.special(CofferDyeingRecipe.SERIALIZER).save(consumer, "hexerei:coffer_dyeing");
-        SpecialRecipeBuilder.special(KeychainRecipe.SERIALIZER).save(consumer, "hexerei:keychain_apply");
+        CustomRecipeBuilder.special(CofferDyeingRecipe.SERIALIZER).save(consumer, "hexerei:coffer_dyeing");
+        CustomRecipeBuilder.special(KeychainRecipe.SERIALIZER).save(consumer, "hexerei:keychain_apply");
     }
 }

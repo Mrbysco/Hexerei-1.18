@@ -1,18 +1,18 @@
 package net.joefoxe.hexerei.world.structure.structures;
 
 import net.joefoxe.hexerei.util.Mutable;
-import net.minecraft.core.BlockPos;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.NoiseColumn;
-import net.minecraft.world.level.biome.Biome;
-import net.minecraft.world.level.biome.CheckerboardColumnBiomeSource;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.util.math.ChunkPos;
+import net.minecraft.world.Blockreader;
+import net.minecraft.world.biome.Biome;
+import net.minecraft.world.biome.provider.CheckerboardBiomeProvider;
+import net.minecraft.block.BlockState;
+import net.minecraft.world.gen.Heightmap;
 import net.minecraft.world.level.levelgen.feature.StructureFeature;
 import net.minecraft.world.level.levelgen.feature.configurations.JigsawConfiguration;
-import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
+import net.minecraft.world.gen.feature.NoFeatureConfig;
 import net.minecraft.world.level.levelgen.feature.configurations.StructureFeatureConfiguration;
 import net.minecraft.world.level.levelgen.structure.pieces.PieceGenerator;
 import net.minecraft.world.level.levelgen.structure.pieces.PieceGeneratorSupplier;
@@ -22,10 +22,10 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-public class GenericJigsawStructure extends AbstractBaseStructure<NoneFeatureConfiguration> {
+public class GenericJigsawStructure extends AbstractBaseStructure<NoFeatureConfig> {
 
-    public GenericJigsawStructure(Predicate<PieceGeneratorSupplier.Context<NoneFeatureConfiguration>> locationCheckPredicate, Function<PieceGeneratorSupplier.Context<NoneFeatureConfiguration>, Optional<PieceGenerator<NoneFeatureConfiguration>>> pieceCreationPredicate) {
-        super(NoneFeatureConfiguration.CODEC, locationCheckPredicate, pieceCreationPredicate);
+    public GenericJigsawStructure(Predicate<PieceGeneratorSupplier.Context<NoFeatureConfig>> locationCheckPredicate, Function<PieceGeneratorSupplier.Context<NoFeatureConfig>, Optional<PieceGenerator<NoFeatureConfig>>> pieceCreationPredicate) {
+        super(NoFeatureConfig.CODEC, locationCheckPredicate, pieceCreationPredicate);
     }
 
     // Need this constructor wrapper so we can hackly call `this` in the predicates that Minecraft requires in constructors
@@ -39,14 +39,14 @@ public class GenericJigsawStructure extends AbstractBaseStructure<NoneFeatureCon
 //        return finalInstance;
 //    }
 
-    protected boolean isFeatureChunk(PieceGeneratorSupplier.Context<NoneFeatureConfiguration> context, GenericJigsawStructureCodeConfig config) {
+    protected boolean isFeatureChunk(PieceGeneratorSupplier.Context<NoFeatureConfig> context, GenericJigsawStructureCodeConfig config) {
         ChunkPos chunkPos = context.chunkPos();
 
-        if (!(context.biomeSource() instanceof CheckerboardColumnBiomeSource)) {
+        if (!(context.biomeSource() instanceof CheckerboardBiomeProvider)) {
             for (int curChunkX = chunkPos.x - config.biomeRange; curChunkX <= chunkPos.x + config.biomeRange; curChunkX++) {
                 for (int curChunkZ = chunkPos.z - config.biomeRange; curChunkZ <= chunkPos.z + config.biomeRange; curChunkZ++) {
                     int yValue = config.useHeightmap ?
-                            config.fixedYSpawn + context.chunkGenerator().getFirstFreeHeight(curChunkX << 4, curChunkZ << 4, Heightmap.Types.WORLD_SURFACE_WG, context.heightAccessor())
+                            config.fixedYSpawn + context.chunkGenerator().getFirstFreeHeight(curChunkX << 4, curChunkZ << 4, Heightmap.Type.WORLD_SURFACE_WG, context.heightAccessor())
                             : config.fixedYSpawn;
                     Biome biome = context.biomeSource().getNoiseBiome(curChunkX << 2, yValue >> 2, curChunkZ << 2, context.chunkGenerator().climateSampler());
                     if (!context.validBiome().test(biome)) {
@@ -81,7 +81,7 @@ public class GenericJigsawStructure extends AbstractBaseStructure<NoneFeatureCon
 
             for (int curChunkX = chunkPos.x - config.terrainHeightRadius; curChunkX <= chunkPos.x + config.terrainHeightRadius; curChunkX++) {
                 for (int curChunkZ = chunkPos.z - config.terrainHeightRadius; curChunkZ <= chunkPos.z + config.terrainHeightRadius; curChunkZ++) {
-                    int height = context.chunkGenerator().getBaseHeight((curChunkX << 4) + 7, (curChunkZ << 4) + 7, Heightmap.Types.WORLD_SURFACE_WG, context.heightAccessor());
+                    int height = context.chunkGenerator().getBaseHeight((curChunkX << 4) + 7, (curChunkZ << 4) + 7, Heightmap.Type.WORLD_SURFACE_WG, context.heightAccessor());
                     maxTerrainHeight = Math.max(maxTerrainHeight, height);
                     minTerrainHeight = Math.min(minTerrainHeight, height);
 
@@ -96,8 +96,8 @@ public class GenericJigsawStructure extends AbstractBaseStructure<NoneFeatureCon
 
         if (config.cannotSpawnInWater) {
             BlockPos centerOfChunk = chunkPos.getMiddleBlockPosition(0);
-            int landHeight = context.chunkGenerator().getFirstOccupiedHeight(centerOfChunk.getX(), centerOfChunk.getZ(), Heightmap.Types.WORLD_SURFACE_WG, context.heightAccessor());
-            NoiseColumn columnOfBlocks = context.chunkGenerator().getBaseColumn(centerOfChunk.getX(), centerOfChunk.getZ(), context.heightAccessor());
+            int landHeight = context.chunkGenerator().getFirstOccupiedHeight(centerOfChunk.getX(), centerOfChunk.getZ(), Heightmap.Type.WORLD_SURFACE_WG, context.heightAccessor());
+            Blockreader columnOfBlocks = context.chunkGenerator().getBaseColumn(centerOfChunk.getX(), centerOfChunk.getZ(), context.heightAccessor());
             BlockState topBlock = columnOfBlocks.getBlock(centerOfChunk.getY() + landHeight);
             return topBlock.getFluidState().isEmpty();
         }

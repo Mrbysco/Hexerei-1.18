@@ -1,12 +1,12 @@
 package net.joefoxe.hexerei.item;
 
-import net.minecraft.world.item.Tier;
-import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.util.LazyLoadedValue;
+import net.minecraft.item.IItemTier;
+import net.minecraft.item.crafting.Ingredient;
+import net.minecraft.util.LazyValue;
 
 import java.util.function.Supplier;
 
-public enum ModItemTier implements Tier {
+public enum ModItemTier implements IItemTier {
 
     ARMOR_SCRAP(4, 2031, 9.0F, 4.0F, 15,
             () -> Ingredient.of(ModItems.ARMOR_SCRAP.get()));
@@ -16,7 +16,7 @@ public enum ModItemTier implements Tier {
     private final float efficiency;
     private final float attackDamage;
     private final int enchantability;
-    private final LazyLoadedValue<Ingredient> repairMaterial;
+    private final LazyValue<Ingredient> repairMaterial;
 
     ModItemTier(int harvestLevel, int maxUses, float efficiency,
                 float attackDamage, int enchantability, Supplier<Ingredient> repairMaterial) {
@@ -25,7 +25,7 @@ public enum ModItemTier implements Tier {
         this.efficiency = efficiency;
         this.attackDamage = attackDamage;
         this.enchantability = enchantability;
-        this.repairMaterial = new LazyLoadedValue<>(repairMaterial);
+        this.repairMaterial = new LazyValue<>(repairMaterial);
     }
 
     @Override

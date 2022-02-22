@@ -1,7 +1,7 @@
 package net.joefoxe.hexerei.particle;
-import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.world.ClientWorld;
 import net.minecraft.client.particle.*;
-import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.particles.BasicParticleType;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
@@ -10,12 +10,12 @@ import java.awt.*;
 import java.util.Random;
 
 @OnlyIn(Dist.CLIENT)
-public class BroomParticle extends TextureSheetParticle {
+public class BroomParticle extends SpriteTexturedParticle {
     protected float scale;
     protected float rotationDir;
     protected float fallingSpeed;
 
-    public BroomParticle(ClientLevel world, double x, double y, double z, double motionX, double motionY, double motionZ) {
+    public BroomParticle(ClientWorld world, double x, double y, double z, double motionX, double motionY, double motionZ) {
         super(world, x, y, z);
         this.xd = motionX;
         this.yd = motionY;
@@ -45,21 +45,21 @@ public class BroomParticle extends TextureSheetParticle {
     }
 
     @Override
-    public ParticleRenderType getRenderType() {
-        return ParticleRenderType.PARTICLE_SHEET_OPAQUE;
+    public IParticleRenderType getRenderType() {
+        return IParticleRenderType.PARTICLE_SHEET_OPAQUE;
     }
 
     @OnlyIn(Dist.CLIENT)
-    public static class Factory implements ParticleProvider<SimpleParticleType> {
-        private final SpriteSet spriteSet;
+    public static class Factory implements IParticleFactory<BasicParticleType> {
+        private final IAnimatedSprite spriteSet;
 
-        public Factory(SpriteSet sprite) {
+        public Factory(IAnimatedSprite sprite) {
             this.spriteSet = sprite;
         }
 
         @Nullable
         @Override
-        public Particle createParticle(SimpleParticleType typeIn, ClientLevel worldIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
+        public Particle createParticle(BasicParticleType typeIn, ClientWorld worldIn, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
             Random rand = new Random();
             float colorOffset = (rand.nextFloat() * 0.4f);
             BroomParticle broomParticle = new BroomParticle(worldIn, x, y, z, xSpeed, ySpeed, zSpeed);

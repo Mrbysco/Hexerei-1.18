@@ -3,39 +3,50 @@ package net.joefoxe.hexerei.block.custom;
 import net.joefoxe.hexerei.block.ITileEntity;
 import net.joefoxe.hexerei.tileentity.BookOfShadowsAltarTile;
 import net.joefoxe.hexerei.tileentity.ModTileEntities;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.network.chat.Style;
-import net.minecraft.network.chat.TextColor;
-import net.minecraft.util.Mth;
-import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.util.text.Style;
+import net.minecraft.util.text.Color;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.item.BlockItemUseContext;
+import net.minecraft.world.IWorld;
 import net.minecraft.world.level.block.*;
-import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.client.util.ITooltipFlag;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
-import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.level.material.Fluids;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.block.state.properties.IntegerProperty;
-import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.tileentity.TileEntityType;
+import net.minecraft.block.BlockState;
+import net.minecraft.fluid.FluidState;
+import net.minecraft.fluid.Fluids;
+import net.minecraft.item.ItemStack;
+import net.minecraft.state.BooleanProperty;
+import net.minecraft.state.IntegerProperty;
+import net.minecraft.state.StateContainer;
 import net.minecraft.world.level.block.state.properties.*;
-import net.minecraft.core.Direction;
-import net.minecraft.core.BlockPos;
+import net.minecraft.util.Direction;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.phys.shapes.*;
-import net.minecraft.world.phys.shapes.BooleanOp;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
-import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.Level;
+import net.minecraft.util.math.shapes.IBooleanFunction;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.world.IBlockReader;
+import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.stream.Stream;
 
-public class Altar extends Block implements ITileEntity<BookOfShadowsAltarTile>, EntityBlock, SimpleWaterloggedBlock {
+import net.minecraft.block.AbstractBlock.Properties;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockRenderType;
+import net.minecraft.block.HorizontalBlock;
+import net.minecraft.block.ITileEntityProvider;
+import net.minecraft.block.IWaterLoggable;
+import net.minecraft.state.properties.BlockStateProperties;
+import net.minecraft.util.math.shapes.ISelectionContext;
+import net.minecraft.util.math.shapes.VoxelShape;
+import net.minecraft.util.math.shapes.VoxelShapes;
+
+public class Altar extends Block implements ITileEntity<BookOfShadowsAltarTile>, ITileEntityProvider, IWaterLoggable {
 
 
     public static final IntegerProperty ANGLE = IntegerProperty.create("angle", 0, 180);
@@ -43,15 +54,15 @@ public class Altar extends Block implements ITileEntity<BookOfShadowsAltarTile>,
 
     @SuppressWarnings("deprecation")
     @Override
-    public RenderShape getRenderShape(BlockState iBlockState) {
-        return RenderShape.MODEL;
+    public BlockRenderType getRenderShape(BlockState iBlockState) {
+        return BlockRenderType.MODEL;
     }
 
     @Nullable
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext context) {
+    public BlockState getStateForPlacement(BlockItemUseContext context) {
         FluidState fluidstate = context.getLevel().getFluidState(context.getClickedPos());
-        return this.defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, context.getHorizontalDirection()).setValue(ANGLE, 0).setValue(WATERLOGGED, Boolean.valueOf(fluidstate.getType() == Fluids.WATER));
+        return this.defaultBlockState().setValue(HorizontalBlock.FACING, context.getHorizontalDirection()).setValue(ANGLE, 0).setValue(WATERLOGGED, Boolean.valueOf(fluidstate.getType() == Fluids.WATER));
     }
 
     // hitbox REMEMBER TO DO THIS
@@ -69,11 +80,11 @@ public class Altar extends Block implements ITileEntity<BookOfShadowsAltarTile>,
             Block.box(0, 0, 11, 5, 1, 16),
             Block.box(0, 0, 0, 5, 1, 5),
             Block.box(11, 0, 0, 16, 1, 5)
-    ).reduce((v1, v2) -> Shapes.join(v1, v2, BooleanOp.OR)).get();
+    ).reduce((v1, v2) -> VoxelShapes.join(v1, v2, IBooleanFunction.OR)).get();
 
 
     @Override
-    public VoxelShape getShape(BlockState p_220053_1_, BlockGetter p_220053_2_, BlockPos p_220053_3_, CollisionContext p_220053_4_){
+    public VoxelShape getShape(BlockState p_220053_1_, IBlockReader p_220053_2_, BlockPos p_220053_3_, ISelectionContext p_220053_4_){
         return SHAPE;
     }
 
@@ -104,22 +115,22 @@ public class Altar extends Block implements ITileEntity<BookOfShadowsAltarTile>,
 
     @SuppressWarnings("deprecation")
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(HorizontalDirectionalBlock.FACING, ANGLE, WATERLOGGED);
+    protected void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
+        builder.add(HorizontalBlock.FACING, ANGLE, WATERLOGGED);
     }
 
-    public void setAngle(Level worldIn, BlockPos pos, BlockState state, int angle) {
-        worldIn.setBlock(pos, state.setValue(ANGLE, Integer.valueOf(Mth.clamp(angle, 0, 180))), 2);
+    public void setAngle(World worldIn, BlockPos pos, BlockState state, int angle) {
+        worldIn.setBlock(pos, state.setValue(ANGLE, Integer.valueOf(MathHelper.clamp(angle, 0, 180))), 2);
     }
 
-    public int getAngle(Level worldIn, BlockPos pos) {
+    public int getAngle(World worldIn, BlockPos pos) {
         return worldIn.getBlockState(pos).getValue(ANGLE);
     }
 
     @Override
-    public BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor world, BlockPos pos, BlockPos facingPos) {
+    public BlockState updateShape(BlockState state, Direction facing, BlockState facingState, IWorld world, BlockPos pos, BlockPos facingPos) {
         if (state.getValue(WATERLOGGED)) {
-            world.scheduleTick(pos, Fluids.WATER, Fluids.WATER.getTickDelay(world));
+            world.getLiquidTicks().scheduleTick(pos, Fluids.WATER, Fluids.WATER.getTickDelay(world));
         }
         return super.updateShape(state, facing, facingState, world, pos, facingPos);
     }
@@ -130,7 +141,7 @@ public class Altar extends Block implements ITileEntity<BookOfShadowsAltarTile>,
     }
 
     @Override
-    public boolean propagatesSkylightDown(BlockState state, BlockGetter reader, BlockPos pos) {
+    public boolean propagatesSkylightDown(BlockState state, IBlockReader reader, BlockPos pos) {
         return !state.getValue(WATERLOGGED);
     }
 
@@ -175,13 +186,13 @@ public class Altar extends Block implements ITileEntity<BookOfShadowsAltarTile>,
 //
 
     @Override
-    public void appendHoverText(ItemStack stack, @Nullable BlockGetter world, List<Component> tooltip, TooltipFlag flagIn) {
+    public void appendHoverText(ItemStack stack, @Nullable IBlockReader world, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
 
         if(Screen.hasShiftDown()) {
-            tooltip.add(new TranslatableComponent("<%s>", new TranslatableComponent("tooltip.hexerei.shift").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAA6600)))).withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
-            tooltip.add(new TranslatableComponent("tooltip.hexerei.altar_shift").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
+            tooltip.add(new TranslationTextComponent("<%s>", new TranslationTextComponent("tooltip.hexerei.shift").withStyle(Style.EMPTY.withColor(Color.fromRgb(0xAA6600)))).withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
+            tooltip.add(new TranslationTextComponent("tooltip.hexerei.altar_shift").withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
         } else {
-            tooltip.add(new TranslatableComponent("[%s]", new TranslatableComponent("tooltip.hexerei.shift").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAAAA00)))).withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
+            tooltip.add(new TranslationTextComponent("[%s]", new TranslationTextComponent("tooltip.hexerei.shift").withStyle(Style.EMPTY.withColor(Color.fromRgb(0xAAAA00)))).withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
 
         }
         super.appendHoverText(stack, world, tooltip, flagIn);
@@ -194,14 +205,14 @@ public class Altar extends Block implements ITileEntity<BookOfShadowsAltarTile>,
 
     @Nullable
     @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level world, BlockState state, BlockEntityType<T> entityType){
+    public <T extends TileEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, TileEntityType<T> entityType){
         return entityType == ModTileEntities.BOOK_OF_SHADOWS_ALTAR_TILE.get() ?
                 (world2, pos, state2, entity) -> ((BookOfShadowsAltarTile)entity).tick() : null;
     }
 
     @Nullable
     @Override
-    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+    public TileEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new BookOfShadowsAltarTile(ModTileEntities.BOOK_OF_SHADOWS_ALTAR_TILE.get(), pos, state);
     }
 }

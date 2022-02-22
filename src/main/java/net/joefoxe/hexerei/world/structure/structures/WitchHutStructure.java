@@ -4,29 +4,29 @@ import com.google.common.collect.ImmutableList;
 import com.mojang.serialization.Codec;
 import net.joefoxe.hexerei.Hexerei;
 import net.joefoxe.hexerei.world.structure.ModStructures;
-import net.minecraft.core.Registry;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.core.RegistryAccess;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.MobCategory;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.EntityClassification;
 import net.minecraft.world.level.*;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeSource;
-import net.minecraft.world.level.biome.MobSpawnSettings;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.biome.MobSpawnInfo;
+import net.minecraft.block.BlockState;
+import net.minecraft.world.gen.Heightmap;
 import net.minecraft.world.level.levelgen.LegacyRandomSource;
 import net.minecraft.world.level.levelgen.WorldgenRandom;
-import net.minecraft.core.BlockPos;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.level.chunk.ChunkGenerator;
-import net.minecraft.world.level.levelgen.GenerationStep;
-import net.minecraft.world.level.levelgen.feature.StructureFeature;
-import net.minecraft.world.level.levelgen.feature.configurations.JigsawConfiguration;
+import net.minecraft.world.gen.GenerationStage;
+import net.minecraft.world.gen.feature.structure.Structure;
+import net.minecraft.world.gen.feature.structure.VillageConfig;
 import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
 import net.minecraft.world.level.levelgen.feature.configurations.StructureFeatureConfiguration;
-import net.minecraft.world.level.levelgen.feature.structures.JigsawPlacement;
+import net.minecraft.world.gen.feature.jigsaw.JigsawManager;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
-import net.minecraft.world.level.levelgen.structure.PoolElementStructurePiece;
+import net.minecraft.world.gen.feature.structure.AbstractVillagePiece;
 import net.minecraft.world.level.levelgen.structure.PostPlacementProcessor;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
 import net.minecraft.world.level.levelgen.structure.pieces.PieceGenerator;
@@ -42,10 +42,12 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.function.Predicate;
 
-public class WitchHutStructure extends StructureFeature<JigsawConfiguration> {
+import net.minecraft.world.Blockreader;
+
+public class WitchHutStructure extends Structure<VillageConfig> {
 
 
-    public WitchHutStructure(Codec<JigsawConfiguration> codec) {
+    public WitchHutStructure(Codec<VillageConfig> codec) {
         super(codec, (context) -> {
                     // Check if the spot is valid for structure gen. If false, return nothing to signal to the game to skip this spawn attempt.
                     if (!WitchHutStructure.isFeatureChunk(context)) {
@@ -59,35 +61,35 @@ public class WitchHutStructure extends StructureFeature<JigsawConfiguration> {
                 PostPlacementProcessor.NONE);
     }
     @Override
-    public GenerationStep.Decoration step() {
-        return GenerationStep.Decoration.SURFACE_STRUCTURES;
+    public GenerationStage.Decoration step() {
+        return GenerationStage.Decoration.SURFACE_STRUCTURES;
     }
 
-    private static final Lazy<List<MobSpawnSettings.SpawnerData>> STRUCTURE_MONSTERS = Lazy.of(() -> ImmutableList.of(
-            new MobSpawnSettings.SpawnerData(EntityType.WITCH, 100, 4, 9)
+    private static final Lazy<List<MobSpawnInfo.Spawners>> STRUCTURE_MONSTERS = Lazy.of(() -> ImmutableList.of(
+            new MobSpawnInfo.Spawners(EntityType.WITCH, 100, 4, 9)
     ));
-    private static final Lazy<List<MobSpawnSettings.SpawnerData>> STRUCTURE_CREATURES = Lazy.of(() -> ImmutableList.of(
-            new MobSpawnSettings.SpawnerData(EntityType.CAT, 100, 1, 2)
+    private static final Lazy<List<MobSpawnInfo.Spawners>> STRUCTURE_CREATURES = Lazy.of(() -> ImmutableList.of(
+            new MobSpawnInfo.Spawners(EntityType.CAT, 100, 1, 2)
     ));
 
     // Hooked up in StructureTutorialMain. You can move this elsewhere or change it up.
     public static void setupStructureSpawns(final StructureSpawnListGatherEvent event) {
         if(event.getStructure() == ModStructures.WITCH_HUT.get()) {
-            event.addEntitySpawns(MobCategory.MONSTER, STRUCTURE_MONSTERS.get());
-            event.addEntitySpawns(MobCategory.CREATURE, STRUCTURE_CREATURES.get());
+            event.addEntitySpawns(EntityClassification.MONSTER, STRUCTURE_MONSTERS.get());
+            event.addEntitySpawns(EntityClassification.CREATURE, STRUCTURE_CREATURES.get());
         }
     }
 
-    private static boolean isFeatureChunk(PieceGeneratorSupplier.Context<JigsawConfiguration> context) {
+    private static boolean isFeatureChunk(PieceGeneratorSupplier.Context<VillageConfig> context) {
         BlockPos blockPos = context.chunkPos().getWorldPosition();
 
         // Grab height of land. Will stop at first non-air block.
-        int landHeight = context.chunkGenerator().getFirstOccupiedHeight(blockPos.getX(), blockPos.getZ(), Heightmap.Types.WORLD_SURFACE_WG, context.heightAccessor());
+        int landHeight = context.chunkGenerator().getFirstOccupiedHeight(blockPos.getX(), blockPos.getZ(), Heightmap.Type.WORLD_SURFACE_WG, context.heightAccessor());
 
         // Grabs column of blocks at given position. In overworld, this column will be made of stone, water, and air.
         // In nether, it will be netherrack, lava, and air. End will only be endstone and air. It depends on what block
         // the chunk generator will place for that dimension.
-        NoiseColumn columnOfBlocks = context.chunkGenerator().getBaseColumn(blockPos.getX(), blockPos.getZ(), context.heightAccessor());
+        Blockreader columnOfBlocks = context.chunkGenerator().getBaseColumn(blockPos.getX(), blockPos.getZ(), context.heightAccessor());
 
         // Combine the column of blocks with land height and you get the top block itself which you can test.
         BlockState topBlock = columnOfBlocks.getBlock(landHeight);
@@ -98,7 +100,7 @@ public class WitchHutStructure extends StructureFeature<JigsawConfiguration> {
     }
 
 
-    public static Optional<PieceGenerator<JigsawConfiguration>> createPiecesGenerator(PieceGeneratorSupplier.Context<JigsawConfiguration> context) {
+    public static Optional<PieceGenerator<VillageConfig>> createPiecesGenerator(PieceGeneratorSupplier.Context<VillageConfig> context) {
         // Turns the chunk coordinates into actual coordinates we can use. (Gets center of that chunk)
         BlockPos blockpos = context.chunkPos().getMiddleBlockPosition(0);
 
@@ -121,7 +123,7 @@ public class WitchHutStructure extends StructureFeature<JigsawConfiguration> {
          * An example of a custom JigsawPlacement.addPieces in action can be found here:
          * https://github.com/TelepathicGrunt/RepurposedStructures/blob/1.18/src/main/java/com/telepathicgrunt/repurposedstructures/world/structures/pieces/PieceLimitedJigsawManager.java
          */
-        JigsawConfiguration newConfig = new JigsawConfiguration(
+        VillageConfig newConfig = new VillageConfig(
                 // The path to the starting Template Pool JSON file to read.
                 //
                 // Note, this is "structure_tutorial:run_down_house/start_pool" which means
@@ -141,7 +143,7 @@ public class WitchHutStructure extends StructureFeature<JigsawConfiguration> {
         );
 
         // Create a new context with the new config that has our json pool. We will pass this into JigsawPlacement.addPieces
-        PieceGeneratorSupplier.Context<JigsawConfiguration> newContext = new PieceGeneratorSupplier.Context<>(
+        PieceGeneratorSupplier.Context<VillageConfig> newContext = new PieceGeneratorSupplier.Context<>(
                 context.chunkGenerator(),
                 context.biomeSource(),
                 context.seed(),
@@ -153,11 +155,11 @@ public class WitchHutStructure extends StructureFeature<JigsawConfiguration> {
                 context.registryAccess()
         );
 
-        Optional<PieceGenerator<JigsawConfiguration>> structurePiecesGenerator =
-                JigsawPlacement.addPieces(
+        Optional<PieceGenerator<VillageConfig>> structurePiecesGenerator =
+                JigsawManager.addPieces(
                         newContext, // Used for JigsawPlacement to get all the proper behaviors done.
-                        PoolElementStructurePiece::new, // Needed in order to create a list of jigsaw pieces when making the structure's layout.
-                        blockpos.above(context.chunkGenerator().getFirstFreeHeight(blockpos.getX(), blockpos.getZ(), Heightmap.Types.WORLD_SURFACE_WG, context.heightAccessor()) + 3), // Position of the structure. Y value is ignored if last parameter is set to true.
+                        AbstractVillagePiece::new, // Needed in order to create a list of jigsaw pieces when making the structure's layout.
+                        blockpos.above(context.chunkGenerator().getFirstFreeHeight(blockpos.getX(), blockpos.getZ(), Heightmap.Type.WORLD_SURFACE_WG, context.heightAccessor()) + 3), // Position of the structure. Y value is ignored if last parameter is set to true.
                         false,  // Special boundary adjustments for villages. It's... hard to explain. Keep this false and make your pieces not be partially intersecting.
                         // Either not intersecting or fully contained will make children pieces spawn just fine. It's easier that way.
                         false // Place at heightmap (top land). Set this to false for structure to be place at the passed in blockpos's Y value instead.

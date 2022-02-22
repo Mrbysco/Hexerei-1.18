@@ -3,9 +3,9 @@ package net.joefoxe.hexerei.util.message;
 import net.joefoxe.hexerei.Hexerei;
 import net.joefoxe.hexerei.tileentity.MixingCauldronTile;
 import net.joefoxe.hexerei.tileentity.SageBurningPlateTile;
-import net.minecraft.core.BlockPos;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.level.Level;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.network.PacketBuffer;
+import net.minecraft.world.World;
 import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.network.NetworkEvent;
 
@@ -19,17 +19,17 @@ public class EmitExtinguishParticlesPacket
         this.pos = pos;
     }
 
-    public static void encode(EmitExtinguishParticlesPacket object, FriendlyByteBuf buffer) {
+    public static void encode(EmitExtinguishParticlesPacket object, PacketBuffer buffer) {
         buffer.writeBlockPos(object.pos);
     }
 
-    public static EmitExtinguishParticlesPacket decode(FriendlyByteBuf buffer) {
+    public static EmitExtinguishParticlesPacket decode(PacketBuffer buffer) {
         return new EmitExtinguishParticlesPacket(buffer.readBlockPos());
     }
 
     public static void handle(EmitExtinguishParticlesPacket packet, Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
-            Level world;
+            World world;
             if (ctx.get().getDirection() == NetworkDirection.PLAY_TO_CLIENT) {
                 world = Hexerei.proxy.getLevel();
             }

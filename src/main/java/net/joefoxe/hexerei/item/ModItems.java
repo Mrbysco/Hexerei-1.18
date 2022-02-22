@@ -7,32 +7,45 @@ import net.joefoxe.hexerei.config.HexConfig;
 import net.joefoxe.hexerei.data.recipes.CofferDyeingRecipe;
 import net.joefoxe.hexerei.data.recipes.KeychainRecipe;
 import net.joefoxe.hexerei.fluid.ModFluids;
-import net.joefoxe.hexerei.item.custom.*;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.Style;
-import net.minecraft.network.chat.TextColor;
-import net.minecraft.network.chat.TranslatableComponent;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.food.FoodProperties;
-import net.minecraft.world.item.*;
-import net.minecraft.world.item.crafting.RecipeSerializer;
-import net.minecraft.world.level.Level;
-import net.minecraftforge.common.crafting.CraftingHelper;
+import net.joefoxe.hexerei.item.custom.BlendItem;
+import net.joefoxe.hexerei.item.custom.BottleBloodtem;
+import net.joefoxe.hexerei.item.custom.BottleLavaItem;
+import net.joefoxe.hexerei.item.custom.BottleMilkItem;
+import net.joefoxe.hexerei.item.custom.BottleQuicksilverItem;
+import net.joefoxe.hexerei.item.custom.BottleTallowItem;
+import net.joefoxe.hexerei.item.custom.BroomItem;
+import net.joefoxe.hexerei.item.custom.DowsingRodItem;
+import net.joefoxe.hexerei.item.custom.FlowerOutputItem;
+import net.joefoxe.hexerei.item.custom.FloweringLilyPadItem;
+import net.joefoxe.hexerei.item.custom.HerbJarItem;
+import net.joefoxe.hexerei.item.custom.KeychainItem;
+import net.joefoxe.hexerei.item.custom.TallowImpurityItem;
+import net.joefoxe.hexerei.item.custom.WitchArmorItem;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.util.ITooltipFlag;
+import net.minecraft.inventory.EquipmentSlotType;
+import net.minecraft.item.BlockItem;
+import net.minecraft.item.BucketItem;
+import net.minecraft.item.Food;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.SwordItem;
+import net.minecraft.item.crafting.IRecipeSerializer;
+import net.minecraft.potion.EffectInstance;
+import net.minecraft.potion.Effects;
+import net.minecraft.util.text.Color;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.Style;
+import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.world.World;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.RegistryObject;
 
 import javax.annotation.Nullable;
 import java.util.List;
-import java.util.function.Supplier;
 
 public class ModItems {
 
@@ -52,14 +65,14 @@ public class ModItems {
             () -> new Item(new Item.Properties().tab(ModItemGroup.HEXEREI_GROUP)){
 
                 @Override
-                public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag flagIn) {
+                public void appendHoverText(ItemStack stack, @Nullable World world, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
 
                     if(Screen.hasShiftDown()) {
-                        tooltip.add(new TranslatableComponent("<%s>", new TranslatableComponent("tooltip.hexerei.shift").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAA6600)))).withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
-                        tooltip.add(new TranslatableComponent("tooltip.hexerei.small_satchel").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
+                        tooltip.add(new TranslationTextComponent("<%s>", new TranslationTextComponent("tooltip.hexerei.shift").withStyle(Style.EMPTY.withColor(Color.fromRgb(0xAA6600)))).withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
+                        tooltip.add(new TranslationTextComponent("tooltip.hexerei.small_satchel").withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
                     } else {
-                        tooltip.add(new TranslatableComponent("[%s]", new TranslatableComponent("tooltip.hexerei.shift").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAAAA00)))).withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
-                        tooltip.add(new TranslatableComponent("tooltip.hexerei.broom_attachments").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
+                        tooltip.add(new TranslationTextComponent("[%s]", new TranslationTextComponent("tooltip.hexerei.shift").withStyle(Style.EMPTY.withColor(Color.fromRgb(0xAAAA00)))).withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
+                        tooltip.add(new TranslationTextComponent("tooltip.hexerei.broom_attachments").withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
                     }
                     super.appendHoverText(stack, world, tooltip, flagIn);
                 }
@@ -69,14 +82,14 @@ public class ModItems {
             () -> new Item(new Item.Properties().tab(ModItemGroup.HEXEREI_GROUP)){
 
                 @Override
-                public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag flagIn) {
+                public void appendHoverText(ItemStack stack, @Nullable World world, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
 
                     if(Screen.hasShiftDown()) {
-                        tooltip.add(new TranslatableComponent("<%s>", new TranslatableComponent("tooltip.hexerei.shift").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAA6600)))).withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
-                        tooltip.add(new TranslatableComponent("tooltip.hexerei.medium_satchel").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
+                        tooltip.add(new TranslationTextComponent("<%s>", new TranslationTextComponent("tooltip.hexerei.shift").withStyle(Style.EMPTY.withColor(Color.fromRgb(0xAA6600)))).withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
+                        tooltip.add(new TranslationTextComponent("tooltip.hexerei.medium_satchel").withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
                     } else {
-                        tooltip.add(new TranslatableComponent("[%s]", new TranslatableComponent("tooltip.hexerei.shift").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAAAA00)))).withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
-                        tooltip.add(new TranslatableComponent("tooltip.hexerei.broom_attachments").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
+                        tooltip.add(new TranslationTextComponent("[%s]", new TranslationTextComponent("tooltip.hexerei.shift").withStyle(Style.EMPTY.withColor(Color.fromRgb(0xAAAA00)))).withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
+                        tooltip.add(new TranslationTextComponent("tooltip.hexerei.broom_attachments").withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
                     }
                     super.appendHoverText(stack, world, tooltip, flagIn);
                 }
@@ -86,14 +99,14 @@ public class ModItems {
             () -> new Item(new Item.Properties().tab(ModItemGroup.HEXEREI_GROUP)){
 
                 @Override
-                public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag flagIn) {
+                public void appendHoverText(ItemStack stack, @Nullable World world, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
 
                     if(Screen.hasShiftDown()) {
-                        tooltip.add(new TranslatableComponent("<%s>", new TranslatableComponent("tooltip.hexerei.shift").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAA6600)))).withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
-                        tooltip.add(new TranslatableComponent("tooltip.hexerei.large_satchel").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
+                        tooltip.add(new TranslationTextComponent("<%s>", new TranslationTextComponent("tooltip.hexerei.shift").withStyle(Style.EMPTY.withColor(Color.fromRgb(0xAA6600)))).withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
+                        tooltip.add(new TranslationTextComponent("tooltip.hexerei.large_satchel").withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
                     } else {
-                        tooltip.add(new TranslatableComponent("[%s]", new TranslatableComponent("tooltip.hexerei.shift").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAAAA00)))).withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
-                        tooltip.add(new TranslatableComponent("tooltip.hexerei.broom_attachments").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
+                        tooltip.add(new TranslationTextComponent("[%s]", new TranslationTextComponent("tooltip.hexerei.shift").withStyle(Style.EMPTY.withColor(Color.fromRgb(0xAAAA00)))).withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
+                        tooltip.add(new TranslationTextComponent("tooltip.hexerei.broom_attachments").withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
                     }
                     super.appendHoverText(stack, world, tooltip, flagIn);
                 }
@@ -103,9 +116,9 @@ public class ModItems {
             () -> new Item(new Item.Properties().tab(ModItemGroup.HEXEREI_GROUP)){
 
                 @Override
-                public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag flagIn) {
+                public void appendHoverText(ItemStack stack, @Nullable World world, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
 
-                    tooltip.add(new TranslatableComponent("tooltip.hexerei.broom_attachments").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
+                    tooltip.add(new TranslationTextComponent("tooltip.hexerei.broom_attachments").withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
                     super.appendHoverText(stack, world, tooltip, flagIn);
                 }
             });
@@ -114,14 +127,14 @@ public class ModItems {
             () -> new Item(new Item.Properties().tab(ModItemGroup.HEXEREI_GROUP).durability(HexConfig.BROOM_NETHERITE_TIP_DURABILITY.get())){
 
                 @Override
-                public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag flagIn) {
+                public void appendHoverText(ItemStack stack, @Nullable World world, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
                     if(Screen.hasShiftDown()) {
-                        tooltip.add(new TranslatableComponent("<%s>", new TranslatableComponent("tooltip.hexerei.shift").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAA6600)))).withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
-                        tooltip.add(new TranslatableComponent("tooltip.hexerei.broom_netherite_tip").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
+                        tooltip.add(new TranslationTextComponent("<%s>", new TranslationTextComponent("tooltip.hexerei.shift").withStyle(Style.EMPTY.withColor(Color.fromRgb(0xAA6600)))).withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
+                        tooltip.add(new TranslationTextComponent("tooltip.hexerei.broom_netherite_tip").withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
                     }
                     else{
-                        tooltip.add(new TranslatableComponent("[%s]", new TranslatableComponent("tooltip.hexerei.shift").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAAAA00)))).withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
-                        tooltip.add(new TranslatableComponent("tooltip.hexerei.broom_attachments").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
+                        tooltip.add(new TranslationTextComponent("[%s]", new TranslationTextComponent("tooltip.hexerei.shift").withStyle(Style.EMPTY.withColor(Color.fromRgb(0xAAAA00)))).withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
+                        tooltip.add(new TranslationTextComponent("tooltip.hexerei.broom_attachments").withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
 
                     }
                     super.appendHoverText(stack, world, tooltip, flagIn);
@@ -132,15 +145,15 @@ public class ModItems {
             () -> new Item(new Item.Properties().tab(ModItemGroup.HEXEREI_GROUP).durability(HexConfig.BROOM_WATERPROOF_TIP_DURABILITY.get())){
 
                 @Override
-                public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag flagIn) {
+                public void appendHoverText(ItemStack stack, @Nullable World world, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
                     if(Screen.hasShiftDown()) {
-                        tooltip.add(new TranslatableComponent("<%s>", new TranslatableComponent("tooltip.hexerei.shift").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAA6600)))).withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
-                        tooltip.add(new TranslatableComponent("tooltip.hexerei.broom_waterproof_tip").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
+                        tooltip.add(new TranslationTextComponent("<%s>", new TranslationTextComponent("tooltip.hexerei.shift").withStyle(Style.EMPTY.withColor(Color.fromRgb(0xAA6600)))).withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
+                        tooltip.add(new TranslationTextComponent("tooltip.hexerei.broom_waterproof_tip").withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
 
                     }
                     else{
-                        tooltip.add(new TranslatableComponent("[%s]", new TranslatableComponent("tooltip.hexerei.shift").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAAAA00)))).withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
-                        tooltip.add(new TranslatableComponent("tooltip.hexerei.broom_attachments").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
+                        tooltip.add(new TranslationTextComponent("[%s]", new TranslationTextComponent("tooltip.hexerei.shift").withStyle(Style.EMPTY.withColor(Color.fromRgb(0xAAAA00)))).withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
+                        tooltip.add(new TranslationTextComponent("tooltip.hexerei.broom_attachments").withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
 
                     }
                     super.appendHoverText(stack, world, tooltip, flagIn);
@@ -157,9 +170,9 @@ public class ModItems {
             () -> new Item(new Item.Properties().tab(ModItemGroup.HEXEREI_GROUP).durability(HexConfig.BROOM_BRUSH_DURABILITY.get())){
 
                 @Override
-                public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag flagIn) {
+                public void appendHoverText(ItemStack stack, @Nullable World world, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
 
-                    tooltip.add(new TranslatableComponent("tooltip.hexerei.broom_attachments").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
+                    tooltip.add(new TranslationTextComponent("tooltip.hexerei.broom_attachments").withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
                     super.appendHoverText(stack, world, tooltip, flagIn);
                 }
             });
@@ -171,9 +184,9 @@ public class ModItems {
             () -> new Item(new Item.Properties().tab(ModItemGroup.HEXEREI_GROUP).durability(HexConfig.ENHANCED_BROOM_BRUSH_DURABILITY.get())){
 
                 @Override
-                public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag flagIn) {
+                public void appendHoverText(ItemStack stack, @Nullable World world, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
 
-                    tooltip.add(new TranslatableComponent("tooltip.hexerei.broom_attachments").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
+                    tooltip.add(new TranslationTextComponent("tooltip.hexerei.broom_attachments").withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
                     super.appendHoverText(stack, world, tooltip, flagIn);
                 }
             });
@@ -226,14 +239,14 @@ public class ModItems {
             () -> new Item(new Item.Properties().tab(ModItemGroup.HEXEREI_GROUP)){
 
                 @Override
-                public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag flagIn) {
+                public void appendHoverText(ItemStack stack, @Nullable World world, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
                     if(Screen.hasShiftDown()) {
-                        tooltip.add(new TranslatableComponent("<%s>", new TranslatableComponent("tooltip.hexerei.shift").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAA6600)))).withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
-                        tooltip.add(new TranslatableComponent("tooltip.hexerei.selenite_shard").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
+                        tooltip.add(new TranslationTextComponent("<%s>", new TranslationTextComponent("tooltip.hexerei.shift").withStyle(Style.EMPTY.withColor(Color.fromRgb(0xAA6600)))).withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
+                        tooltip.add(new TranslationTextComponent("tooltip.hexerei.selenite_shard").withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
 
                     }
                     else{
-                        tooltip.add(new TranslatableComponent("[%s]", new TranslatableComponent("tooltip.hexerei.shift").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAAAA00)))).withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
+                        tooltip.add(new TranslationTextComponent("[%s]", new TranslationTextComponent("tooltip.hexerei.shift").withStyle(Style.EMPTY.withColor(Color.fromRgb(0xAAAA00)))).withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
 
                     }
                     super.appendHoverText(stack, world, tooltip, flagIn);
@@ -249,9 +262,9 @@ public class ModItems {
                     .tab(ModItemGroup.HEXEREI_GROUP)){
 
                 @Override
-                public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag flagIn) {
+                public void appendHoverText(ItemStack stack, @Nullable World world, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
 
-                    tooltip.add(new TranslatableComponent("tooltip.hexerei.sage_seeds").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
+                    tooltip.add(new TranslationTextComponent("tooltip.hexerei.sage_seeds").withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
                     super.appendHoverText(stack, world, tooltip, flagIn);
                 }
             });
@@ -267,9 +280,9 @@ public class ModItems {
                 }
 
                 @Override
-                public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag flagIn) {
+                public void appendHoverText(ItemStack stack, @Nullable World world, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
                     if(Screen.hasShiftDown()) {
-                        tooltip.add(new TranslatableComponent("<%s>", new TranslatableComponent("tooltip.hexerei.shift").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAA6600)))).withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
+                        tooltip.add(new TranslationTextComponent("<%s>", new TranslationTextComponent("tooltip.hexerei.shift").withStyle(Style.EMPTY.withColor(Color.fromRgb(0xAA6600)))).withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
 
                         int duration = stack.getMaxDamage() - stack.getDamageValue();
                         float percentDamaged = stack.getDamageValue() / (float)stack.getMaxDamage();
@@ -288,12 +301,12 @@ public class ModItems {
                         if(percentDamaged > 0.95f)
                             color = '4';
                         String string = (minutes > 1 ? "\u00A7" + color + minutes + "\u00A7r" + " minutes" + (seconds >= 1 ? " " : "") : minutes == 1 ? "\u00A7" + color + minutes + "\u00A7r" + " minute" + (seconds >= 1 ? " " : "") : "") + (seconds > 1 ? "\u00A7" + color + seconds + "\u00A7r" + " seconds" : seconds == 1 ? "\u00A7" + color + seconds + "\u00A7r" + " second" : "");
-                        TranslatableComponent itemText = (TranslatableComponent) new TranslatableComponent(ModBlocks.SAGE_BURNING_PLATE.get().getDescriptionId()).withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x998800)));
+                        TranslationTextComponent itemText = (TranslationTextComponent) new TranslationTextComponent(ModBlocks.SAGE_BURNING_PLATE.get().getDescriptionId()).withStyle(Style.EMPTY.withColor(Color.fromRgb(0x998800)));
 
-                        tooltip.add(new TranslatableComponent("tooltip.hexerei.dried_sage_bundle_shift_1", string).withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
-                        tooltip.add(new TranslatableComponent("tooltip.hexerei.dried_sage_bundle_shift_2", itemText).withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
+                        tooltip.add(new TranslationTextComponent("tooltip.hexerei.dried_sage_bundle_shift_1", string).withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
+                        tooltip.add(new TranslationTextComponent("tooltip.hexerei.dried_sage_bundle_shift_2", itemText).withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
                     } else {
-                        tooltip.add(new TranslatableComponent("[%s]", new TranslatableComponent("tooltip.hexerei.shift").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAAAA00)))).withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
+                        tooltip.add(new TranslationTextComponent("[%s]", new TranslationTextComponent("tooltip.hexerei.shift").withStyle(Style.EMPTY.withColor(Color.fromRgb(0xAAAA00)))).withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
 
 //                        tooltip.add(new TranslatableComponent("tooltip.hexerei.dried_sage_bundle").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
 //                        tooltip.add(new TranslatableComponent("tooltip.hexerei.shift_for_info"));
@@ -311,7 +324,7 @@ public class ModItems {
             () -> new FlowerOutputItem(new Item.Properties().tab(ModItemGroup.HEXEREI_GROUP)));
 
     public static final RegistryObject<FlowerOutputItem> BELLADONNA_BERRIES = ITEMS.register("belladonna_berries",
-            () -> new FlowerOutputItem(new Item.Properties().food(new FoodProperties.Builder().nutrition(1).saturationMod(0.1f).fast().effect(new MobEffectInstance(MobEffects.POISON, 100, 2) , 100f).build()).tab(ModItemGroup.HEXEREI_GROUP)));
+            () -> new FlowerOutputItem(new Item.Properties().food(new Food.Builder().nutrition(1).saturationMod(0.1f).fast().effect(new EffectInstance(Effects.POISON, 100, 2) , 100f).build()).tab(ModItemGroup.HEXEREI_GROUP)));
 
     public static final RegistryObject<FlowerOutputItem> MANDRAKE_FLOWERS = ITEMS.register("mandrake_flowers",
             () -> new FlowerOutputItem(new Item.Properties().tab(ModItemGroup.HEXEREI_GROUP)));
@@ -410,11 +423,11 @@ public class ModItems {
 //                    new Item.Properties().tab(ModItemGroup.HEXEREI_GROUP)));
 
     public static final RegistryObject<Item> WITCH_HELMET = ITEMS.register("witch_helmet",
-            () -> new WitchArmorItem(ModArmorMaterial.INFUSED_FABRIC, EquipmentSlot.HEAD,
+            () -> new WitchArmorItem(ModArmorMaterial.INFUSED_FABRIC, EquipmentSlotType.HEAD,
                     new Item.Properties().tab(ModItemGroup.HEXEREI_GROUP)));
 
     public static final RegistryObject<Item> WITCH_CHESTPLATE = ITEMS.register("witch_chestplate",
-            () -> new WitchArmorItem(ModArmorMaterial.INFUSED_FABRIC, EquipmentSlot.CHEST,
+            () -> new WitchArmorItem(ModArmorMaterial.INFUSED_FABRIC, EquipmentSlotType.CHEST,
                     new Item.Properties().tab(ModItemGroup.HEXEREI_GROUP)));
 
 //    public static final RegistryObject<Item> WITCH_LEGGINGS = ITEMS.register("witch_leggings",
@@ -422,12 +435,12 @@ public class ModItems {
 //                    new Item.Properties().tab(ModItemGroup.HEXEREI_GROUP)));
 
     public static final RegistryObject<Item> WITCH_BOOTS = ITEMS.register("witch_boots",
-            () -> new WitchArmorItem(ModArmorMaterial.INFUSED_FABRIC, EquipmentSlot.FEET,
+            () -> new WitchArmorItem(ModArmorMaterial.INFUSED_FABRIC, EquipmentSlotType.FEET,
                     new Item.Properties().tab(ModItemGroup.HEXEREI_GROUP)));
 
 
 
-    public static void registerRecipeSerializers(RegistryEvent.Register<RecipeSerializer<?>> evt) {
+    public static void registerRecipeSerializers(RegistryEvent.Register<IRecipeSerializer<?>> evt) {
         evt.getRegistry().register(CofferDyeingRecipe.SERIALIZER.setRegistryName(Hexerei.MOD_ID, "coffer_dyeing"));
         evt.getRegistry().register(KeychainRecipe.SERIALIZER.setRegistryName(Hexerei.MOD_ID, "keychain_apply"));
     }

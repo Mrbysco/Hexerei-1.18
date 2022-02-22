@@ -2,13 +2,16 @@ package net.joefoxe.hexerei.client.renderer.entity;
 
 import net.joefoxe.hexerei.Hexerei;
 import net.joefoxe.hexerei.client.renderer.entity.custom.BroomEntity;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.entity.*;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.RegistryObject;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
+
+import net.minecraft.entity.EntityClassification;
+import net.minecraft.entity.EntityType;
 
 @Mod.EventBusSubscriber(modid = Hexerei.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class ModEntityTypes {
@@ -32,7 +35,7 @@ public class ModEntityTypes {
     public static final RegistryObject<EntityType<BroomEntity>> BROOM =
             ENTITY_TYPES.register("broom",
                     () -> EntityType.Builder.<BroomEntity>of(BroomEntity::new,
-                                    MobCategory.MISC).sized(1.175F, 0.3625F).setTrackingRange(10)
+                                    EntityClassification.MISC).sized(1.175F, 0.3625F).setTrackingRange(10)
                             .build(new ResourceLocation(Hexerei.MOD_ID, "broom").toString()));
 
 //    public static final RegistryObject<EntityType<CrowEntity>> CROW =

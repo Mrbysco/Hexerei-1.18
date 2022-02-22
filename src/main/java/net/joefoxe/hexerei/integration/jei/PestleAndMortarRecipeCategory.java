@@ -1,6 +1,6 @@
 package net.joefoxe.hexerei.integration.jei;
 
-import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.matrix.MatrixStack;
 import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.gui.IRecipeLayout;
 import mezz.jei.api.gui.drawable.IDrawable;
@@ -11,10 +11,10 @@ import net.joefoxe.hexerei.Hexerei;
 import net.joefoxe.hexerei.block.ModBlocks;
 import net.joefoxe.hexerei.data.recipes.PestleAndMortarRecipe;
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.item.ItemStack;
 
 public class PestleAndMortarRecipeCategory implements IRecipeCategory<PestleAndMortarRecipe> {
     public final static ResourceLocation UID = new ResourceLocation(Hexerei.MOD_ID, "pestle_and_mortar");
@@ -40,7 +40,7 @@ public class PestleAndMortarRecipeCategory implements IRecipeCategory<PestleAndM
     }
 
     @Override
-    public Component getTitle() {
+    public ITextComponent getTitle() {
         return ModBlocks.PESTLE_AND_MORTAR.get().getName();
     }
 
@@ -75,7 +75,7 @@ public class PestleAndMortarRecipeCategory implements IRecipeCategory<PestleAndM
     }
 
     @Override
-    public void draw(PestleAndMortarRecipe recipe, PoseStack matrixStack, double mouseX, double mouseY) {
+    public void draw(PestleAndMortarRecipe recipe, MatrixStack matrixStack, double mouseX, double mouseY) {
 
         int grindingTime = recipe.getGrindingTime();
         Minecraft minecraft = Minecraft.getInstance();
@@ -84,8 +84,8 @@ public class PestleAndMortarRecipeCategory implements IRecipeCategory<PestleAndM
         String grindingTimeString = grindingTime < Integer.MAX_VALUE ? grindingTime / 20 + (grindingTime % 20 == 0 ? "" : ("." + Integer.toString(grindingTime % 20))) : "?";
         if(grindingTimeString.charAt(grindingTimeString.length()-1) == '0' && grindingTime != 0 && grindingTime % 20 != 0)
             grindingTimeString = grindingTimeString.substring(0, grindingTimeString.length()-1);
-        TranslatableComponent dip_time_1 = new TranslatableComponent("gui.jei.category.pestle_and_mortar.grind_time_1");
-        TranslatableComponent dip_time_3 = new TranslatableComponent("gui.jei.category.dipper.resultSeconds", grindingTimeString);
+        TranslationTextComponent dip_time_1 = new TranslationTextComponent("gui.jei.category.pestle_and_mortar.grind_time_1");
+        TranslationTextComponent dip_time_3 = new TranslationTextComponent("gui.jei.category.dipper.resultSeconds", grindingTimeString);
 
 
         minecraft.font.draw(matrixStack, dip_time_1, 6*1.666f, 68.5f*1.666f, 0xFF808080);

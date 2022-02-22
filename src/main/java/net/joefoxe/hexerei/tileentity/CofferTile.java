@@ -6,35 +6,35 @@ import net.joefoxe.hexerei.block.custom.Coffer;
 import net.joefoxe.hexerei.container.CofferContainer;
 import net.joefoxe.hexerei.util.HexereiPacketHandler;
 import net.joefoxe.hexerei.util.message.TESyncPacket;
-import net.minecraft.core.NonNullList;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.util.NonNullList;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.network.IPacket;
+import net.minecraft.client.network.play.IClientPlayNetHandler;
+import net.minecraft.network.play.server.SUpdateTileEntityPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.PlayerList;
-import net.minecraft.world.Clearable;
+import net.minecraft.inventory.IClearable;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.MenuProvider;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.level.block.Block;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.inventory.container.Container;
+import net.minecraft.item.Item;
+import net.minecraft.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
+import net.minecraft.tileentity.LockableLootTileEntity;
 import net.minecraft.world.level.block.entity.TickingBlockEntity;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.Connection;
+import net.minecraft.block.BlockState;
+import net.minecraft.entity.Entity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.network.NetworkManager;
 import net.minecraft.client.renderer.texture.Tickable;
-import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.core.Direction;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.tileentity.TileEntityType;
+import net.minecraft.util.Direction;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.client.model.data.IModelData;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
@@ -50,7 +50,7 @@ import javax.annotation.Nullable;
 import java.util.Set;
 import java.util.function.Function;
 
-public class CofferTile extends RandomizableContainerBlockEntity implements Clearable {
+public class CofferTile extends LockableLootTileEntity implements IClearable {
 
     public final ItemStackHandler itemHandler = createHandler();
     private final LazyOptional<IItemHandler> handler = LazyOptional.of(() -> itemHandler);
@@ -61,10 +61,10 @@ public class CofferTile extends RandomizableContainerBlockEntity implements Clea
     public int buttonToggled;
     public static final int lidOpenAmount = 112;
 
-    public Component customName;
+    public ITextComponent customName;
 
 
-    public CofferTile(BlockEntityType<?> tileEntityTypeIn, BlockPos blockPos, BlockState blockState) {
+    public CofferTile(TileEntityType<?> tileEntityTypeIn, BlockPos blockPos, BlockState blockState) {
         super(tileEntityTypeIn, blockPos, blockState);
         buttonToggled = 0;
     }
@@ -82,11 +82,11 @@ public class CofferTile extends RandomizableContainerBlockEntity implements Clea
 
 
     @Override
-    public BlockEntityType<?> getType() {
+    public TileEntityType<?> getType() {
         return super.getType();
     }
 
-    public void readInventory(CompoundTag compound) {
+    public void readInventory(CompoundNBT compound) {
         itemHandler.deserializeNBT(compound);
     }
 
@@ -110,12 +110,12 @@ public class CofferTile extends RandomizableContainerBlockEntity implements Clea
     }
 
     @Override
-    public void startOpen(Player p_18955_) {
+    public void startOpen(PlayerEntity p_18955_) {
         super.startOpen(p_18955_);
     }
 
     @Override
-    public void stopOpen(Player p_18954_) {
+    public void stopOpen(PlayerEntity p_18954_) {
         super.stopOpen(p_18954_);
     }
 
@@ -131,12 +131,12 @@ public class CofferTile extends RandomizableContainerBlockEntity implements Clea
 
 
     @Override
-    protected Component getDefaultName() {
-        return new TranslatableComponent("container." + Hexerei.MOD_ID + ".coffer");
+    protected ITextComponent getDefaultName() {
+        return new TranslationTextComponent("container." + Hexerei.MOD_ID + ".coffer");
     }
 
     @Override
-    protected AbstractContainerMenu createMenu(int id, Inventory player) {
+    protected Container createMenu(int id, PlayerInventory player) {
         return new CofferContainer(id, this.level, this.worldPosition, player, player.player);
     }
 
@@ -152,8 +152,8 @@ public class CofferTile extends RandomizableContainerBlockEntity implements Clea
 //    }
 
     @Override
-    public AABB getRenderBoundingBox() {
-        AABB aabb = super.getRenderBoundingBox().inflate(5, 5, 5);
+    public AxisAlignedBB getRenderBoundingBox() {
+        AxisAlignedBB aabb = super.getRenderBoundingBox().inflate(5, 5, 5);
         return aabb;
     }
 
@@ -169,7 +169,7 @@ public class CofferTile extends RandomizableContainerBlockEntity implements Clea
     }
 
     @Override
-    public void handleUpdateTag(CompoundTag tag) {
+    public void handleUpdateTag(CompoundNBT tag) {
         super.handleUpdateTag(tag);
     }
 
@@ -184,17 +184,17 @@ public class CofferTile extends RandomizableContainerBlockEntity implements Clea
 
 
     @Override
-    public void deserializeNBT(CompoundTag nbt) {
+    public void deserializeNBT(CompoundNBT nbt) {
         super.deserializeNBT(nbt);
     }
 
     @Override
-    public CompoundTag serializeNBT() {
+    public CompoundNBT serializeNBT() {
         return super.serializeNBT();
     }
 
 //    @Override
-    public CompoundTag save(CompoundTag tag) {
+    public CompoundNBT save(CompoundNBT tag) {
         super.saveAdditional(tag);
 //        ContainerHelper.saveAllItems(tag, this.items);
         tag.put("inv", itemHandler.serializeNBT());
@@ -203,41 +203,41 @@ public class CofferTile extends RandomizableContainerBlockEntity implements Clea
 
 
     @Override
-    public void saveAdditional(CompoundTag compound) {
+    public void saveAdditional(CompoundNBT compound) {
         compound.put("inv", itemHandler.serializeNBT());
 //        ContainerHelper.saveAllItems(compound, this.items);
         if (this.customName != null)
-            compound.putString("CustomName", Component.Serializer.toJson(this.customName));
+            compound.putString("CustomName", ITextComponent.Serializer.toJson(this.customName));
     }
 
 
 
     @Override
-    public void load(CompoundTag compoundTag) {
+    public void load(CompoundNBT compoundTag) {
         super.load(compoundTag);
         itemHandler.deserializeNBT(compoundTag.getCompound("inv"));
 //        this.items = NonNullList.withSize(this.getContainerSize(), ItemStack.EMPTY);
         if (compoundTag.contains("CustomName", 8))
-            this.customName = Component.Serializer.fromJson(compoundTag.getString("CustomName"));
+            this.customName = ITextComponent.Serializer.fromJson(compoundTag.getString("CustomName"));
 //        if (!this.tryLoadLootTable(compoundTag))
 //            ContainerHelper.loadAllItems(compoundTag, this.items);
 
     }
 
     @Override
-    public CompoundTag getUpdateTag()
+    public CompoundNBT getUpdateTag()
     {
-        return this.save(new CompoundTag());
+        return this.save(new CompoundNBT());
     }
 
     @Nullable
-    public Packet<ClientGamePacketListener> getUpdatePacket() {
+    public IPacket<IClientPlayNetHandler> getUpdatePacket() {
 
-        return ClientboundBlockEntityDataPacket.create(this, (tag) -> this.getUpdateTag());
+        return SUpdateTileEntityPacket.create(this, (tag) -> this.getUpdateTag());
     }
 
     @Override
-    public void onDataPacket(final Connection net, final ClientboundBlockEntityDataPacket pkt)
+    public void onDataPacket(final NetworkManager net, final SUpdateTileEntityPacket pkt)
     {
         this.deserializeNBT(pkt.getTag());
     }
@@ -245,7 +245,7 @@ public class CofferTile extends RandomizableContainerBlockEntity implements Clea
     public void sync() {
         setChanged();
         if (!level.isClientSide)
-            HexereiPacketHandler.instance.send(PacketDistributor.TRACKING_CHUNK.with(() -> level.getChunkAt(worldPosition)), new TESyncPacket(worldPosition, save(new CompoundTag())));
+            HexereiPacketHandler.instance.send(PacketDistributor.TRACKING_CHUNK.with(() -> level.getChunkAt(worldPosition)), new TESyncPacket(worldPosition, save(new CompoundNBT())));
 
         if(this.level != null)
             this.level.sendBlockUpdated(this.worldPosition, this.level.getBlockState(this.worldPosition), this.level.getBlockState(this.worldPosition),
@@ -326,13 +326,13 @@ public class CofferTile extends RandomizableContainerBlockEntity implements Clea
     }
 
     @Override
-    public Component getDisplayName() {
+    public ITextComponent getDisplayName() {
         return customName != null ? customName
-                : new TranslatableComponent("");
+                : new TranslationTextComponent("");
     }
 
     @Override
-    public Component getCustomName() {
+    public ITextComponent getCustomName() {
         return this.customName;
     }
 
@@ -342,7 +342,7 @@ public class CofferTile extends RandomizableContainerBlockEntity implements Clea
     }
 
     @Override
-    public Component getName() {
+    public ITextComponent getName() {
         return customName;
     }
 
@@ -366,7 +366,7 @@ public class CofferTile extends RandomizableContainerBlockEntity implements Clea
             return;
 
         boolean flag = false;
-        Player playerEntity = this.level.getNearestPlayer(this.worldPosition.getX(),this.worldPosition.getY(),this.worldPosition.getZ(), 5D, false);
+        PlayerEntity playerEntity = this.level.getNearestPlayer(this.worldPosition.getX(),this.worldPosition.getY(),this.worldPosition.getZ(), 5D, false);
         if(playerEntity != null) {
             if (Math.floor(getDistanceToEntity(playerEntity, this.worldPosition)) < 4D) {
                 int distanceFromSide = (lidOpenAmount / 2) - Math.abs((lidOpenAmount / 2) - this.degreesOpened);

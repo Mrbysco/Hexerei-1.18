@@ -6,23 +6,23 @@ import net.joefoxe.hexerei.Hexerei;
 import net.joefoxe.hexerei.client.renderer.entity.model.WitchArmorModel;
 import net.joefoxe.hexerei.util.ClientProxy;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.model.HumanoidModel;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.renderer.entity.model.BipedModel;
 import net.minecraft.client.model.Model;
 import net.minecraft.core.Registry;
-import net.minecraft.network.chat.Style;
-import net.minecraft.network.chat.TextColor;
-import net.minecraft.util.Mth;
-import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.item.ArmorItem;
-import net.minecraft.world.item.ArmorMaterial;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
-import net.minecraft.world.level.Level;
+import net.minecraft.util.text.Style;
+import net.minecraft.util.text.Color;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.client.util.ITooltipFlag;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.inventory.EquipmentSlotType;
+import net.minecraft.item.ArmorItem;
+import net.minecraft.item.IArmorMaterial;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.IItemRenderProperties;
@@ -32,27 +32,29 @@ import java.util.List;
 
 import static net.joefoxe.hexerei.util.ClientProxy.WITCH_ARMOR_LAYER;
 
+import net.minecraft.item.Item.Properties;
+
 public class WitchArmorItem extends ArmorItem {
 
-    public WitchArmorItem(ArmorMaterial materialIn, EquipmentSlot slot, Properties builder) {
+    public WitchArmorItem(IArmorMaterial materialIn, EquipmentSlotType slot, Properties builder) {
         super(materialIn, slot, builder);
     }
 
 
     @Override
-    public String getArmorTexture(ItemStack stack, Entity entity, EquipmentSlot slot, String type) {
+    public String getArmorTexture(ItemStack stack, Entity entity, EquipmentSlotType slot, String type) {
         return Hexerei.MOD_ID + ":textures/models/armor/witch_armor_layer1.png";
     }
 
 
     @Override
-    public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag flagIn) {
+    public void appendHoverText(ItemStack stack, @Nullable World world, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
         if(Screen.hasShiftDown()) {
-            tooltip.add(new TranslatableComponent("<%s>", new TranslatableComponent("tooltip.hexerei.shift").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAA6600)))).withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
+            tooltip.add(new TranslationTextComponent("<%s>", new TranslationTextComponent("tooltip.hexerei.shift").withStyle(Style.EMPTY.withColor(Color.fromRgb(0xAA6600)))).withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
 
-            tooltip.add(new TranslatableComponent("tooltip.hexerei.witch_armor_shift").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
+            tooltip.add(new TranslationTextComponent("tooltip.hexerei.witch_armor_shift").withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
         } else {
-            tooltip.add(new TranslatableComponent("[%s]", new TranslatableComponent("tooltip.hexerei.shift").withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAAAA00)))).withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x999999))));
+            tooltip.add(new TranslationTextComponent("[%s]", new TranslationTextComponent("tooltip.hexerei.shift").withStyle(Style.EMPTY.withColor(Color.fromRgb(0xAAAA00)))).withStyle(Style.EMPTY.withColor(Color.fromRgb(0x999999))));
 
 //            tooltip.add(new TranslatableComponent("tooltip.hexerei.witch_armor"));
         }
@@ -69,13 +71,13 @@ public class WitchArmorItem extends ArmorItem {
             static WitchArmorModel model;
 
             @Override
-            public WitchArmorModel getArmorModel(LivingEntity entity, ItemStack itemStack, EquipmentSlot armorSlot, HumanoidModel _default) {
+            public WitchArmorModel getArmorModel(LivingEntity entity, ItemStack itemStack, EquipmentSlotType armorSlot, BipedModel _default) {
                 if (model == null) model = new WitchArmorModel(Minecraft.getInstance().getEntityModels().bakeLayer(ClientProxy.WITCH_ARMOR_LAYER));
                 float pticks = Minecraft.getInstance().getFrameTime();
-                float f = Mth.rotLerp(pticks, entity.yBodyRotO, entity.yBodyRot);
-                float f1 = Mth.rotLerp(pticks, entity.yHeadRotO, entity.yHeadRot);
+                float f = MathHelper.rotLerp(pticks, entity.yBodyRotO, entity.yBodyRot);
+                float f1 = MathHelper.rotLerp(pticks, entity.yHeadRotO, entity.yHeadRot);
                 float netHeadYaw = f1 - f;
-                float netHeadPitch = Mth.lerp(pticks, entity.xRotO, entity.getXRot());
+                float netHeadPitch = MathHelper.lerp(pticks, entity.xRotO, entity.getXRot());
                 model.slot = slot;
                 model.copyFromDefault(_default);
                 model.setupAnim(entity, entity.animationPosition, entity.animationSpeed, entity.tickCount + pticks, netHeadYaw, netHeadPitch);

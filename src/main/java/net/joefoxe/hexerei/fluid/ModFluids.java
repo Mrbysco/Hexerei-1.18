@@ -2,21 +2,22 @@ package net.joefoxe.hexerei.fluid;
 
 import net.joefoxe.hexerei.Hexerei;
 import net.joefoxe.hexerei.block.ModBlocks;
+import net.joefoxe.hexerei.fluid.BloodFluid.Source;
 import net.joefoxe.hexerei.item.ModItems;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.world.level.block.LiquidBlock;
-import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.minecraft.world.level.material.FlowingFluid;
-import net.minecraft.world.level.material.Fluid;
-import net.minecraft.world.level.material.Material;
-import net.minecraft.world.level.material.MaterialColor;
+import net.minecraft.block.AbstractBlock;
+import net.minecraft.block.FlowingFluidBlock;
+import net.minecraft.block.material.Material;
+import net.minecraft.block.material.MaterialColor;
+import net.minecraft.fluid.FlowingFluid;
+import net.minecraft.fluid.Fluid;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.SoundEvents;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fluids.FluidAttributes;
 import net.minecraftforge.fluids.ForgeFlowingFluid;
+import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.RegistryObject;
 
 public class ModFluids {
 
@@ -43,10 +44,10 @@ public class ModFluids {
     public static final ForgeFlowingFluid.Properties QUICKSILVER_PROPERTIES = new ForgeFlowingFluid.Properties(
             () -> QUICKSILVER_FLUID.get(), () -> QUICKSILVER_FLOWING.get(), FluidAttributes.builder(QUICKSILVER_STILL_RL, QUICKSILVER_FLOWING_RL).density(15).luminosity(15).viscosity(15).sound(SoundEvents.BUCKET_EMPTY_LAVA).overlay(QUICKSILVER_OVERLAY_RL).color(0xF9FFFFFF)).slopeFindDistance(2).levelDecreasePerBlock(2).block(() -> ModFluids.QUICKSILVER_BLOCK.get()).bucket(() -> ModItems.QUICKSILVER_BUCKET.get());
 
-    public static final RegistryObject<LiquidBlock> QUICKSILVER_BLOCK = ModBlocks.BLOCKS.register("quicksilver", () -> new LiquidBlock(() -> ModFluids.QUICKSILVER_FLUID.get(),
-            BlockBehaviour.Properties.of(Material.LAVA).noCollission().explosionResistance(100f).noDrops()));
+    public static final RegistryObject<FlowingFluidBlock> QUICKSILVER_BLOCK = ModBlocks.BLOCKS.register("quicksilver", () -> new FlowingFluidBlock(() -> ModFluids.QUICKSILVER_FLUID.get(),
+            AbstractBlock.Properties.of(Material.LAVA).noCollission().strength(0, 100f).noDrops()));
 
-    public static final RegistryObject<BloodFluid.Source> BLOOD_FLUID = FLUIDS.register("blood_fluid", () -> new BloodFluid.Source(ModFluids.BLOOD_PROPERTIES));
+    public static final RegistryObject<Source> BLOOD_FLUID = FLUIDS.register("blood_fluid", () -> new BloodFluid.Source(ModFluids.BLOOD_PROPERTIES));
 
     public static final RegistryObject<BloodFluid.Flowing> BLOOD_FLOWING = FLUIDS.register("blood_flowing", () -> new BloodFluid.Flowing(ModFluids.BLOOD_PROPERTIES));
 
@@ -63,8 +64,8 @@ public class ModFluids {
             .block(() -> ModFluids.BLOOD_BLOCK.get())
             .bucket(() -> ModItems.BLOOD_BUCKET.get());
 
-    public static final RegistryObject<LiquidBlock> BLOOD_BLOCK = ModBlocks.BLOCKS.register("blood", () -> new LiquidBlock(() -> ModFluids.BLOOD_FLUID.get(),
-            BlockBehaviour.Properties.of(BLOOD).noCollission().explosionResistance(100f).noDrops()));
+    public static final RegistryObject<FlowingFluidBlock> BLOOD_BLOCK = ModBlocks.BLOCKS.register("blood", () -> new FlowingFluidBlock(() -> ModFluids.BLOOD_FLUID.get(),
+            AbstractBlock.Properties.of(BLOOD).noCollission().strength(0, 100f).noDrops()));
 
 
 
@@ -85,8 +86,8 @@ public class ModFluids {
             .block(() -> ModFluids.TALLOW_BLOCK.get())
             .bucket(() -> ModItems.TALLOW_BUCKET.get());
 
-    public static final RegistryObject<LiquidBlock> TALLOW_BLOCK = ModBlocks.BLOCKS.register("tallow", () -> new LiquidBlock(() -> ModFluids.TALLOW_FLUID.get(),
-            BlockBehaviour.Properties.of(TALLOW).noCollission().explosionResistance(100f).noDrops()));
+    public static final RegistryObject<FlowingFluidBlock> TALLOW_BLOCK = ModBlocks.BLOCKS.register("tallow", () -> new FlowingFluidBlock(() -> ModFluids.TALLOW_FLUID.get(),
+            AbstractBlock.Properties.of(TALLOW).noCollission().strength(0, 100f).noDrops()));
 
 
     public static void register(IEventBus eventBus) {

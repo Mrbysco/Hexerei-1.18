@@ -1,8 +1,8 @@
 package net.joefoxe.hexerei.items;
 
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.Slot;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.inventory.container.Slot;
+import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.SlotItemHandler;
 
@@ -17,7 +17,7 @@ public class JarSlot extends SlotItemHandler {
     }
 
     @Override
-    public boolean mayPickup(Player playerIn) {
+    public boolean mayPickup(PlayerEntity playerIn) {
         return true;
     }
 

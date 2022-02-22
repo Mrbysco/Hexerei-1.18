@@ -2,10 +2,10 @@ package net.joefoxe.hexerei.world.gen;
 
 import net.minecraft.data.worldgen.features.VegetationFeatures;
 import net.minecraft.data.worldgen.placement.PlacementUtils;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.core.Registry;
-import net.minecraft.world.level.biome.Biome;
-import net.minecraft.world.level.levelgen.GenerationStep;
+import net.minecraft.util.RegistryKey;
+import net.minecraft.util.registry.Registry;
+import net.minecraft.world.biome.Biome;
+import net.minecraft.world.gen.GenerationStage;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.placement.BiomeFilter;
 import net.minecraft.world.level.levelgen.placement.InSquarePlacement;
@@ -23,12 +23,12 @@ public class ModFlowerGeneration {
 //    public static final PlacedFeature SWAMP_FLOWERS = PlacementUtils.register("swamp_flowers", ModConfiguredFeatures.SWAMP_FLOWERS.placed(RarityFilter.onAverageOnceEvery(32), InSquarePlacement.spread(), PlacementUtils.HEIGHTMAP, BiomeFilter.biome()));
 
     public static void generateFlowers(final BiomeLoadingEvent event) {
-        ResourceKey<Biome> key = ResourceKey.create(Registry.BIOME_REGISTRY, event.getName());
+        RegistryKey<Biome> key = RegistryKey.create(Registry.BIOME_REGISTRY, event.getName());
         Set<BiomeDictionary.Type> types = BiomeDictionary.getTypes(key);
 
         if(types.contains(BiomeDictionary.Type.SWAMP)) {
             List<Supplier<PlacedFeature>> base =
-                    event.getGeneration().getFeatures(GenerationStep.Decoration.VEGETAL_DECORATION);
+                    event.getGeneration().getFeatures(GenerationStage.Decoration.VEGETAL_DECORATION);
 //
 ////            base.add(() -> ModConfiguredFeatures.MANDRAKE_FLOWER_CONFIG);
 

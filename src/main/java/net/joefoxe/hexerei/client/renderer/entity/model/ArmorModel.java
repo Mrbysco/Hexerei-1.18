@@ -1,24 +1,24 @@
 package net.joefoxe.hexerei.client.renderer.entity.model;
 
 import com.google.common.collect.ImmutableList;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.model.HumanoidModel;
-import net.minecraft.client.model.geom.ModelPart;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.IVertexBuilder;
+import net.minecraft.client.renderer.entity.model.BipedModel;
+import net.minecraft.client.renderer.model.ModelRenderer;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.CubeListBuilder;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraftforge.client.IItemRenderProperties;
 
-public class ArmorModel <T extends LivingEntity> extends HumanoidModel<T> implements IItemRenderProperties {
+public class ArmorModel <T extends LivingEntity> extends BipedModel<T> implements IItemRenderProperties {
 
-    public EquipmentSlot slot;
-    ModelPart root, modelHead, modelBody, modelLeft_arm, modelRight_arm, modelBelt, modelLeft_leg, modelRight_leg, modelLeft_foot, modelRight_foot;
+    public EquipmentSlotType slot;
+    ModelRenderer root, modelHead, modelBody, modelLeft_arm, modelRight_arm, modelBelt, modelLeft_leg, modelRight_leg, modelLeft_foot, modelRight_foot;
 
-    public ArmorModel(ModelPart root) {
+    public ArmorModel(ModelRenderer root) {
         super(root);
         this.root = root;
         this.modelBelt = root.getChild("Belt");
@@ -49,33 +49,33 @@ public class ArmorModel <T extends LivingEntity> extends HumanoidModel<T> implem
     }
 
     @Override
-    protected Iterable<ModelPart> headParts() {
-        return slot == EquipmentSlot.HEAD ? ImmutableList.of(modelHead) : ImmutableList.of();
+    protected Iterable<ModelRenderer> headParts() {
+        return slot == EquipmentSlotType.HEAD ? ImmutableList.of(modelHead) : ImmutableList.of();
     }
 
     @Override
-    protected Iterable<ModelPart> bodyParts() {
-        if (slot == EquipmentSlot.CHEST) {
-            return ImmutableList.<ModelPart>of(modelBody, modelLeft_arm, modelRight_arm);
+    protected Iterable<ModelRenderer> bodyParts() {
+        if (slot == EquipmentSlotType.CHEST) {
+            return ImmutableList.<ModelRenderer>of(modelBody, modelLeft_arm, modelRight_arm);
         }
-        else if (slot == EquipmentSlot.LEGS) {
-            return ImmutableList.<ModelPart>of(modelLeft_leg, modelRight_leg, modelBelt);
+        else if (slot == EquipmentSlotType.LEGS) {
+            return ImmutableList.<ModelRenderer>of(modelLeft_leg, modelRight_leg, modelBelt);
         }
-        else if (slot == EquipmentSlot.FEET) {
-            return ImmutableList.<ModelPart>of(modelLeft_foot, modelRight_foot);
+        else if (slot == EquipmentSlotType.FEET) {
+            return ImmutableList.<ModelRenderer>of(modelLeft_foot, modelRight_foot);
         }
         else return ImmutableList.of();
     }
 
     @Override
-    public void renderToBuffer(PoseStack matrixStack, VertexConsumer buffer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha){
+    public void renderToBuffer(MatrixStack matrixStack, IVertexBuilder buffer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha){
 //        super.renderToBuffer(matrixStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
         matrixStack.pushPose();
-        if (this.slot == EquipmentSlot.HEAD) {
+        if (this.slot == EquipmentSlotType.HEAD) {
             this.modelHead.copyFrom(this.head);
             this.modelHead.render(matrixStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
         }
-        else if (this.slot == EquipmentSlot.CHEST) {
+        else if (this.slot == EquipmentSlotType.CHEST) {
             this.modelBody.copyFrom(this.body);
             this.modelBody.render(matrixStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
             this.modelRight_arm.copyFrom(this.rightArm);
@@ -83,7 +83,7 @@ public class ArmorModel <T extends LivingEntity> extends HumanoidModel<T> implem
             this.modelLeft_arm.copyFrom(this.leftArm);
             this.modelLeft_arm.render(matrixStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
 
-        } else if (this.slot == EquipmentSlot.LEGS) {
+        } else if (this.slot == EquipmentSlotType.LEGS) {
             this.modelBelt.copyFrom(this.body);
             this.modelBelt.render(matrixStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
             this.modelRight_leg.copyFrom(this.rightLeg);
@@ -91,7 +91,7 @@ public class ArmorModel <T extends LivingEntity> extends HumanoidModel<T> implem
             this.modelLeft_leg.copyFrom(this.leftLeg);
             this.modelLeft_leg.render(matrixStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
 
-        } else if (this.slot == EquipmentSlot.FEET) {
+        } else if (this.slot == EquipmentSlotType.FEET) {
             this.modelRight_foot.copyFrom(this.rightLeg);
             this.modelRight_foot.render(matrixStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
             this.modelLeft_foot.copyFrom(this.leftLeg);
@@ -100,7 +100,7 @@ public class ArmorModel <T extends LivingEntity> extends HumanoidModel<T> implem
         matrixStack.popPose();
     }
 
-    public void copyFromDefault(HumanoidModel model) {
+    public void copyFromDefault(BipedModel model) {
         modelBody.copyFrom(model.body);
         modelBelt.copyFrom(model.body);
         modelHead.copyFrom(model.head);

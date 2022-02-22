@@ -16,23 +16,23 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
-import net.minecraft.network.chat.Component;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
+import net.minecraft.util.ActionResultType;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.item.BlockItem;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.client.util.ITooltipFlag;
+import net.minecraft.item.BlockItemUseContext;
 import net.minecraft.world.level.ClipContext;
-import net.minecraft.world.level.Level;
+import net.minecraft.world.World;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Biomes;
-import net.minecraft.world.level.block.Block;
+import net.minecraft.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.phys.HitResult;
 import net.minecraftforge.api.distmarker.Dist;
@@ -47,6 +47,8 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
+import net.minecraft.item.Item.Properties;
+
 public class HerbJarItem extends BlockItem {
 
     public HerbJarItem(Block block, Properties properties) {
@@ -54,7 +56,7 @@ public class HerbJarItem extends BlockItem {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag flagIn) {
+    public void appendHoverText(ItemStack stack, @Nullable World world, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
 //        if(Screen.hasShiftDown()) {
 //            tooltip.add(new TranslatableComponent("tooltip.hexerei.dowsing_rod"));
 //        } else {
@@ -66,7 +68,7 @@ public class HerbJarItem extends BlockItem {
     }
 
     @Override
-    public InteractionResult place(BlockPlaceContext context) {
+    public ActionResultType place(BlockItemUseContext context) {
 
         return super.place(context);
     }

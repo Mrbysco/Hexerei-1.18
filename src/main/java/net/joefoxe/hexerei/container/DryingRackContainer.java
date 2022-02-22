@@ -1,27 +1,27 @@
 package net.joefoxe.hexerei.container;
 
 import net.joefoxe.hexerei.block.ModBlocks;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ContainerLevelAccess;
-import net.minecraft.world.inventory.Slot;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.inventory.container.Container;
+import net.minecraft.util.IWorldPosCallable;
+import net.minecraft.inventory.container.Slot;
+import net.minecraft.item.ItemStack;
+import net.minecraft.world.World;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.SlotItemHandler;
 import net.minecraftforge.items.wrapper.InvWrapper;
 
 
-public class DryingRackContainer extends AbstractContainerMenu {
-    private final BlockEntity tileEntity;
-    private final Player playerEntity;
+public class DryingRackContainer extends Container {
+    private final TileEntity tileEntity;
+    private final PlayerEntity playerEntity;
     private final IItemHandler playerInventory;
 
-    public DryingRackContainer(int windowId, Level world, BlockPos pos, Inventory playerInventory, Player player) {
+    public DryingRackContainer(int windowId, World world, BlockPos pos, PlayerInventory playerInventory, PlayerEntity player) {
         super(ModContainers.DRYING_RACK_CONTAINER.get(), windowId);
         this.tileEntity = world.getBlockEntity(pos);
         playerEntity = player;
@@ -42,8 +42,8 @@ public class DryingRackContainer extends AbstractContainerMenu {
     }
 
     @Override
-    public boolean stillValid(Player playerIn) {
-        return stillValid(ContainerLevelAccess.create(tileEntity.getLevel(), tileEntity.getBlockPos()),
+    public boolean stillValid(PlayerEntity playerIn) {
+        return stillValid(IWorldPosCallable.create(tileEntity.getLevel(), tileEntity.getBlockPos()),
                 playerIn, ModBlocks.HERB_DRYING_RACK.get());
     }
 
@@ -93,7 +93,7 @@ public class DryingRackContainer extends AbstractContainerMenu {
     private static final int TE_INVENTORY_SLOT_COUNT = 3;  // must match TileEntityInventoryBasic.NUMBER_OF_SLOTS
 
     @Override
-    public ItemStack quickMoveStack(Player playerIn, int index) {
+    public ItemStack quickMoveStack(PlayerEntity playerIn, int index) {
         Slot sourceSlot = slots.get(index);
         if (sourceSlot == null || !sourceSlot.hasItem()) return ItemStack.EMPTY;  //EMPTY_ITEM
         ItemStack sourceStack = sourceSlot.getItem();

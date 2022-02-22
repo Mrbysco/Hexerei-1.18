@@ -1,43 +1,43 @@
 package net.joefoxe.hexerei.tileentity.renderer;
 
-import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.matrix.MatrixStack;
 import net.joefoxe.hexerei.Hexerei;
 import net.joefoxe.hexerei.block.ModBlocks;
 import net.joefoxe.hexerei.block.custom.Coffer;
 import net.joefoxe.hexerei.tileentity.CofferTile;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.HorizontalBlock;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.core.Direction;
-import com.mojang.math.Vector3f;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.Direction;
+import net.minecraft.util.math.vector.Vector3f;
 import net.minecraftforge.client.model.data.EmptyModelData;
 
-public class CofferRenderer implements BlockEntityRenderer<CofferTile> {
+public class CofferRenderer implements TileEntityRenderer<CofferTile> {
 
     @Override
-    public void render(CofferTile tileEntityIn, float partialTicks, PoseStack matrixStackIn,
-                       MultiBufferSource bufferIn, int combinedLightIn, int combinedOverlayIn) {
+    public void render(CofferTile tileEntityIn, float partialTicks, MatrixStack matrixStackIn,
+                       IRenderTypeBuffer bufferIn, int combinedLightIn, int combinedOverlayIn) {
 
         if(!tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).hasBlockEntity())
             return;
 
         matrixStackIn.pushPose();
-        if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalDirectionalBlock.FACING) == Direction.NORTH) {
+        if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalBlock.FACING) == Direction.NORTH) {
             matrixStackIn.translate(8D / 16D, 4D / 16D, 4D / 16D);
             matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(180));
-        } else if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalDirectionalBlock.FACING) == Direction.SOUTH) {
+        } else if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalBlock.FACING) == Direction.SOUTH) {
             matrixStackIn.translate(8D / 16D, 4D / 16D, 12D / 16D);
             matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(0));
-        } else if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalDirectionalBlock.FACING) == Direction.EAST) {
+        } else if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalBlock.FACING) == Direction.EAST) {
             matrixStackIn.translate(12D / 16D, 4D / 16D, 8D / 16D);
             matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(90));
-        } else if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalDirectionalBlock.FACING) == Direction.WEST) {
+        } else if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalBlock.FACING) == Direction.WEST) {
             matrixStackIn.translate(4D / 16D, 4D / 16D, 8D / 16D);
             matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(270));
         }
@@ -78,7 +78,7 @@ public class CofferRenderer implements BlockEntityRenderer<CofferTile> {
 
         float sideRotation = (((float)tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(Coffer.ANGLE) / (float)tileEntityIn.lidOpenAmount) * 135);
 
-        if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalDirectionalBlock.FACING) == Direction.NORTH || tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalDirectionalBlock.FACING) == Direction.SOUTH) {
+        if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalBlock.FACING) == Direction.NORTH || tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalBlock.FACING) == Direction.SOUTH) {
 
             matrixStackIn.pushPose();
             matrixStackIn.translate(11.7299D / 16D, 2.4772D / 16D, 5.475D / 16D);
@@ -113,7 +113,7 @@ public class CofferRenderer implements BlockEntityRenderer<CofferTile> {
             matrixStackIn.popPose();
         }
 
-        if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalDirectionalBlock.FACING) == Direction.EAST || tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalDirectionalBlock.FACING) == Direction.WEST) {
+        if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalBlock.FACING) == Direction.EAST || tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalBlock.FACING) == Direction.WEST) {
 
             matrixStackIn.pushPose();
             matrixStackIn.translate(0D / 16D, 0D / 16D, 16D / 16D);
@@ -163,13 +163,13 @@ public class CofferRenderer implements BlockEntityRenderer<CofferTile> {
         //render items only if its at least slightly opened
         if((float)tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(Coffer.ANGLE) > 2)
         {
-            if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalDirectionalBlock.FACING) == Direction.NORTH)
+            if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalBlock.FACING) == Direction.NORTH)
                 renderItemsNorth(tileEntityIn, partialTicks, matrixStackIn, bufferIn, combinedLightIn);
-            if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalDirectionalBlock.FACING) == Direction.WEST)
+            if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalBlock.FACING) == Direction.WEST)
                 renderItemsWest(tileEntityIn, partialTicks, matrixStackIn, bufferIn, combinedLightIn);
-            if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalDirectionalBlock.FACING) == Direction.SOUTH)
+            if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalBlock.FACING) == Direction.SOUTH)
                 renderItemsSouth(tileEntityIn, partialTicks, matrixStackIn, bufferIn, combinedLightIn);
-            if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalDirectionalBlock.FACING) == Direction.EAST)
+            if (tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(HorizontalBlock.FACING) == Direction.EAST)
                 renderItemsEast(tileEntityIn, partialTicks, matrixStackIn, bufferIn, combinedLightIn);
 
         }
@@ -177,8 +177,8 @@ public class CofferRenderer implements BlockEntityRenderer<CofferTile> {
 
     }
 
-    private void renderItemsNorth(CofferTile tileEntityIn, float partialTicks, PoseStack matrixStackIn,
-                                  MultiBufferSource bufferIn, int combinedLightIn)
+    private void renderItemsNorth(CofferTile tileEntityIn, float partialTicks, MatrixStack matrixStackIn,
+                                  IRenderTypeBuffer bufferIn, int combinedLightIn)
     {
         float sideRotation = (((float)tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(Coffer.ANGLE) / (float)tileEntityIn.lidOpenAmount) * 135);
 
@@ -624,8 +624,8 @@ public class CofferRenderer implements BlockEntityRenderer<CofferTile> {
 
     }
 
-    private void renderItemsSouth(CofferTile tileEntityIn, float partialTicks, PoseStack matrixStackIn,
-                                 MultiBufferSource bufferIn, int combinedLightIn)
+    private void renderItemsSouth(CofferTile tileEntityIn, float partialTicks, MatrixStack matrixStackIn,
+                                 IRenderTypeBuffer bufferIn, int combinedLightIn)
     {
         float sideRotation = (((float)tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(Coffer.ANGLE) / (float)tileEntityIn.lidOpenAmount) * 135);
 
@@ -964,8 +964,8 @@ public class CofferRenderer implements BlockEntityRenderer<CofferTile> {
 
     }
 
-    private void renderItemsWest(CofferTile tileEntityIn, float partialTicks, PoseStack matrixStackIn,
-                                 MultiBufferSource bufferIn, int combinedLightIn)
+    private void renderItemsWest(CofferTile tileEntityIn, float partialTicks, MatrixStack matrixStackIn,
+                                 IRenderTypeBuffer bufferIn, int combinedLightIn)
     {
         float sideRotation = (((float)tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(Coffer.ANGLE) / (float)tileEntityIn.lidOpenAmount) * 135);
 
@@ -1448,8 +1448,8 @@ public class CofferRenderer implements BlockEntityRenderer<CofferTile> {
 
     }
 
-    private void renderItemsEast(CofferTile tileEntityIn, float partialTicks, PoseStack matrixStackIn,
-                                 MultiBufferSource bufferIn, int combinedLightIn)
+    private void renderItemsEast(CofferTile tileEntityIn, float partialTicks, MatrixStack matrixStackIn,
+                                 IRenderTypeBuffer bufferIn, int combinedLightIn)
     {
         float sideRotation = (((float)tileEntityIn.getLevel().getBlockState(tileEntityIn.getBlockPos()).getValue(Coffer.ANGLE) / (float)tileEntityIn.lidOpenAmount) * 135);
 
@@ -1932,16 +1932,16 @@ public class CofferRenderer implements BlockEntityRenderer<CofferTile> {
 
     }
 
-    private void renderItem(ItemStack stack, float partialTicks, PoseStack matrixStackIn, MultiBufferSource bufferIn,
+    private void renderItem(ItemStack stack, float partialTicks, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn,
                             int combinedLightIn) {
-        Minecraft.getInstance().getItemRenderer().renderStatic(stack, ItemTransforms.TransformType.FIXED, combinedLightIn,
+        Minecraft.getInstance().getItemRenderer().renderStatic(stack, ItemCameraTransforms.TransformType.FIXED, combinedLightIn,
                 OverlayTexture.NO_OVERLAY, matrixStackIn, bufferIn, 1);
     }
 
 
 
 
-    private void renderBlock(PoseStack matrixStackIn, MultiBufferSource bufferIn, int combinedLightIn, BlockState state) {
+    private void renderBlock(MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int combinedLightIn, BlockState state) {
         Minecraft.getInstance().getBlockRenderer().renderSingleBlock(state, matrixStackIn, bufferIn, combinedLightIn, OverlayTexture.NO_OVERLAY, EmptyModelData.INSTANCE);
 
     }

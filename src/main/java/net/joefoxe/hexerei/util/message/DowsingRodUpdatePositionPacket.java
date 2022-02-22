@@ -3,11 +3,11 @@ package net.joefoxe.hexerei.util.message;
 import net.joefoxe.hexerei.Hexerei;
 import net.joefoxe.hexerei.client.renderer.entity.custom.BroomEntity;
 import net.joefoxe.hexerei.item.custom.DowsingRodItem;
-import net.minecraft.core.BlockPos;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.network.PacketBuffer;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
+import net.minecraft.item.ItemStack;
+import net.minecraft.world.World;
 import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.network.NetworkEvent;
 
@@ -23,27 +23,27 @@ public class DowsingRodUpdatePositionPacket {
         this.blockPos = blockPos;
         this.swampMode = swampMode;
     }
-    public DowsingRodUpdatePositionPacket(FriendlyByteBuf buf) {
+    public DowsingRodUpdatePositionPacket(PacketBuffer buf) {
         this.itemStack = buf.readItem();
         this.blockPos = buf.readBlockPos();
         this.swampMode = buf.readBoolean();
 
     }
 
-    public static void encode(DowsingRodUpdatePositionPacket object, FriendlyByteBuf buffer) {
+    public static void encode(DowsingRodUpdatePositionPacket object, PacketBuffer buffer) {
         buffer.writeItem(object.itemStack);
         buffer.writeBlockPos(object.blockPos);
         buffer.writeBoolean(object.swampMode);
 
     }
 
-    public static DowsingRodUpdatePositionPacket decode(FriendlyByteBuf buffer) {
+    public static DowsingRodUpdatePositionPacket decode(PacketBuffer buffer) {
         return new DowsingRodUpdatePositionPacket(buffer);
     }
 
     public static void consume(DowsingRodUpdatePositionPacket packet, Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
-            Level world;
+            World world;
             if (ctx.get().getDirection() == NetworkDirection.PLAY_TO_CLIENT) {
                 world = Hexerei.proxy.getLevel();
             }

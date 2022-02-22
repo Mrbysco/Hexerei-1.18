@@ -1,27 +1,27 @@
 package net.joefoxe.hexerei.screen;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.matrix.MatrixStack;
 import net.joefoxe.hexerei.Hexerei;
 import net.joefoxe.hexerei.block.ModBlocks;
 import net.joefoxe.hexerei.container.HerbJarContainer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.client.renderer.entity.ItemRenderer;
-import net.minecraft.network.chat.Component;
+import net.minecraft.client.renderer.ItemRenderer;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.network.chat.Style;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.item.ItemStack;
 
-public class HerbJarScreen extends AbstractContainerScreen<HerbJarContainer> {
+public class HerbJarScreen extends ContainerScreen<HerbJarContainer> {
     private final ResourceLocation GUI = new ResourceLocation(Hexerei.MOD_ID,
             "textures/gui/herb_jar_gui.png");
     private final ResourceLocation INVENTORY = new ResourceLocation(Hexerei.MOD_ID,
             "textures/gui/inventory.png");
 
-    public HerbJarScreen(HerbJarContainer screenContainer, Inventory inv, Component titleIn) {
+    public HerbJarScreen(HerbJarContainer screenContainer, PlayerInventory inv, ITextComponent titleIn) {
         super(screenContainer, inv, titleIn);
         inventoryLabelY = 135;
         inventoryLabelX = 8;
@@ -42,7 +42,7 @@ public class HerbJarScreen extends AbstractContainerScreen<HerbJarContainer> {
     }
 
     @Override
-    public void render(PoseStack matrixStack, int mouseX, int mouseY, float partialTicks) {
+    public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
 
 
         this.renderBackground(matrixStack);
@@ -51,12 +51,12 @@ public class HerbJarScreen extends AbstractContainerScreen<HerbJarContainer> {
     }
 
     @Override
-    public Component getTitle() {
+    public ITextComponent getTitle() {
         return super.getTitle();
     }
 
     @Override
-    protected void renderBg(PoseStack matrixStack, float partialTicks, int x, int y) {
+    protected void renderBg(MatrixStack matrixStack, float partialTicks, int x, int y) {
 
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);

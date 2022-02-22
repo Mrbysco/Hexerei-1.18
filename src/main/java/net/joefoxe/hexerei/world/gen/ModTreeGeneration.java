@@ -1,12 +1,12 @@
 package net.joefoxe.hexerei.world.gen;
 
 import net.joefoxe.hexerei.block.ModBlocks;
-import net.minecraft.core.BlockPos;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.data.worldgen.placement.PlacementUtils;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.core.Registry;
-import net.minecraft.world.level.biome.Biome;
-import net.minecraft.world.level.levelgen.GenerationStep;
+import net.minecraft.world.biome.Biome;
+import net.minecraft.world.gen.GenerationStage;
 import net.minecraft.world.level.levelgen.blockpredicates.BlockPredicate;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.placement.*;
@@ -28,10 +28,10 @@ public class ModTreeGeneration {
 //                    event.getGeneration().getFeatures(GenerationStep.Decoration.VEGETAL_DECORATION);
 
 
-        if (event.getCategory() == Biome.BiomeCategory.SWAMP || event.getCategory() == Biome.BiomeCategory.PLAINS) {
+        if (event.getCategory() == Biome.Category.SWAMP || event.getCategory() == Biome.Category.PLAINS) {
 //            event.getGeneration().getFeatures(GenerationStep.Decoration.VEGETAL_DECORATION).add(() -> ModConfiguredFeatures.WILLOW.placed());
 
-            event.getGeneration().getFeatures(GenerationStep.Decoration.VEGETAL_DECORATION).add(() -> ModConfiguredFeatures.MAHOGANY.placed(
+            event.getGeneration().getFeatures(GenerationStage.Decoration.VEGETAL_DECORATION).add(() -> ModConfiguredFeatures.MAHOGANY.placed(
                     PlacementUtils.countExtra(0, 0.05F * 10, 1),
                     InSquarePlacement.spread(), SurfaceWaterDepthFilter.forMaxDepth(0), PlacementUtils.HEIGHTMAP_OCEAN_FLOOR,
                     BlockPredicateFilter.forPredicate(BlockPredicate.wouldSurvive(ModBlocks.MAHOGANY_SAPLING.get().defaultBlockState(), BlockPos.ZERO)),

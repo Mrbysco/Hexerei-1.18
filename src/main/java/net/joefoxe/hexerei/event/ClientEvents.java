@@ -1,9 +1,9 @@
 package net.joefoxe.hexerei.event;
 
 import net.joefoxe.hexerei.fluid.ModFluids;
-import net.minecraft.client.Camera;
-import net.minecraft.world.level.material.Fluid;
-import net.minecraft.world.level.material.FluidState;
+import net.minecraft.client.renderer.ActiveRenderInfo;
+import net.minecraft.fluid.Fluid;
+import net.minecraft.fluid.FluidState;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.EntityViewRenderEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -14,7 +14,7 @@ public class ClientEvents {
 
     @SubscribeEvent
     public static void getFogDensity(EntityViewRenderEvent.FogDensity event) {
-        Camera info = event.getCamera();
+        ActiveRenderInfo info = event.getCamera();
         FluidState fluidState = info.level.getFluidState(info.blockPosition);
         if (fluidState.isEmpty())
             return;
@@ -29,7 +29,7 @@ public class ClientEvents {
 
     @SubscribeEvent
     public static void getFogColor(EntityViewRenderEvent.FogColors event) {
-        Camera info = event.getCamera();
+        ActiveRenderInfo info = event.getCamera();
         FluidState fluidState = info.level.getFluidState(info.blockPosition);
         if (fluidState.isEmpty())
             return;

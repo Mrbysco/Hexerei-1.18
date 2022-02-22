@@ -2,7 +2,7 @@ package net.joefoxe.hexerei.data.recipes;
 
 import net.joefoxe.hexerei.Hexerei;
 import net.minecraft.core.Registry;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.Container;
 import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.item.crafting.Recipe;

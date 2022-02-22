@@ -1,17 +1,17 @@
 package net.joefoxe.hexerei.block.custom;
 
 import net.joefoxe.hexerei.block.ModBlocks;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.Direction;
+import net.minecraft.world.server.ServerWorld;
 import net.minecraft.world.level.block.AmethystBlock;
 import net.minecraft.world.level.block.AmethystClusterBlock;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.Fluids;
-import net.minecraft.world.level.material.PushReaction;
+import net.minecraft.block.Block;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.AbstractBlock;
+import net.minecraft.block.BlockState;
+import net.minecraft.fluid.Fluids;
+import net.minecraft.block.material.PushReaction;
 
 import java.util.Random;
 
@@ -19,7 +19,7 @@ public class BuddingSelenite extends AmethystBlock {
     public static final int GROWTH_CHANCE = 5;
     private static final Direction[] DIRECTIONS = Direction.values();
 
-    public BuddingSelenite(BlockBehaviour.Properties p_152726_) {
+    public BuddingSelenite(AbstractBlock.Properties p_152726_) {
         super(p_152726_);
     }
 
@@ -27,7 +27,7 @@ public class BuddingSelenite extends AmethystBlock {
         return PushReaction.DESTROY;
     }
 
-    public void randomTick(BlockState p_152728_, ServerLevel p_152729_, BlockPos p_152730_, Random p_152731_) {
+    public void randomTick(BlockState p_152728_, ServerWorld p_152729_, BlockPos p_152730_, Random p_152731_) {
         if (p_152731_.nextInt(5) == 0) {
             Direction direction = DIRECTIONS[p_152731_.nextInt(DIRECTIONS.length)];
             BlockPos blockpos = p_152730_.relative(direction);

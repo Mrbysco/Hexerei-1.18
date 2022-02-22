@@ -14,9 +14,9 @@ import net.joefoxe.hexerei.screen.MixingCauldronScreen;
 import net.joefoxe.hexerei.tileentity.CandleDipperTile;
 import net.joefoxe.hexerei.tileentity.DryingRackTile;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.RecipeManager;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.crafting.RecipeManager;
+import net.minecraft.util.ResourceLocation;
 
 import java.util.Objects;
 import java.util.stream.Collectors;

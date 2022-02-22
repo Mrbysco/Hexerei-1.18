@@ -1,10 +1,10 @@
 package net.joefoxe.hexerei.config;
 
 
-import com.mojang.blaze3d.platform.InputConstants;
+import net.minecraft.client.util.InputMappings;
 import com.sun.java.accessibility.util.Translator;
-import net.minecraft.client.KeyMapping;
-import net.minecraft.client.resources.language.I18n;
+import net.minecraft.client.settings.KeyBinding;
+import net.minecraft.client.resources.I18n;
 import net.minecraftforge.client.ClientRegistry;
 import net.minecraftforge.client.settings.IKeyConflictContext;
 import net.minecraftforge.client.settings.KeyConflictContext;
@@ -14,13 +14,13 @@ import org.lwjgl.glfw.GLFW;
 import java.util.List;
 
 public final class ModKeyBindings {
-    public static final KeyMapping broomDescend;
+    public static final KeyBinding broomDescend;
     private static final String recipeCategoryName = I18n.get("hexerei.key.category.broom");
 
-    private static final List<KeyMapping> allBindings;
+    private static final List<KeyBinding> allBindings;
 
-    static InputConstants.Key getKey(int key) {
-        return InputConstants.Type.KEYSYM.getOrCreate(key);
+    static InputMappings.Input getKey(int key) {
+        return InputMappings.Type.KEYSYM.getOrCreate(key);
     }
 
     static {
@@ -29,7 +29,7 @@ public final class ModKeyBindings {
                 // Overlay
 
                 // Recipes
-                broomDescend = new KeyMapping("key.hexerei.broomDescend", KeyConflictContext.IN_GAME, getKey(GLFW.GLFW_KEY_LEFT_SHIFT), recipeCategoryName)
+                broomDescend = new KeyBinding("key.hexerei.broomDescend", KeyConflictContext.IN_GAME, getKey(GLFW.GLFW_KEY_LEFT_SHIFT), recipeCategoryName)
         );
 
     }
@@ -38,7 +38,7 @@ public final class ModKeyBindings {
     }
 
     public static void init() {
-        for (KeyMapping binding : allBindings) {
+        for (KeyBinding binding : allBindings) {
             ClientRegistry.registerKeyBinding(binding);
         }
     }

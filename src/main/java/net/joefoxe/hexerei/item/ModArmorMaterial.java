@@ -1,18 +1,18 @@
 package net.joefoxe.hexerei.item;
 
 import net.joefoxe.hexerei.Hexerei;
-import net.minecraft.sounds.SoundEvent;
-import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.item.ArmorMaterial;
-import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.util.LazyLoadedValue;
-import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.SoundEvent;
+import net.minecraft.inventory.EquipmentSlotType;
+import net.minecraft.item.IArmorMaterial;
+import net.minecraft.item.crafting.Ingredient;
+import net.minecraft.util.LazyValue;
+import net.minecraft.util.SoundEvents;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 import java.util.function.Supplier;
 
-public enum ModArmorMaterial implements ArmorMaterial {
+public enum ModArmorMaterial implements IArmorMaterial {
 
     ARMOR_SCRAP("armor_scrap", 7, new int[] { 2, 5, 6, 2 }, 12, SoundEvents.ARMOR_EQUIP_IRON, 1.0f, 0.0f, () -> {
         return Ingredient.of(ModItems.ARMOR_SCRAP.get());
@@ -30,7 +30,7 @@ public enum ModArmorMaterial implements ArmorMaterial {
     private final SoundEvent soundEvent;
     private final float toughness;
     private final float knockbackResistance;
-    private final LazyLoadedValue<Ingredient> repairMaterial;
+    private final LazyValue<Ingredient> repairMaterial;
 
     private ModArmorMaterial(String name, int maxDamageFactor, int[] damageReductionAmountArray, int enchantability, SoundEvent soundEvent, float toughness, float knockbackResistance, Supplier<Ingredient> repairMaterial) {
         this.name = name;
@@ -40,14 +40,14 @@ public enum ModArmorMaterial implements ArmorMaterial {
         this.soundEvent = soundEvent;
         this.toughness = toughness;
         this.knockbackResistance = knockbackResistance;
-        this.repairMaterial = new LazyLoadedValue<>(repairMaterial);
+        this.repairMaterial = new LazyValue<>(repairMaterial);
     }
 
-    public int getDurabilityForSlot(EquipmentSlot slotIn) {
+    public int getDurabilityForSlot(EquipmentSlotType slotIn) {
         return MAX_DAMAGE_ARRAY[slotIn.getIndex()] * this.maxDamageFactor;
     }
 
-    public int getDefenseForSlot(EquipmentSlot slotIn) {
+    public int getDefenseForSlot(EquipmentSlotType slotIn) {
         return this.damageReductionAmountArray[slotIn.getIndex()];
     }
 

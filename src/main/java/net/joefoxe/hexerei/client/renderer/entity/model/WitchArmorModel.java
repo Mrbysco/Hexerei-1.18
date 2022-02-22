@@ -6,15 +6,15 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.joefoxe.hexerei.Hexerei;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.EntityModel;
-import net.minecraft.client.model.HumanoidModel;
+import net.minecraft.client.renderer.entity.model.BipedModel;
 import net.minecraft.client.model.geom.ModelLayerLocation;
-import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.renderer.model.ModelRenderer;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
 import net.minecraft.core.Registry;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.Entity;
+import net.minecraft.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.AbstractIllager;
@@ -32,12 +32,12 @@ public class WitchArmorModel<T extends Entity> extends ArmorModel {
     // This layer location should be baked with EntityRendererProvider.Context in the entity renderer and passed into this model's constructor
     public static final ModelLayerLocation LAYER_LOCATION = new ModelLayerLocation(new ResourceLocation(Hexerei.MOD_ID, "witch_armor"), "main");
 
-    public WitchArmorModel(ModelPart part) {
+    public WitchArmorModel(ModelRenderer part) {
         super(part);
     }
 
     public static LayerDefinition createBodyLayer() {
-        MeshDefinition mesh = HumanoidModel.createMesh(new CubeDeformation(0), 0);
+        MeshDefinition mesh = BipedModel.createMesh(new CubeDeformation(0), 0);
         PartDefinition root = createHumanoidAlias(mesh);
 
         PartDefinition body = root.getChild("Body");
@@ -225,7 +225,7 @@ public class WitchArmorModel<T extends Entity> extends ArmorModel {
     }
 
 
-    public void setRotationAngle(ModelPart modelRenderer, float x, float y, float z) {
+    public void setRotationAngle(ModelRenderer modelRenderer, float x, float y, float z) {
         modelRenderer.xRot = x;
         modelRenderer.yRot = y;
         modelRenderer.zRot = z;

@@ -3,17 +3,17 @@ package net.joefoxe.hexerei.data.recipes;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.joefoxe.hexerei.block.ModBlocks;
-import net.minecraft.core.NonNullList;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.GsonHelper;
-import net.minecraft.world.Container;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.item.crafting.RecipeSerializer;
-import net.minecraft.world.item.crafting.RecipeType;
-import net.minecraft.world.item.crafting.ShapedRecipe;
-import net.minecraft.world.level.Level;
+import net.minecraft.util.NonNullList;
+import net.minecraft.network.PacketBuffer;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.JSONUtils;
+import net.minecraft.inventory.IInventory;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.crafting.Ingredient;
+import net.minecraft.item.crafting.IRecipeSerializer;
+import net.minecraft.item.crafting.IRecipeType;
+import net.minecraft.item.crafting.ShapedRecipe;
+import net.minecraft.world.World;
 import net.minecraftforge.registries.ForgeRegistryEntry;
 
 import javax.annotation.Nullable;
@@ -44,7 +44,7 @@ public class PestleAndMortarRecipe implements IPestleAndMortarRecipe{
 
 
     @Override
-    public boolean matches(Container inv, Level worldIn) {
+    public boolean matches(IInventory inv, World worldIn) {
 
         for(int i = 0; i < 5; i++)
             itemMatchesSlot.set(i, false);
@@ -128,7 +128,7 @@ public class PestleAndMortarRecipe implements IPestleAndMortarRecipe{
     }
 
     @Override
-    public ItemStack assemble(Container inv) {
+    public ItemStack assemble(IInventory inv) {
         return output;
     }
 
@@ -150,11 +150,11 @@ public class PestleAndMortarRecipe implements IPestleAndMortarRecipe{
     }
 
     @Override
-    public RecipeSerializer<?> getSerializer() {
+    public IRecipeSerializer<?> getSerializer() {
         return ModRecipeTypes.PESTLE_AND_MORTAR_SERIALIZER.get();
     }
 
-    public static class PestleAndMortarRecipeType implements RecipeType<PestleAndMortarRecipe> {
+    public static class PestleAndMortarRecipeType implements IRecipeType<PestleAndMortarRecipe> {
         @Override
         public String toString() {
             return PestleAndMortarRecipe.TYPE_ID.toString();
@@ -162,16 +162,16 @@ public class PestleAndMortarRecipe implements IPestleAndMortarRecipe{
     }
 
     // for Serializing the recipe into/from a json
-    public static class Serializer extends ForgeRegistryEntry<RecipeSerializer<?>>
-            implements RecipeSerializer<PestleAndMortarRecipe> {
+    public static class Serializer extends ForgeRegistryEntry<IRecipeSerializer<?>>
+            implements IRecipeSerializer<PestleAndMortarRecipe> {
 
         @Override
         public PestleAndMortarRecipe fromJson(ResourceLocation recipeId, JsonObject json) {
-            ItemStack output = ShapedRecipe.itemStackFromJson(GsonHelper.getAsJsonObject(json, "output"));
+            ItemStack output = ShapedRecipe.itemStackFromJson(JSONUtils.getAsJsonObject(json, "output"));
 
-            JsonArray ingredients = GsonHelper.getAsJsonArray(json, "ingredients");
+            JsonArray ingredients = JSONUtils.getAsJsonArray(json, "ingredients");
             NonNullList<Ingredient> inputs = NonNullList.withSize(ingredients.size(), Ingredient.EMPTY);
-            int grindingTime = GsonHelper.getAsInt(json, "grindingTime");
+            int grindingTime = JSONUtils.getAsInt(json, "grindingTime");
 
             for (int i = 0; i < inputs.size(); i++) {
                 inputs.set(i, Ingredient.fromJson(ingredients.get(i)));
@@ -183,7 +183,7 @@ public class PestleAndMortarRecipe implements IPestleAndMortarRecipe{
 
         @Nullable
         @Override
-        public PestleAndMortarRecipe fromNetwork(ResourceLocation recipeId, FriendlyByteBuf buffer) {
+        public PestleAndMortarRecipe fromNetwork(ResourceLocation recipeId, PacketBuffer buffer) {
             NonNullList<Ingredient> inputs = NonNullList.withSize(buffer.readInt(), Ingredient.EMPTY);
 
             for (int i = 0; i < inputs.size(); i++) {
@@ -195,7 +195,7 @@ public class PestleAndMortarRecipe implements IPestleAndMortarRecipe{
         }
 
         @Override
-        public void toNetwork(FriendlyByteBuf buffer, PestleAndMortarRecipe recipe) {
+        public void toNetwork(PacketBuffer buffer, PestleAndMortarRecipe recipe) {
             buffer.writeInt(recipe.getIngredients().size());
             for (Ingredient ing : recipe.getIngredients()) {
                 ing.toNetwork(buffer);

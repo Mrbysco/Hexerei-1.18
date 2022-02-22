@@ -1,22 +1,24 @@
 package net.joefoxe.hexerei.item.custom;
 
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntitySelector;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.level.Level;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.entity.Entity;
+import net.minecraft.util.EntityPredicates;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.client.util.ITooltipFlag;
+import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Properties;
 import java.util.function.Predicate;
 
+import net.minecraft.item.Item.Properties;
+
 public class FireTabletItem extends Item {
-    private static final Predicate<Entity> field_219989_a = EntitySelector.NO_SPECTATORS.and(Entity::canBeCollidedWith);
+    private static final Predicate<Entity> field_219989_a = EntityPredicates.NO_SPECTATORS.and(Entity::canBeCollidedWith);
 
     public FireTabletItem(Properties properties) {
         super(properties);
@@ -28,11 +30,11 @@ public class FireTabletItem extends Item {
      */
 
     @Override
-    public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag flagIn) {
+    public void appendHoverText(ItemStack stack, @Nullable World world, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
         if(Screen.hasShiftDown()) {
-            tooltip.add(new TranslatableComponent("tooltip.hexerei.broom_shift"));
+            tooltip.add(new TranslationTextComponent("tooltip.hexerei.broom_shift"));
         } else {
-            tooltip.add(new TranslatableComponent("tooltip.hexerei.broom"));
+            tooltip.add(new TranslationTextComponent("tooltip.hexerei.broom"));
         }
 
 

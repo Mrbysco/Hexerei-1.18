@@ -4,23 +4,23 @@ import net.joefoxe.hexerei.block.ModBlocks;
 import net.joefoxe.hexerei.block.custom.Coffer;
 import net.joefoxe.hexerei.item.custom.KeychainItem;
 import net.minecraft.core.NonNullList;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.ListNBT;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.ContainerHelper;
-import net.minecraft.world.inventory.CraftingContainer;
+import net.minecraft.inventory.CraftingInventory;
 import net.minecraft.world.item.DyeColor;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.CustomRecipe;
-import net.minecraft.world.item.crafting.RecipeSerializer;
-import net.minecraft.world.item.crafting.SimpleRecipeSerializer;
-import net.minecraft.world.level.Level;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.crafting.SpecialRecipe;
+import net.minecraft.item.crafting.IRecipeSerializer;
+import net.minecraft.item.crafting.SpecialRecipeSerializer;
+import net.minecraft.world.World;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.common.Tags;
 
 
-public class KeychainRecipe extends CustomRecipe {
-    public static final SimpleRecipeSerializer<KeychainRecipe> SERIALIZER = new SimpleRecipeSerializer<>(KeychainRecipe::new);
+public class KeychainRecipe extends SpecialRecipe {
+    public static final SpecialRecipeSerializer<KeychainRecipe> SERIALIZER = new SpecialRecipeSerializer<>(KeychainRecipe::new);
 
     public KeychainRecipe(ResourceLocation registryName) {
         super(registryName);
@@ -28,7 +28,7 @@ public class KeychainRecipe extends CustomRecipe {
     }
 
     @Override
-    public boolean matches(CraftingContainer inventory, Level world) {
+    public boolean matches(CraftingInventory inventory, World world) {
         int keychain = 0;
         int other = 0;
 
@@ -51,7 +51,7 @@ public class KeychainRecipe extends CustomRecipe {
     }
 
     @Override
-    public ItemStack assemble(CraftingContainer inventory) {
+    public ItemStack assemble(CraftingInventory inventory) {
         ItemStack keychain = ItemStack.EMPTY;
         ItemStack other = ItemStack.EMPTY;
 
@@ -68,14 +68,14 @@ public class KeychainRecipe extends CustomRecipe {
             }
         }
         if (keychain.getItem() instanceof KeychainItem && !other.isEmpty()) {
-            CompoundTag tag = new CompoundTag();
+            CompoundNBT tag = new CompoundNBT();
             if(keychain.hasTag())
                 tag = keychain.getTag();
 
-            ListTag listtag = new ListTag();
+            ListNBT listtag = new ListNBT();
 
             if (!other.isEmpty()) {
-                CompoundTag compoundtag = new CompoundTag();
+                CompoundNBT compoundtag = new CompoundNBT();
                 compoundtag.putByte("Slot", (byte)0);
                 other.save(compoundtag);
                 listtag.add(compoundtag);
@@ -96,7 +96,7 @@ public class KeychainRecipe extends CustomRecipe {
         return width >= 2 && height >= 1;
     }
     @Override
-    public RecipeSerializer<?> getSerializer() {
+    public IRecipeSerializer<?> getSerializer() {
         return SERIALIZER;
     }
 }
